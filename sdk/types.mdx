@@ -1,0 +1,259 @@
+---
+title: "Types Reference"
+description: "TypeScript type definitions for the Wavedash SDK"
+---
+
+This page documents the TypeScript types used throughout the Wavedash SDK.
+
+## Response types
+
+### WavedashResponse
+
+All SDK methods return a `WavedashResponse` wrapper:
+
+```typescript
+interface WavedashResponse<T> {
+  success: boolean;     // Whether the operation succeeded
+  data: T | null;       // Result data (null on failure)
+  args: Record<string, any>;  // Original arguments passed
+  message?: string;     // Error message if success is false
+}
+```
+
+**Example usage:**
+
+```typescript
+const response = await WavedashJS.getLeaderboard("high-scores");
+
+if (response.success) {
+  const leaderboard: Leaderboard = response.data;
+  // Use leaderboard...
+} else {
+  console.error(response.message);
+}
+```
+
+## Configuration types
+
+### WavedashConfig
+
+SDK configuration options:
+
+```typescript
+interface WavedashConfig {
+  gameId: string;              // Your game's ID
+  debug?: boolean;             // Enable debug logging
+  remoteStorageOrigin?: string; // Custom storage origin
+  p2p?: Partial<P2PConfig>;    // P2P options
+  disableAchievementsAndStats?: boolean; // Disable stats
+  deferEvents?: boolean;       // Defer events until ready
+}
+```
+
+### P2PConfig
+
+Peer-to-peer networking configuration:
+
+```typescript
+interface P2PConfig {
+  maxPeers: number;              // Max concurrent connections
+  enableReliableChannel: boolean;  // TCP-like channel
+  enableUnreliableChannel: boolean; // UDP-like channel
+}
+```
+
+## Leaderboard types
+
+### Leaderboard
+
+```typescript
+interface Leaderboard {
+  id: string;           // Leaderboard ID
+  name: string;         // Display name
+  sortOrder: LeaderboardSortOrder;   // "ascending" | "descending"
+  displayType: LeaderboardDisplayType; // "numeric" | "time"
+  totalEntries: number; // Total number of entries
+}
+```
+
+### LeaderboardSortOrder
+
+```typescript
+type LeaderboardSortOrder = "ascending" | "descending";
+```
+
+### LeaderboardDisplayType
+
+```typescript
+type LeaderboardDisplayType = "numeric" | "time";
+```
+
+### LeaderboardEntry
+
+```typescript
+interface LeaderboardEntry {
+  userId: string;      // Player's user ID
+  username: string;    // Player's display name
+  score: number;       // Score value
+  rank: number;        // Current rank
+  ugcId?: string;      // Attached UGC (optional)
+  createdAt: number;   // First submission timestamp
+  updatedAt: number;   // Last update timestamp
+}
+```
+
+## Lobby types
+
+### Lobby
+
+```typescript
+interface Lobby {
+  id: string;                    // Lobby ID
+  hostId: string;                // Host's user ID
+  visibility: LobbyVisibility;   // Access level
+  maxPlayers: number;            // Player limit
+  numUsers: number;              // Current count
+  metadata: Record<string, any>; // Custom data
+}
+```
+
+### LobbyVisibility
+
+```typescript
+type LobbyVisibility = "public" | "private" | "friends";
+```
+
+### LobbyUser
+
+```typescript
+interface LobbyUser {
+  id: string;       // User ID
+  username: string; // Display name
+}
+```
+
+### LobbyMessage
+
+```typescript
+interface LobbyMessage {
+  id: string;        // Message ID
+  userId: string;    // Sender's ID
+  username: string;  // Sender's name
+  content: string;   // Message text
+  createdAt: number; // Timestamp
+}
+```
+
+## P2P types
+
+### P2PConnection
+
+```typescript
+interface P2PConnection {
+  lobbyId: string;
+  peers: Record<string, P2PPeer>;
+  state: P2PConnectionState;
+}
+```
+
+### P2PConnectionState
+
+```typescript
+type P2PConnectionState =
+  | "connecting"
+  | "connected"
+  | "disconnected"
+  | "failed";
+```
+
+### P2PPeer
+
+```typescript
+interface P2PPeer {
+  userId: string;    // Peer's user ID
+  username: string;  // Peer's display name
+}
+```
+
+### P2PMessage
+
+```typescript
+interface P2PMessage {
+  fromUserId: string;   // Sender's user ID
+  channel: number;      // Channel number (0-7)
+  payload: Uint8Array;  // Binary data
+}
+```
+
+## UGC types
+
+### UGCType
+
+```typescript
+type UGCType = string; // e.g., "replay", "screenshot", "level"
+```
+
+### UGCVisibility
+
+```typescript
+type UGCVisibility = "public" | "private" | "friends";
+```
+
+## Storage types
+
+### RemoteFileMetadata
+
+```typescript
+interface RemoteFileMetadata {
+  exists: boolean;     // Whether file exists
+  key: string;         // Full storage key
+  name: string;        // Filename
+  lastModified: number; // Unix timestamp
+  size: number;        // Size in bytes
+  etag: string;        // Version identifier
+}
+```
+
+## Engine types
+
+### EngineInstance
+
+Interface for game engine instances:
+
+```typescript
+interface EngineInstance {
+  type: "godot" | "unity" | "custom";
+
+  // Send message to engine
+  SendMessage(
+    objectName: string,
+    methodName: string,
+    value?: string | number | boolean
+  ): void;
+
+  // Emscripten filesystem API
+  FS: {
+    readFile(path: string, opts?: Record<string, any>): string | Uint8Array;
+    writeFile(path: string, data: string | ArrayBufferView, opts?: Record<string, any>): void;
+    mkdirTree(path: string, mode?: number): void;
+    syncfs(populate: boolean, callback?: (err: any) => void): void;
+    analyzePath(path: string): { exists: boolean };
+  };
+}
+```
+
+## ID types
+
+The SDK uses string IDs for all entities:
+
+```typescript
+type UserId = string;
+type GameId = string;
+type LobbyId = string;
+type LeaderboardId = string;
+type UGCId = string;
+```
+
+<Note>
+IDs are opaque strings. Don't parse or construct them manually—always use IDs returned from SDK methods.
+</Note>

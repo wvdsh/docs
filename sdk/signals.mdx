@@ -1,0 +1,317 @@
+---
+title: "Signals Reference"
+description: "Events emitted by the Wavedash SDK to your game"
+---
+
+Signals are events that the SDK emits to notify your game of real-time updates. Your game engine receives these signals to react to lobby changes, P2P connections, and backend status.
+
+## Signal overview
+
+| Signal | Category | Description |
+|--------|----------|-------------|
+| `LOBBY_JOINED` | Lobby | Successfully joined a lobby |
+| `LOBBY_USERS_UPDATED` | Lobby | Users joined or left the lobby |
+| `LOBBY_MESSAGE` | Lobby | New message received |
+| `LOBBY_DATA_UPDATED` | Lobby | Lobby metadata changed |
+| `LOBBY_KICKED` | Lobby | Removed from lobby |
+| `P2P_CONNECTION_ESTABLISHED` | P2P | Connected to a peer |
+| `P2P_CONNECTION_FAILED` | P2P | Connection to peer failed |
+| `P2P_PEER_DISCONNECTED` | P2P | Peer disconnected |
+| `P2P_MESSAGE` | P2P | Message received from peer |
+| `BACKEND_CONNECTED` | Backend | Connected to Wavedash |
+| `BACKEND_DISCONNECTED` | Backend | Disconnected from Wavedash |
+| `BACKEND_RECONNECTING` | Backend | Attempting to reconnect |
+
+## Lobby signals
+
+### LOBBY_JOINED
+
+Emitted when you successfully join or create a lobby.
+
+```typescript
+{
+  success: boolean;
+  data: string; // Lobby ID
+}
+```
+
+### LOBBY_USERS_UPDATED
+
+Emitted when users join or leave the lobby.
+
+```typescript
+{
+  users: LobbyUser[];
+}
+```
+
+### LOBBY_MESSAGE
+
+Emitted when a new message is received in the lobby.
+
+```typescript
+{
+  id: string;
+  userId: string;
+  username: string;
+  content: string;
+  createdAt: number;
+}
+```
+
+### LOBBY_DATA_UPDATED
+
+Emitted when the lobby metadata changes.
+
+```typescript
+{
+  key: string;
+  value: any;
+}
+```
+
+### LOBBY_KICKED
+
+Emitted when you are removed from the lobby.
+
+```typescript
+{
+  reason?: string;
+}
+```
+
+## P2P signals
+
+### P2P_CONNECTION_ESTABLISHED
+
+Emitted when a peer-to-peer connection is ready.
+
+```typescript
+{
+  userId: string;
+  username: string;
+}
+```
+
+### P2P_CONNECTION_FAILED
+
+Emitted when a peer connection fails.
+
+```typescript
+{
+  userId: string;
+  error?: string;
+}
+```
+
+### P2P_PEER_DISCONNECTED
+
+Emitted when a peer disconnects.
+
+```typescript
+{
+  userId: string;
+}
+```
+
+### P2P_MESSAGE
+
+Emitted when a P2P message is received (depending on configuration).
+
+```typescript
+{
+  fromUserId: string;
+  channel: number;
+  payload: Uint8Array;
+}
+```
+
+<Note>
+P2P messages can also be read from message queues using `readP2PMessageFromChannel()` instead of relying on signals.
+</Note>
+
+## Backend signals
+
+### BACKEND_CONNECTED
+
+Emitted when connected to the Wavedash backend.
+
+```typescript
+{} // No data
+```
+
+### BACKEND_DISCONNECTED
+
+Emitted when disconnected from the backend.
+
+```typescript
+{} // No data
+```
+
+### BACKEND_RECONNECTING
+
+Emitted when attempting to reconnect after a disconnect.
+
+```typescript
+{} // No data
+```
+
+## Handling signals
+
+<Tabs>
+  <Tab title="Godot">
+    The Wavedash Godot SDK exposes signals as Godot signals:
+
+    ```gdscript
+    extends Node
+
+    func _ready():
+        # Connect to lobby signals
+        Wavedash.lobby_joined.connect(_on_lobby_joined)
+        Wavedash.lobby_message.connect(_on_lobby_message)
+        Wavedash.lobby_users_updated.connect(_on_users_updated)
+        Wavedash.lobby_kicked.connect(_on_lobby_kicked)
+
+        # Connect to P2P signals
+        Wavedash.p2p_connection_established.connect(_on_peer_connected)
+        Wavedash.p2p_peer_disconnected.connect(_on_peer_disconnected)
+
+        # Connect to backend signals
+        Wavedash.backend_connected.connect(_on_backend_connected)
+        Wavedash.backend_disconnected.connect(_on_backend_disconnected)
+
+    func _on_lobby_joined(data: Dictionary):
+        if data.success:
+            print("Joined lobby: ", data.data)
+
+    func _on_lobby_message(message: Dictionary):
+        print(message.username, ": ", message.content)
+
+    func _on_users_updated(data: Dictionary):
+        for user in data.users:
+            print("User in lobby: ", user.username)
+
+    func _on_lobby_kicked(data: Dictionary):
+        print("Kicked from lobby")
+        get_tree().change_scene_to_file("res://menu.tscn")
+
+    func _on_peer_connected(data: Dictionary):
+        print("Connected to peer: ", data.username)
+
+    func _on_peer_disconnected(data: Dictionary):
+        print("Peer disconnected: ", data.userId)
+
+    func _on_backend_connected():
+        print("Connected to Wavedash!")
+
+    func _on_backend_disconnected():
+        print("Lost connection to Wavedash")
+    ```
+  </Tab>
+  <Tab title="Unity">
+    Handle signals through JavaScript interop:
+
+    ```csharp
+    using UnityEngine;
+    using System.Runtime.InteropServices;
+
+    public class WavedashSignalHandler : MonoBehaviour
+    {
+        // Called from JavaScript
+        public void OnLobbyJoined(string jsonData)
+        {
+            var data = JsonUtility.FromJson<LobbyJoinedData>(jsonData);
+            Debug.Log($"Joined lobby: {data.lobbyId}");
+        }
+
+        public void OnLobbyMessage(string jsonData)
+        {
+            var message = JsonUtility.FromJson<LobbyMessageData>(jsonData);
+            Debug.Log($"{message.username}: {message.content}");
+        }
+
+        public void OnP2PConnectionEstablished(string jsonData)
+        {
+            var data = JsonUtility.FromJson<P2PConnectionData>(jsonData);
+            Debug.Log($"Connected to: {data.username}");
+        }
+    }
+    ```
+  </Tab>
+  <Tab title="Custom">
+    For custom engines, the SDK calls your registered callback:
+
+    ```javascript
+    // Set up your engine instance with signal handler
+    WavedashJS.setEngineInstance({
+      type: "custom",
+      SendMessage: (objectName, signalName, value) => {
+        switch (signalName) {
+          case "LobbyJoined":
+            handleLobbyJoined(JSON.parse(value));
+            break;
+          case "LobbyMessage":
+            handleLobbyMessage(JSON.parse(value));
+            break;
+          case "P2PConnectionEstablished":
+            handlePeerConnected(JSON.parse(value));
+            break;
+          // ... handle other signals
+        }
+      }
+    });
+
+    function handleLobbyJoined(data) {
+      if (data.success) {
+        console.log("Joined lobby:", data.data);
+      }
+    }
+
+    function handleLobbyMessage(message) {
+      console.log(`${message.username}: ${message.content}`);
+    }
+
+    function handlePeerConnected(data) {
+      console.log("Connected to peer:", data.username);
+    }
+    ```
+  </Tab>
+</Tabs>
+
+## Signal constants
+
+The signal names are defined as constants:
+
+```javascript
+const Signals = {
+  // Lobby
+  LOBBY_MESSAGE: "LobbyMessage",
+  LOBBY_KICKED: "LobbyKicked",
+  LOBBY_JOINED: "LobbyJoined",
+  LOBBY_USERS_UPDATED: "LobbyUsersUpdated",
+  LOBBY_DATA_UPDATED: "LobbyDataUpdated",
+
+  // P2P
+  P2P_MESSAGE: "P2PMessage",
+  P2P_CONNECTION_ESTABLISHED: "P2PConnectionEstablished",
+  P2P_CONNECTION_FAILED: "P2PConnectionFailed",
+  P2P_PEER_DISCONNECTED: "P2PPeerDisconnected",
+
+  // Backend
+  BACKEND_CONNECTED: "BackendConnected",
+  BACKEND_DISCONNECTED: "BackendDisconnected",
+  BACKEND_RECONNECTING: "BackendReconnecting",
+};
+```
+
+## Deferring events
+
+If your game needs time to set up signal handlers, you can defer events:
+
+```javascript
+// In your game's configuration, set deferEvents: true
+// Then call this when ready:
+WavedashJS.readyForEvents();
+```
+
+This ensures no signals are missed during initialization.

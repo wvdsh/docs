@@ -1,0 +1,312 @@
+---
+title: "Remote Storage"
+description: "Save and sync player files to the cloud"
+---
+
+The Remote Storage API lets you save and load player files to cloud storage. Files persist across sessions and devices, enabling features like cloud saves, user preferences, and synced game data.
+
+## Overview
+
+Remote storage provides:
+- **Per-user isolation**: Each player has their own storage namespace
+- **Cloud sync**: Files persist across devices and sessions
+- **Directory support**: Organize files in folders
+- **Metadata access**: Get file size, modification time, and more
+
+## Uploading files
+
+Upload a file to remote storage:
+
+```javascript
+const response = await WavedashJS.uploadRemoteFile({
+  path: "saves/slot1.json",
+  data: new Uint8Array(/* file data */)
+});
+
+if (response.success) {
+  console.log("File uploaded successfully");
+}
+```
+
+### Parameters
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `path` | string | Yes | File path (relative to user's storage root) |
+| `data` | Uint8Array | Yes | File contents as binary data |
+
+### Example: Save game data
+
+```javascript
+async function saveGame(slot, gameState) {
+  const data = new TextEncoder().encode(JSON.stringify(gameState));
+
+  const response = await WavedashJS.uploadRemoteFile({
+    path: `saves/slot${slot}.json`,
+    data: data
+  });
+
+  return response.success;
+}
+```
+
+## Downloading files
+
+Download a file from remote storage:
+
+```javascript
+const response = await WavedashJS.downloadRemoteFile({
+  path: "saves/slot1.json"
+});
+
+if (response.success) {
+  const data = response.data; // Uint8Array
+  const text = new TextDecoder().decode(data);
+  const gameState = JSON.parse(text);
+}
+```
+
+### Example: Load game data
+
+```javascript
+async function loadGame(slot) {
+  const response = await WavedashJS.downloadRemoteFile({
+    path: `saves/slot${slot}.json`
+  });
+
+  if (response.success && response.data) {
+    const text = new TextDecoder().decode(response.data);
+    return JSON.parse(text);
+  }
+
+  return null; // No save found
+}
+```
+
+## Listing directories
+
+List files in a directory:
+
+```javascript
+const response = await WavedashJS.listRemoteDirectory({
+  path: "saves/"
+});
+
+if (response.success) {
+  response.data.forEach(file => {
+    console.log(`${file.name} - ${file.size} bytes`);
+    console.log(`  Modified: ${new Date(file.lastModified)}`);
+  });
+}
+```
+
+### File metadata
+
+```typescript
+interface RemoteFileMetadata {
+  exists: boolean;    // Whether the file exists
+  key: string;        // Full storage key
+  name: string;       // Filename relative to directory
+  lastModified: number; // Unix timestamp
+  size: number;       // Size in bytes
+  etag: string;       // Version identifier
+}
+```
+
+## Downloading directories
+
+Download all files in a directory:
+
+```javascript
+const response = await WavedashJS.downloadRemoteDirectory({
+  path: "saves/"
+});
+
+if (response.success) {
+  // response.data contains all files in the directory
+  for (const [path, data] of response.data) {
+    console.log(`Downloaded: ${path}`);
+  }
+}
+```
+
+## File metadata
+
+Get metadata for a specific file without downloading it:
+
+```javascript
+const response = await WavedashJS.getRemoteFileMetadata({
+  path: "saves/slot1.json"
+});
+
+if (response.success && response.data.exists) {
+  console.log(`Size: ${response.data.size} bytes`);
+  console.log(`Modified: ${response.data.lastModified}`);
+}
+```
+
+## Path conventions
+
+Paths are relative to the user's storage root:
+
+```
+saves/               # Directory for save games
+saves/slot1.json     # Save file
+settings.json        # Root-level file
+replays/             # Directory for replays
+replays/game001.bin  # Replay file
+```
+
+<Note>
+Paths should use forward slashes (`/`) as separators, regardless of platform.
+</Note>
+
+## Storage limits
+
+Storage limits depend on your Wavedash plan. Check the dashboard for:
+- Maximum storage per user
+- Maximum file size
+- Total storage quota
+
+## Engine integration
+
+<Tabs>
+  <Tab title="Godot">
+    The Godot SDK integrates with the Emscripten filesystem:
+
+    ```gdscript
+    # Save to remote storage
+    func save_game(data: Dictionary):
+        var json = JSON.stringify(data)
+        Wavedash.upload_remote_file("saves/game.json", json.to_utf8_buffer())
+
+    # Load from remote storage
+    func load_game() -> Dictionary:
+        var result = await Wavedash.download_remote_file("saves/game.json")
+        if result.success:
+            return JSON.parse_string(result.data.get_string_from_utf8())
+        return {}
+    ```
+  </Tab>
+  <Tab title="Unity">
+    Use JavaScript interop to access remote storage:
+
+    ```csharp
+    [DllImport("__Internal")]
+    private static extern void UploadRemoteFile(string path, byte[] data, int length);
+
+    public void SaveGame(string path, byte[] data)
+    {
+        UploadRemoteFile(path, data, data.Length);
+    }
+    ```
+  </Tab>
+  <Tab title="Custom">
+    Access the API directly:
+
+    ```javascript
+    async function savePreferences(prefs) {
+      const data = new TextEncoder().encode(JSON.stringify(prefs));
+      return WavedashJS.uploadRemoteFile({
+        path: "preferences.json",
+        data: data
+      });
+    }
+    ```
+  </Tab>
+</Tabs>
+
+## Best practices
+
+<AccordionGroup>
+  <Accordion title="Organize files in directories">
+    Use a clear directory structure: `saves/`, `replays/`, `preferences/`, etc.
+  </Accordion>
+  <Accordion title="Use efficient formats">
+    For large data, consider binary formats or compression instead of JSON.
+  </Accordion>
+  <Accordion title="Handle missing files gracefully">
+    Always check `response.success` and handle the case where a file doesn't exist.
+  </Accordion>
+  <Accordion title="Avoid frequent writes">
+    Batch save operations instead of writing on every change to reduce API calls.
+  </Accordion>
+  <Accordion title="Version your save format">
+    Include a version number in save files to handle format migrations.
+  </Accordion>
+</AccordionGroup>
+
+## Example: Cloud save system
+
+```javascript
+class CloudSaveSystem {
+  constructor() {
+    this.saveVersion = 2;
+  }
+
+  async save(slot, gameState) {
+    const saveData = {
+      version: this.saveVersion,
+      timestamp: Date.now(),
+      state: gameState
+    };
+
+    const data = new TextEncoder().encode(JSON.stringify(saveData));
+
+    const response = await WavedashJS.uploadRemoteFile({
+      path: `saves/slot${slot}.json`,
+      data: data
+    });
+
+    return response.success;
+  }
+
+  async load(slot) {
+    const response = await WavedashJS.downloadRemoteFile({
+      path: `saves/slot${slot}.json`
+    });
+
+    if (!response.success || !response.data) {
+      return null;
+    }
+
+    const text = new TextDecoder().decode(response.data);
+    const saveData = JSON.parse(text);
+
+    // Handle version migration
+    if (saveData.version < this.saveVersion) {
+      return this.migrate(saveData);
+    }
+
+    return saveData.state;
+  }
+
+  async listSaves() {
+    const response = await WavedashJS.listRemoteDirectory({
+      path: "saves/"
+    });
+
+    if (!response.success) {
+      return [];
+    }
+
+    return response.data.map(file => ({
+      slot: parseInt(file.name.match(/slot(\d+)/)[1]),
+      modified: new Date(file.lastModified),
+      size: file.size
+    }));
+  }
+
+  migrate(saveData) {
+    // Handle save format migrations
+    if (saveData.version === 1) {
+      // Migrate from v1 to v2
+      return {
+        ...saveData.state,
+        newField: "default"
+      };
+    }
+    return saveData.state;
+  }
+}
+```

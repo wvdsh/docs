@@ -1,0 +1,501 @@
+---
+title: "Custom Engine Integration"
+description: "Set up Wavedash for web games and custom engines"
+---
+
+This guide covers integrating Wavedash with custom HTML5 games, frameworks like Phaser or PixiJS, or any web-based game that doesn't use Godot or Unity.
+
+## Requirements
+
+- An HTML5-based game
+- JavaScript entry point
+- A Wavedash account and game created
+
+## Project setup
+
+### 1. Install the Wavedash CLI
+
+<Tabs>
+  <Tab title="macOS">
+    ```bash
+    brew install wvdsh/tap/wvdsh
+    ```
+  </Tab>
+  <Tab title="Linux">
+    ```bash
+    curl --proto '=https' --tlsv1.2 -LsSf https://github.com/wvdsh/cli/releases/latest/download/wvdsh-installer.sh | sh
+    ```
+  </Tab>
+  <Tab title="Windows">
+    ```powershell
+    irm https://github.com/wvdsh/cli/releases/latest/download/wvdsh-installer.ps1 | iex
+    ```
+  </Tab>
+</Tabs>
+
+### 2. Create wavedash.toml
+
+In your project root, create `wavedash.toml`:
+
+```toml wavedash.toml
+org_slug = "your-org"
+game_slug = "your-game"
+branch_slug = "production"
+upload_dir = "./dist"
+
+[custom]
+version = "1.0.0"
+entrypoint = "game.js"
+```
+
+| Field | Description |
+|-------|-------------|
+| `upload_dir` | Directory containing your built game |
+| `version` | Your game's version number |
+| `entrypoint` | JavaScript file that starts your game |
+
+## Entrypoint file
+
+The entrypoint file is a JavaScript file that initializes your game within the Wavedash environment. It must handle several required tasks.
+
+### Required globals
+
+Your entrypoint has access to these globals provided by Wavedash:
+
+| Global | Description |
+|--------|-------------|
+| `window.entrypointParams` | Configuration object passed from Wavedash |
+| `window.WavedashJS` | The Wavedash SDK instance |
+| `document.getElementById('wavedash-target')` | The container element where your game should render |
+
+### Required tasks
+
+Your entrypoint **must** do the following:
+
+1. **Render to `wavedash-target`** - Create your game canvas inside the target element
+2. **Report loading progress** - Call `WavedashJS.updateLoadProgressZeroToOne(progress)` with values from 0 to 1
+3. **Signal load complete** - Call `WavedashJS.loadComplete()` when your game is ready
+
+### Optional but recommended
+
+4. **Set engine instance** - Call `WavedashJS.setEngineInstance(instance)` to enable SDK signals for lobbies, P2P, etc.
+
+### Minimal entrypoint example
+
+```javascript
+(async function () {
+  const entrypointParams = window.entrypointParams;
+
+  // Create your game canvas
+  const canvas = document.createElement('canvas');
+  canvas.style.width = '100%';
+  canvas.style.height = '100%';
+  document.getElementById('wavedash-target').appendChild(canvas);
+
+  // Report loading progress (0 to 1)
+  WavedashJS.updateLoadProgressZeroToOne(0.5);
+
+  // Initialize your game...
+  await initializeGame(canvas);
+
+  // Set up signal handling for SDK features
+  WavedashJS.setEngineInstance({
+    type: "custom",
+    SendMessage: (objectName, signalName, jsonValue) => {
+      const data = jsonValue ? JSON.parse(jsonValue) : {};
+      handleSignal(signalName, data);
+    }
+  });
+
+  // Signal that loading is complete
+  WavedashJS.loadComplete();
+})();
+```
+
+### Loading scripts
+
+Use the helper to load external scripts:
+
+```javascript
+// Load your game's main script
+await WavedashJS.loadScript(entrypointParams.loaderUrl);
+```
+
+### Using entrypointParams
+
+The `entrypointParams` object contains configuration you can use:
+
+```javascript
+const entrypointParams = window.entrypointParams;
+
+// Access loader URL (if configured)
+const loaderUrl = entrypointParams.loaderUrl;
+
+// Access custom config
+const config = entrypointParams.config;
+```
+
+## SDK integration
+
+### Accessing the SDK
+
+The Wavedash SDK is automatically available as `window.WavedashJS` when your game runs on Wavedash.
+
+```javascript
+// Wait for SDK to be ready
+function initGame() {
+  if (window.WavedashJS && WavedashJS.isReady()) {
+    startGame();
+  } else {
+    setTimeout(initGame, 100);
+  }
+}
+
+initGame();
+```
+
+### Basic usage
+
+```javascript
+async function startGame() {
+  // Get current user
+  const userId = WavedashJS.getUserId();
+  const user = WavedashJS.getUser();
+  console.log(`Welcome, ${user.username}!`);
+
+  // Load a leaderboard
+  const response = await WavedashJS.getLeaderboard("high-scores");
+  if (response.success) {
+    console.log(`Leaderboard: ${response.data.name}`);
+  }
+}
+```
+
+## Handling signals
+
+For custom engines, set up your engine instance to receive signals:
+
+```javascript
+// Register your game to receive SDK signals
+WavedashJS.setEngineInstance({
+  type: "custom",
+  SendMessage: (objectName, signalName, jsonValue) => {
+    const data = jsonValue ? JSON.parse(jsonValue) : {};
+    handleSignal(signalName, data);
+  }
+});
+
+function handleSignal(signal, data) {
+  switch (signal) {
+    case "LobbyJoined":
+      onLobbyJoined(data);
+      break;
+    case "LobbyMessage":
+      onLobbyMessage(data);
+      break;
+    case "LobbyUsersUpdated":
+      onUsersUpdated(data);
+      break;
+    case "P2PConnectionEstablished":
+      onPeerConnected(data);
+      break;
+    case "P2PPeerDisconnected":
+      onPeerDisconnected(data);
+      break;
+    case "BackendConnected":
+      onBackendConnected();
+      break;
+    case "BackendDisconnected":
+      onBackendDisconnected();
+      break;
+  }
+}
+```
+
+## Complete example
+
+Here's a complete example game with Wavedash integration:
+
+**index.html:**
+```html
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>My Game</title>
+  <style>
+    body { margin: 0; background: #1a1a2e; }
+    canvas { display: block; }
+  </style>
+</head>
+<body>
+  <canvas id="game"></canvas>
+  <script src="game.js"></script>
+</body>
+</html>
+```
+
+**game.js:**
+```javascript
+class Game {
+  constructor() {
+    this.canvas = document.getElementById('game');
+    this.ctx = this.canvas.getContext('2d');
+    this.score = 0;
+    this.leaderboardId = null;
+
+    this.init();
+  }
+
+  async init() {
+    // Wait for Wavedash SDK
+    await this.waitForSDK();
+
+    // Set up signal handling
+    this.setupSignals();
+
+    // Load leaderboard
+    await this.loadLeaderboard();
+
+    // Start game loop
+    this.gameLoop();
+  }
+
+  waitForSDK() {
+    return new Promise((resolve) => {
+      const check = () => {
+        if (window.WavedashJS && WavedashJS.isReady()) {
+          resolve();
+        } else {
+          setTimeout(check, 100);
+        }
+      };
+      check();
+    });
+  }
+
+  setupSignals() {
+    WavedashJS.setEngineInstance({
+      type: "custom",
+      SendMessage: (obj, signal, value) => {
+        const data = value ? JSON.parse(value) : {};
+        this.handleSignal(signal, data);
+      }
+    });
+  }
+
+  handleSignal(signal, data) {
+    console.log(`Signal: ${signal}`, data);
+
+    switch (signal) {
+      case "LobbyMessage":
+        this.onChatMessage(data);
+        break;
+      case "P2PConnectionEstablished":
+        this.onPeerConnected(data);
+        break;
+    }
+  }
+
+  async loadLeaderboard() {
+    const response = await WavedashJS.getOrCreateLeaderboard(
+      "high-scores",
+      "descending",
+      "numeric"
+    );
+
+    if (response.success) {
+      this.leaderboardId = response.data.id;
+      console.log("Leaderboard loaded:", response.data);
+    }
+  }
+
+  async submitScore() {
+    if (!this.leaderboardId) return;
+
+    const response = await WavedashJS.uploadLeaderboardScore({
+      leaderboardId: this.leaderboardId,
+      score: this.score,
+      keepBest: true
+    });
+
+    if (response.success) {
+      console.log("Score submitted! Rank:", response.data.rank);
+    }
+  }
+
+  async createLobby() {
+    const response = await WavedashJS.createLobby({
+      visibility: "public",
+      maxPlayers: 4
+    });
+
+    if (response.success) {
+      this.lobbyId = response.data;
+      console.log("Created lobby:", this.lobbyId);
+    }
+  }
+
+  onChatMessage(data) {
+    console.log(`${data.username}: ${data.content}`);
+  }
+
+  onPeerConnected(data) {
+    console.log(`Connected to: ${data.username}`);
+  }
+
+  gameLoop() {
+    // Update game state
+    this.update();
+
+    // Render
+    this.render();
+
+    requestAnimationFrame(() => this.gameLoop());
+  }
+
+  update() {
+    // Game logic here
+  }
+
+  render() {
+    this.ctx.fillStyle = '#1a1a2e';
+    this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+
+    this.ctx.fillStyle = '#fff';
+    this.ctx.font = '24px sans-serif';
+    this.ctx.fillText(`Score: ${this.score}`, 20, 40);
+  }
+
+  addScore(points) {
+    this.score += points;
+  }
+}
+
+// Start the game
+new Game();
+```
+
+## Frameworks
+
+### Phaser
+
+```javascript
+class MainScene extends Phaser.Scene {
+  async create() {
+    // Wait for Wavedash
+    await this.waitForWavedash();
+
+    // Now use the SDK
+    const response = await WavedashJS.getLeaderboard("high-scores");
+    if (response.success) {
+      this.createLeaderboardUI(response.data);
+    }
+  }
+
+  waitForWavedash() {
+    return new Promise((resolve) => {
+      const check = () => {
+        if (window.WavedashJS && WavedashJS.isReady()) {
+          resolve();
+        } else {
+          this.time.delayedCall(100, check);
+        }
+      };
+      check();
+    });
+  }
+}
+```
+
+### PixiJS
+
+```javascript
+const app = new PIXI.Application();
+
+async function init() {
+  await app.init({ width: 800, height: 600 });
+  document.body.appendChild(app.canvas);
+
+  // Wait for Wavedash
+  while (!window.WavedashJS || !WavedashJS.isReady()) {
+    await new Promise(r => setTimeout(r, 100));
+  }
+
+  // SDK is ready
+  const user = WavedashJS.getUser();
+  console.log(`Playing as: ${user.username}`);
+
+  // Start game
+  startGame();
+}
+
+init();
+```
+
+## Testing locally
+
+Run the development server:
+
+```bash
+wvdsh dev
+```
+
+## Publishing
+
+### 1. Build your game
+
+Bundle your game files into the `upload_dir`:
+
+```bash
+npm run build  # or your build command
+```
+
+Ensure your `upload_dir` contains:
+- `index.html` (or your HTML entry point)
+- Your JavaScript entry point (`game.js`)
+- All assets (images, audio, etc.)
+
+### 2. Push to Wavedash
+
+```bash
+wvdsh build push
+```
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion title="WavedashJS is undefined">
+    - Ensure you're running through `wvdsh dev` or on wavedash.com
+    - The SDK is only available in the Wavedash environment
+    - Check that your entrypoint is correct in `wavedash.toml`
+  </Accordion>
+  <Accordion title="SDK not ready">
+    - Wait for `WavedashJS.isReady()` to return true
+    - The SDK needs time to initialize and authenticate
+  </Accordion>
+  <Accordion title="Signals not working">
+    - Call `WavedashJS.setEngineInstance()` with your signal handler
+    - Ensure you're parsing the JSON value correctly
+  </Accordion>
+  <Accordion title="Files not found">
+    - Verify `upload_dir` points to your built game
+    - Check that all assets use relative paths
+    - Ensure the entrypoint file exists
+  </Accordion>
+</AccordionGroup>
+
+## Example project structure
+
+```
+my-game/
+├── src/
+│   ├── index.js
+│   └── game.js
+├── dist/               # Build output (upload_dir)
+│   ├── index.html
+│   ├── game.js
+│   └── assets/
+├── package.json
+└── wavedash.toml
+```

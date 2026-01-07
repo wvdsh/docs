@@ -1,0 +1,105 @@
+---
+title: "Build & Push"
+description: "Upload your game builds to Wavedash"
+---
+
+The `wvdsh build push` command uploads your compiled game to Wavedash.
+
+## Usage
+
+```bash
+wvdsh build push
+```
+
+This:
+1. Reads your `wavedash.toml` configuration
+2. Validates your authentication
+3. Uploads your game files to Wavedash
+4. Creates a new build on the specified branch
+
+## Options
+
+| Option | Description |
+|--------|-------------|
+| `-c, --config <PATH>` | Path to wavedash.toml (default: `./wavedash.toml`) |
+
+### Example
+
+Push using a custom config:
+```bash
+wvdsh build push --config ./deploy/wavedash.toml
+```
+
+## Prerequisites
+
+Before pushing a build:
+
+<Steps>
+  <Step title="Authenticate">
+    Log in with `wvdsh auth login` if you haven't already.
+  </Step>
+  <Step title="Export your game">
+    Export your game for web:
+    - **Godot**: Export as HTML5
+    - **Unity**: Build for WebGL
+    - **Custom**: Bundle your HTML/JS files
+  </Step>
+  <Step title="Configure wavedash.toml">
+    Create a `wavedash.toml` with your org, game, and branch slugs. See the [Configuration](/cli/configuration) page.
+  </Step>
+</Steps>
+
+## How it works
+
+<Steps>
+  <Step title="Authentication check">
+    The CLI verifies you're logged in with a valid API key.
+  </Step>
+  <Step title="Credential request">
+    The CLI requests temporary upload credentials from the Wavedash API.
+  </Step>
+  <Step title="File upload">
+    All files from your `upload_dir` are uploaded to our servers with progress tracking.
+  </Step>
+  <Step title="Build creation">
+    The CLI notifies Wavedash that the upload is complete, and a new build is created on your branch.
+  </Step>
+</Steps>
+
+## File handling
+
+The CLI uploads:
+- All files in your `upload_dir` recursively
+- Your `wavedash.toml` configuration (copied to upload dir if needed)
+- Custom entrypoint files (for custom engine projects)
+
+<Note>
+The directory structure is preserved during upload. Files are uploaded relative to `upload_dir`.
+</Note>
+
+## Branches
+
+Builds are pushed to the branch specified in your `wavedash.toml`:
+
+```toml
+branch_slug = "production"
+```
+
+Common branch strategies:
+
+| Branch | Use case |
+|--------|----------|
+| `production` | Live builds for players |
+| `staging` | Pre-release testing |
+| `development` | Internal development builds |
+
+<Tip>
+Create different `wavedash.toml` files for each branch, or use environment-specific configs.
+</Tip>
+
+## Build size limits
+
+<Info>
+Check your plan limits in the Wavedash Dashboard. Build size limits vary by plan.
+</Info>
+

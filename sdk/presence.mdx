@@ -1,0 +1,188 @@
+---
+title: "Presence"
+description: "Track and share player online status and activity"
+---
+
+The Presence API lets you share player status and activity with friends and other players. Use it to show what players are doing, enable "join game" functionality, and build social features.
+
+## Updating presence
+
+Set the current player's presence status:
+
+```javascript
+const response = await WavedashJS.updateUserPresence({
+  status: "In Game",
+  details: "Playing Level 5",
+  gameData: {
+    level: 5,
+    score: 12500,
+    lobbyId: "lobby_abc123"
+  }
+});
+```
+
+### Parameters
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `status` | string | No | Short status text (e.g., "In Menu", "In Game") |
+| `details` | string | No | Detailed activity description |
+| `gameData` | object | No | Custom data for join functionality |
+
+## Use cases
+
+### Menu vs in-game status
+
+```javascript
+// Player is in menu
+WavedashJS.updateUserPresence({
+  status: "In Menu",
+  details: "Main Menu"
+});
+
+// Player starts a game
+WavedashJS.updateUserPresence({
+  status: "In Game",
+  details: "Deathmatch on Arena",
+  gameData: {
+    mode: "deathmatch",
+    map: "arena"
+  }
+});
+
+// Player joins a lobby
+WavedashJS.updateUserPresence({
+  status: "In Lobby",
+  details: "Waiting for players (2/4)",
+  gameData: {
+    lobbyId: currentLobbyId,
+    canJoin: true
+  }
+});
+```
+
+### Joinable games
+
+Include a `lobbyId` in `gameData` to enable "Join Game" functionality:
+
+```javascript
+WavedashJS.updateUserPresence({
+  status: "In Lobby",
+  details: "Arena - Waiting",
+  gameData: {
+    lobbyId: lobbyId,
+    canJoin: lobbyUsers.length < maxPlayers
+  }
+});
+```
+
+Friends can see this status and join the lobby directly.
+
+## Heartbeat
+
+The SDK automatically sends heartbeat signals to keep the connection alive and presence updated. You don't need to manage this manually.
+
+### Connection signals
+
+| Signal | Description |
+|--------|-------------|
+| `BACKEND_CONNECTED` | Connected to Wavedash backend |
+| `BACKEND_DISCONNECTED` | Lost connection |
+| `BACKEND_RECONNECTING` | Attempting to reconnect |
+
+```gdscript
+# Godot example
+func _ready():
+    Wavedash.backend_disconnected.connect(_on_disconnected)
+    Wavedash.backend_reconnecting.connect(_on_reconnecting)
+    Wavedash.backend_connected.connect(_on_connected)
+
+func _on_disconnected():
+    show_offline_indicator()
+
+func _on_reconnecting():
+    show_reconnecting_indicator()
+
+func _on_connected():
+    hide_connection_indicators()
+```
+
+## Clearing presence
+
+When leaving the game or going offline, presence is automatically cleared. You can also clear it manually:
+
+```javascript
+WavedashJS.updateUserPresence({
+  status: "",
+  details: ""
+});
+```
+
+## Best practices
+
+<AccordionGroup>
+  <Accordion title="Keep status text short">
+    Use brief, clear status text like "In Menu", "In Game", "In Lobby".
+  </Accordion>
+  <Accordion title="Update on state changes">
+    Update presence when the player's activity changes significantly (entering/leaving games, joining lobbies).
+  </Accordion>
+  <Accordion title="Include joinable data">
+    If the player is in a joinable lobby, include the `lobbyId` so friends can join.
+  </Accordion>
+  <Accordion title="Don't update too frequently">
+    Avoid updating presence on every frame. Update on meaningful state changes.
+  </Accordion>
+</AccordionGroup>
+
+## Example: Complete presence management
+
+```javascript
+class PresenceManager {
+  constructor() {
+    this.currentState = "menu";
+  }
+
+  setMenuPresence() {
+    this.currentState = "menu";
+    WavedashJS.updateUserPresence({
+      status: "In Menu",
+      details: "Main Menu"
+    });
+  }
+
+  setLobbyPresence(lobbyId, playerCount, maxPlayers, settings) {
+    this.currentState = "lobby";
+    WavedashJS.updateUserPresence({
+      status: "In Lobby",
+      details: `${settings.mapName} (${playerCount}/${maxPlayers})`,
+      gameData: {
+        lobbyId: lobbyId,
+        canJoin: playerCount < maxPlayers,
+        mode: settings.gameMode,
+        map: settings.mapName
+      }
+    });
+  }
+
+  setGamePresence(mode, map, score) {
+    this.currentState = "game";
+    WavedashJS.updateUserPresence({
+      status: "In Game",
+      details: `${mode} on ${map}`,
+      gameData: {
+        mode: mode,
+        map: map,
+        score: score
+      }
+    });
+  }
+
+  updateScore(score) {
+    if (this.currentState === "game") {
+      // Don't update presence just for score changes
+      // Too frequent updates are not recommended
+    }
+  }
+}
+```

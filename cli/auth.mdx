@@ -1,0 +1,88 @@
+---
+title: "Authentication"
+description: "Authenticate the Wavedash CLI with your account"
+---
+
+The `wvdsh auth` commands manage your authentication with Wavedash.
+
+## Login
+
+```bash
+wvdsh auth login
+```
+
+This opens your default browser to complete OAuth authentication. Once you authorize the CLI, your API key is stored locally.
+
+### Manual token entry
+
+If browser-based login isn't available, you can provide an API key directly:
+
+```bash
+wvdsh auth login --token YOUR_API_KEY
+```
+
+<Note>
+You can generate API keys in the Developer Dashboard at [wavedash.com](https://wavedash.com/developers/dashboard).
+</Note>
+
+### How it works
+
+1. The CLI starts a local HTTP server on an available port (starting at 7777)
+2. Your browser opens the Wavedash authorization page
+3. After you authorize, Wavedash redirects back to the local server with your API key
+4. The CLI stores the key in your credentials file
+
+## Logout
+
+```bash
+wvdsh auth logout
+```
+
+This removes your stored API key from the local credentials file.
+
+## Status
+
+```bash
+wvdsh auth status
+```
+
+Check your current authentication status. If logged in, this displays a masked preview of your API key (first 6 and last 3 characters).
+
+**Example output:**
+
+```
+Logged in
+API Key: abc123...xyz
+```
+
+## Credentials file
+
+Your API key is stored in a JSON file with restricted permissions:
+
+| Platform | Location |
+|----------|----------|
+| macOS | `~/.config/gg/wavedash/cli/credentials.json` |
+| Linux | `~/.config/gg/wavedash/cli/credentials.json` |
+| Windows | `%APPDATA%\gg\wavedash\cli\credentials.json` |
+
+<Warning>
+Never share your credentials file or commit it to version control.
+</Warning>
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion title="Browser doesn't open automatically">
+    If the browser doesn't open, copy the URL from the terminal and paste it into your browser manually.
+  </Accordion>
+  <Accordion title="Port already in use">
+    The CLI automatically finds an available port starting at 7777. If you have firewall issues, ensure outbound connections to wavedash.com are allowed.
+  </Accordion>
+  <Accordion title="API key not working">
+    Try logging out and logging in again:
+    ```bash
+    wvdsh auth logout
+    wvdsh auth login
+    ```
+  </Accordion>
+</AccordionGroup>

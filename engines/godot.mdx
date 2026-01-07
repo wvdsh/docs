@@ -1,0 +1,301 @@
+---
+title: "Godot Integration"
+description: "Set up Wavedash for Godot web exports"
+---
+
+This guide walks you through integrating Wavedash into your Godot project, from initial setup to publishing your game.
+
+## Requirements
+
+- Godot 4.5+ recommended
+- Web export templates installed
+- A Wavedash account and game created
+
+## Project setup
+
+### 1. Install the Wavedash CLI
+
+<Tabs>
+  <Tab title="macOS">
+    ```bash
+    brew install wvdsh/tap/wvdsh
+    ```
+  </Tab>
+  <Tab title="Linux">
+    ```bash
+    curl --proto '=https' --tlsv1.2 -LsSf https://github.com/wvdsh/cli/releases/latest/download/wvdsh-installer.sh | sh
+    ```
+  </Tab>
+  <Tab title="Windows">
+    ```powershell
+    irm https://github.com/wvdsh/cli/releases/latest/download/wvdsh-installer.ps1 | iex
+    ```
+  </Tab>
+</Tabs>
+
+### 2. Create wavedash.toml
+
+In your Godot project root, create `wavedash.toml`:
+
+```toml wavedash.toml
+org_slug = "your-org"
+game_slug = "your-game"
+branch_slug = "production"
+upload_dir = "./exports/web"
+
+[godot]
+version = "4.5-stable"
+```
+
+<Note>
+Set `upload_dir` to where your Godot web export is saved.
+</Note>
+
+### 3. Configure web export
+
+1. Open **Project > Export...**
+2. Add a **Web** export preset
+3. Configure the export path to match your `upload_dir`
+
+**Recommended export settings:**
+- **Threads Support**: Enabled (for P2P networking)
+- **VRAM Texture Compression**: For Web
+- **Export Type**: Regular
+
+### 4. Install the Wavedash Godot SDK
+
+Download the Wavedash Godot SDK addon and add it to your project:
+
+1. Download from the Wavedash dashboard or GitHub
+2. Copy the `addons/wavedash` folder to your project
+3. Enable the addon in **Project > Project Settings > Plugins**
+
+## SDK integration
+
+### Autoload setup
+
+Add the Wavedash autoload to your project:
+
+1. Go to **Project > Project Settings > Autoload**
+2. Add `res://addons/wavedash/Wavedash.gd` as `Wavedash`
+
+### Basic usage
+
+```gdscript
+extends Node
+
+func _ready():
+    # Connect to signals
+    Wavedash.backend_connected.connect(_on_connected)
+    Wavedash.lobby_message.connect(_on_lobby_message)
+
+func _on_connected():
+    print("Connected to Wavedash!")
+
+    # Now you can use the SDK
+    var result = await Wavedash.get_leaderboard("high-scores")
+    if result.success:
+        print("Leaderboard: ", result.data.name)
+
+func _on_lobby_message(message: Dictionary):
+    print(message.username, ": ", message.content)
+```
+
+## Available signals
+
+Connect to these signals in your game code:
+
+```gdscript
+# Lobby signals
+Wavedash.lobby_joined.connect(_on_lobby_joined)
+Wavedash.lobby_message.connect(_on_lobby_message)
+Wavedash.lobby_users_updated.connect(_on_users_updated)
+Wavedash.lobby_kicked.connect(_on_kicked)
+Wavedash.lobby_data_updated.connect(_on_data_updated)
+
+# P2P signals
+Wavedash.p2p_connection_established.connect(_on_peer_connected)
+Wavedash.p2p_connection_failed.connect(_on_peer_failed)
+Wavedash.p2p_peer_disconnected.connect(_on_peer_disconnected)
+
+# Backend signals
+Wavedash.backend_connected.connect(_on_backend_connected)
+Wavedash.backend_disconnected.connect(_on_backend_disconnected)
+Wavedash.backend_reconnecting.connect(_on_backend_reconnecting)
+```
+
+## SDK methods
+
+### Leaderboards
+
+```gdscript
+# Get a leaderboard
+var result = await Wavedash.get_leaderboard("high-scores")
+
+# Get or create a leaderboard
+var result = await Wavedash.get_or_create_leaderboard(
+    "speedrun",
+    "ascending",  # or "descending"
+    "time"        # or "numeric"
+)
+
+# Submit a score
+var result = await Wavedash.upload_leaderboard_score(
+    leaderboard_id,
+    score,
+    true  # keep_best
+)
+
+# List entries
+var result = await Wavedash.list_leaderboard_entries(
+    leaderboard_id,
+    0,   # offset
+    10   # limit
+)
+```
+
+### Lobbies
+
+```gdscript
+# Create a lobby
+var result = await Wavedash.create_lobby("public", 4)
+if result.success:
+    var lobby_id = result.data
+
+# Join a lobby
+var result = await Wavedash.join_lobby(lobby_id)
+
+# Leave a lobby
+var result = await Wavedash.leave_lobby(lobby_id)
+
+# Send a message
+await Wavedash.send_lobby_message(lobby_id, "Hello!")
+
+# Get users
+var users = Wavedash.get_lobby_users(lobby_id)
+
+# Set lobby data (host only)
+Wavedash.set_lobby_data(lobby_id, "map", "arena")
+
+# Get lobby data
+var map = Wavedash.get_lobby_data(lobby_id, "map")
+```
+
+### P2P networking
+
+```gdscript
+# Broadcast to all peers
+Wavedash.broadcast_p2p_message(channel, data, reliable)
+
+# Send to specific peer
+Wavedash.send_p2p_message(user_id, channel, data, reliable)
+
+# Read messages from a channel
+var message = Wavedash.read_p2p_message_from_channel(0)
+if message:
+    print("From: ", message.from_user_id)
+    print("Data: ", message.payload)
+```
+
+### Stats and achievements
+
+```gdscript
+# Set a stat
+Wavedash.set_stat("total_kills", 100)
+
+# Get a stat
+var kills = Wavedash.get_stat("total_kills")
+
+# Unlock an achievement
+await Wavedash.set_achievement("first_win")
+
+# Check achievement
+var unlocked = Wavedash.get_achievement("first_win")
+```
+
+### Remote storage
+
+```gdscript
+# Upload a file
+var data = "save data".to_utf8_buffer()
+await Wavedash.upload_remote_file("saves/slot1.json", data)
+
+# Download a file
+var result = await Wavedash.download_remote_file("saves/slot1.json")
+if result.success:
+    var save_data = result.data.get_string_from_utf8()
+
+# List files
+var result = await Wavedash.list_remote_directory("saves/")
+```
+
+## Testing locally
+
+Run the development server:
+
+```bash
+wvdsh dev
+```
+
+This:
+1. Starts a local HTTPS server
+2. Opens your game in the Wavedash sandbox
+3. Connects to live backend services
+
+## Exporting and publishing
+
+### 1. Export your game
+
+1. Open **Project > Export...**
+2. Select your Web preset
+3. Click **Export Project**
+4. Save to your `upload_dir` folder
+
+### 2. Push to Wavedash
+
+```bash
+wvdsh build push
+```
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion title="SDK not connecting">
+    - Ensure you're running through `wvdsh dev` or on wavedash.com
+    - Check the browser console for errors
+    - Verify the Wavedash addon is enabled
+  </Accordion>
+  <Accordion title="Export fails">
+    - Ensure web export templates are installed
+    - Check for export errors in the Godot console
+    - Verify your export settings match the requirements
+  </Accordion>
+  <Accordion title="Signals not firing">
+    - Connect signals in `_ready()` before SDK initialization
+    - Check that you're using the correct signal names
+    - Ensure you're awaiting async operations properly
+  </Accordion>
+  <Accordion title="P2P not working">
+    - Enable Threads Support in export settings
+    - Ensure SharedArrayBuffer is available (requires HTTPS)
+    - Check browser console for WebRTC errors
+  </Accordion>
+</AccordionGroup>
+
+## Example project structure
+
+```
+my-godot-game/
+├── addons/
+│   └── wavedash/
+│       └── Wavedash.gd
+├── exports/
+│   └── web/           # Web export output
+├── scenes/
+│   └── main.tscn
+├── scripts/
+│   └── main.gd
+├── project.godot
+├── export_presets.cfg
+└── wavedash.toml
+```

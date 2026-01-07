@@ -1,0 +1,173 @@
+---
+title: "Initialization"
+description: "Set up and configure the Wavedash SDK in your game"
+---
+
+The Wavedash SDK initializes automatically when your game loads on Wavedash. This page explains the initialization process and configuration options.
+
+## Automatic initialization
+
+When your game runs on Wavedash (either locally with `wvdsh dev` or in production), the SDK is automatically:
+
+1. Loaded into the page
+2. Configured with your game's credentials
+3. Connected to the Wavedash backend
+4. Made available as `window.WavedashJS`
+
+You don't need to manually initialize the SDK in most cases.
+
+## Checking ready state
+
+Before calling SDK methods, verify the SDK is ready:
+
+```javascript
+// Check if SDK is ready
+if (WavedashJS.isReady()) {
+  // SDK is ready to use
+  const response = await WavedashJS.getLeaderboard("high-scores");
+}
+```
+
+## Configuration options
+
+The SDK accepts configuration through the `init()` method. While this is typically called automatically, you can customize behavior:
+
+```typescript
+interface WavedashConfig {
+  gameId: string;              // Your game's ID (set automatically)
+  debug?: boolean;             // Enable debug logging
+  remoteStorageOrigin?: string; // Custom storage origin
+  p2p?: Partial<P2PConfig>;    // P2P networking options
+  disableAchievementsAndStats?: boolean; // Disable stats tracking
+  deferEvents?: boolean;       // Defer event signals until ready
+}
+```
+
+### Debug mode
+
+Enable verbose logging to help debug SDK issues:
+
+```javascript
+// Debug mode is typically set via the Wavedash dashboard
+// or automatically enabled in development
+```
+
+### P2P configuration
+
+Customize peer-to-peer networking:
+
+```typescript
+interface P2PConfig {
+  maxPeers: number;              // Maximum concurrent peer connections
+  enableReliableChannel: boolean;  // Enable reliable (TCP-like) channel
+  enableUnreliableChannel: boolean; // Enable unreliable (UDP-like) channel
+}
+```
+
+## Event deferral
+
+By default, the SDK starts sending signals to your game immediately. If you need to defer events until your game is ready:
+
+```javascript
+// Signal you're ready to receive events
+WavedashJS.readyForEvents();
+```
+
+This is useful when your game needs time to set up event listeners before receiving signals.
+
+## Current user
+
+Access the authenticated user's information:
+
+```javascript
+// Get the current user's ID
+const userId = WavedashJS.getUserId();
+
+// Get user info (username, etc.)
+const user = WavedashJS.getUser();
+console.log(`Playing as: ${user.username}`);
+```
+
+## Backend connection
+
+The SDK automatically manages the connection to the Wavedash backend and emits signals for connection state changes:
+
+| Signal | Description |
+|--------|-------------|
+| `BACKEND_CONNECTED` | Successfully connected to backend |
+| `BACKEND_DISCONNECTED` | Disconnected from backend |
+| `BACKEND_RECONNECTING` | Attempting to reconnect |
+
+See [Signals Reference](/sdk/signals) for handling these events.
+
+## Engine-specific initialization
+
+<Tabs>
+  <Tab title="Godot">
+    The Wavedash Godot SDK wraps the JavaScript SDK. Initialize in your autoload:
+
+    ```gdscript
+    # Wavedash.gd (Autoload)
+    extends Node
+
+    func _ready():
+        # SDK is automatically initialized
+        # Connect to signals you need
+        Wavedash.backend_connected.connect(_on_connected)
+
+    func _on_connected():
+        print("Connected to Wavedash!")
+    ```
+  </Tab>
+  <Tab title="Unity">
+    Access the SDK through JavaScript interop:
+
+    ```csharp
+    using System.Runtime.InteropServices;
+
+    public class WavedashSDK : MonoBehaviour
+    {
+        [DllImport("__Internal")]
+        private static extern bool WavedashIsReady();
+
+        void Start()
+        {
+            if (WavedashIsReady())
+            {
+                Debug.Log("Wavedash SDK is ready!");
+            }
+        }
+    }
+    ```
+  </Tab>
+  <Tab title="Custom">
+    Access the SDK directly through JavaScript:
+
+    ```javascript
+    // Wait for SDK to be ready
+    function waitForWavedash() {
+      if (window.WavedashJS && WavedashJS.isReady()) {
+        initGame();
+      } else {
+        setTimeout(waitForWavedash, 100);
+      }
+    }
+
+    waitForWavedash();
+    ```
+  </Tab>
+</Tabs>
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion title="WavedashJS is undefined">
+    Ensure you're running your game through Wavedash (either `wvdsh dev` or on wavedash.com). The SDK is not available when running standalone.
+  </Accordion>
+  <Accordion title="SDK not ready">
+    The SDK may take a moment to initialize. Use `WavedashJS.isReady()` or listen for the `BACKEND_CONNECTED` signal.
+  </Accordion>
+  <Accordion title="Authentication errors">
+    The SDK handles authentication automatically. If you see auth errors, ensure your game is properly configured in the Wavedash dashboard.
+  </Accordion>
+</AccordionGroup>

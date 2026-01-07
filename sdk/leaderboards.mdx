@@ -1,0 +1,213 @@
+---
+title: "Leaderboards"
+description: "Create competitive leaderboards and submit player scores"
+---
+
+The Leaderboards API lets you create score-based rankings for your game. Players can submit scores, view their rank, and compete with others.
+
+<Note>
+Leaderboards are currently created by the Wavedash team. Contact us at [developer@wavedash.com](mailto:developer@wavedash.com) or via [Discord](https://discord.gg/bBaWUjTJWx) to set up leaderboards for your game. Dashboard creation is coming soon.
+</Note>
+
+## Getting a leaderboard
+
+Retrieve an existing leaderboard by name:
+
+```javascript
+const response = await WavedashJS.getLeaderboard("high-scores");
+
+if (response.success) {
+  const leaderboard = response.data;
+  console.log(`Leaderboard: ${leaderboard.name}`);
+  console.log(`Total entries: ${leaderboard.totalEntries}`);
+  console.log(`Sort order: ${leaderboard.sortOrder}`);
+}
+```
+
+## Creating a leaderboard
+
+Create a leaderboard if it doesn't exist, or get it if it does:
+
+```javascript
+const response = await WavedashJS.getOrCreateLeaderboard(
+  "speedrun-times",      // Leaderboard name
+  "ascending",           // Sort order: "ascending" or "descending"
+  "time"                 // Display type: "numeric" or "time"
+);
+
+if (response.success) {
+  const leaderboard = response.data;
+  console.log(`Leaderboard ID: ${leaderboard.id}`);
+}
+```
+
+### Sort order
+
+| Value | Description | Best for |
+|-------|-------------|----------|
+| `ascending` | Lower scores rank higher | Time trials, golf scores |
+| `descending` | Higher scores rank higher | Points, high scores |
+
+### Display type
+
+| Value | Description |
+|-------|-------------|
+| `numeric` | Display as a number (e.g., "1,000") |
+| `time` | Display as time (e.g., "1:23.45") |
+
+## Submitting scores
+
+Upload a player's score to a leaderboard:
+
+```javascript
+const response = await WavedashJS.uploadLeaderboardScore({
+  leaderboardId: "j57abc123...",  // Leaderboard ID
+  score: 1500,                     // Score value
+  keepBest: true                   // Only update if better than existing
+});
+
+if (response.success) {
+  const entry = response.data;
+  console.log(`Rank: ${entry.rank}`);
+  console.log(`Score: ${entry.score}`);
+}
+```
+
+### Parameters
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `leaderboardId` | string | Yes | The leaderboard's ID |
+| `score` | number | Yes | The score to submit |
+| `keepBest` | boolean | Yes | If true, only updates if score is better |
+| `ugcId` | string | No | Optional UGC attachment (replay, screenshot) |
+
+<Tip>
+Use `keepBest: true` to automatically handle personal best tracking. The SDK compares based on the leaderboard's sort order.
+</Tip>
+
+## Querying entries
+
+### List top entries
+
+Get the top entries from a leaderboard:
+
+```javascript
+const response = await WavedashJS.listLeaderboardEntries({
+  leaderboardId: "j57abc123...",
+  offset: 0,    // Start from rank 1
+  limit: 10     // Get top 10
+});
+
+if (response.success) {
+  response.data.forEach((entry, index) => {
+    console.log(`#${entry.rank} ${entry.username}: ${entry.score}`);
+  });
+}
+```
+
+### List entries around user
+
+Get entries around the current player's rank:
+
+```javascript
+const response = await WavedashJS.listLeaderboardEntriesAroundUser({
+  leaderboardId: "j57abc123...",
+  countAhead: 5,   // 5 entries with better scores
+  countBehind: 5   // 5 entries with worse scores
+});
+
+if (response.success) {
+  // Returns up to 11 entries centered on the player
+  response.data.forEach(entry => {
+    const isMe = entry.userId === WavedashJS.getUserId();
+    console.log(`${isMe ? ">" : " "} #${entry.rank} ${entry.username}: ${entry.score}`);
+  });
+}
+```
+
+### Get player's entry
+
+Get the current player's leaderboard entry:
+
+```javascript
+const response = await WavedashJS.getMyLeaderboardEntries({
+  leaderboardId: "j57abc123..."
+});
+
+if (response.success && response.data.length > 0) {
+  const myEntry = response.data[0];
+  console.log(`Your rank: #${myEntry.rank}`);
+  console.log(`Your score: ${myEntry.score}`);
+}
+```
+
+## Entry count
+
+Get the total number of entries (cached, synchronous):
+
+```javascript
+const count = WavedashJS.getLeaderboardEntryCount("j57abc123...");
+console.log(`Total players: ${count}`);
+```
+
+<Note>
+This returns a cached value from the last query. Returns -1 if the leaderboard hasn't been queried yet.
+</Note>
+
+## Leaderboard entry structure
+
+```typescript
+interface LeaderboardEntry {
+  userId: string;      // Player's user ID
+  username: string;    // Player's display name
+  score: number;       // Score value
+  rank: number;        // Current rank
+  ugcId?: string;      // Attached UGC (if any)
+  createdAt: number;   // When first submitted
+  updatedAt: number;   // When last updated
+}
+```
+
+## Attaching replays or screenshots
+
+You can attach user-generated content (like replays or screenshots) to leaderboard entries:
+
+```javascript
+// First, create the UGC item
+const ugcResponse = await WavedashJS.createUGCItem({
+  ugcType: "replay",
+  visibility: "public"
+});
+
+if (ugcResponse.success) {
+  // Upload the replay data...
+
+  // Then submit score with UGC attachment
+  const scoreResponse = await WavedashJS.uploadLeaderboardScore({
+    leaderboardId: "speedrun-times",
+    score: 12345,
+    keepBest: true,
+    ugcId: ugcResponse.data.id
+  });
+}
+```
+
+See [User-Generated Content](/sdk/ugc) for more on UGC.
+
+## Best practices
+
+<AccordionGroup>
+  <Accordion title="Use descriptive leaderboard names">
+    Use clear, unique names like "level-1-speedrun" or "weekly-high-score" rather than generic names.
+  </Accordion>
+  <Accordion title="Always use keepBest for competitive leaderboards">
+    Set `keepBest: true` to automatically track personal bests. This prevents overwriting a better score with a worse one.
+  </Accordion>
+  <Accordion title="Cache leaderboard IDs">
+    Store the leaderboard ID after calling `getOrCreateLeaderboard` to avoid extra network calls.
+  </Accordion>
+  <Accordion title="Handle offline gracefully">
+    Check `response.success` and show appropriate UI when submissions fail.
+  </Accordion>
+</AccordionGroup>

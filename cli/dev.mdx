@@ -1,0 +1,136 @@
+---
+title: "Local Development"
+description: "Test your game locally with the Wavedash development server"
+---
+
+The `wvdsh dev` command starts a local HTTPS development server that lets you test your game in the Wavedash sandbox environment before publishing.
+
+## Usage
+
+```bash
+wvdsh dev
+```
+
+This:
+1. Reads your `wavedash.toml` configuration
+2. Starts an HTTPS server at `https://localhost:7777`
+3. Opens your game in the Wavedash sandbox environment
+4. Serves files from your `upload_dir`
+
+## Options
+
+| Option | Description |
+|--------|-------------|
+| `-c, --config <PATH>` | Path to wavedash.toml (default: `./wavedash.toml`) |
+| `--no-open` | Don't open the browser automatically |
+
+### Examples
+
+Use a custom config file:
+```bash
+wvdsh dev --config ./configs/wavedash.toml
+```
+
+Start without opening the browser:
+```bash
+wvdsh dev --no-open
+```
+
+## How it works
+
+The dev server creates a local testing environment that mimics the production Wavedash platform:
+
+<Steps>
+  <Step title="Certificate generation">
+    On first run, the CLI generates a self-signed SSL certificate and installs it in your system's trust store. This enables HTTPS which is required for many browser APIs.
+  </Step>
+  <Step title="File serving">
+    The server serves your game files from the `upload_dir` specified in your config. It automatically handles compression and content types.
+  </Step>
+  <Step title="Sandbox redirect">
+    Your browser opens the Wavedash sandbox with your local server as the game origin. This lets you test SDK features with real backend services.
+  </Step>
+</Steps>
+
+## Certificate trust
+
+The first time you run `wvdsh dev`, the CLI generates and installs a self-signed certificate:
+
+| Platform | Certificate location |
+|----------|---------------------|
+| macOS | System Keychain |
+| Windows | Certificate Store |
+| Linux | `/usr/local/share/ca-certificates/` |
+
+<Warning>
+You may see a security prompt asking to trust the certificate. Accept it to enable HTTPS.
+</Warning>
+
+### Certificate files
+
+Certificates are stored in your config directory:
+
+```
+~/.config/gg/wavedash/cli/dev-server/
+├── cert.pem
+└── key.pem
+```
+
+## Supported features
+
+The local dev server supports:
+
+- **CORS headers** for wavedash.com domains
+- **Compression** (gzip, brotli) for applicable files
+- **Content-Type detection** for common file types
+- **Pre-compressed files** (`.gz`, `.br` extensions)
+
+## File serving
+
+The server automatically:
+
+1. Locates your HTML entrypoint (searches for `index.html`, then any `.html` file)
+2. Serves files from your `upload_dir`
+3. Handles engine-specific files (Godot `.pck`, Unity `.data`, etc.)
+
+## Sandbox URL
+
+When the dev server starts, it builds a sandbox URL with:
+
+- Your game metadata (org, game, branch slugs)
+- Local origin (`https://localhost:7777`)
+- Engine type and version
+- Entrypoint parameters
+
+The URL format is:
+```
+https://{game_slug}.sandbox.wavedash.com/sandbox/permission-grant?...
+```
+
+## Stopping the server
+
+Press `Ctrl+C` to stop the dev server. It will:
+- Shut down the HTTPS server
+- Clean up any temporary files
+- Display a summary of served requests
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion title="Certificate not trusted">
+    If you see certificate warnings, try removing and regenerating the certificate:
+    ```bash
+    rm -rf ~/.config/gg/wavedash/cli/dev-server/
+    wvdsh dev
+    ```
+  </Accordion>
+  <Accordion title="Port 7777 in use">
+    The dev server uses port 7777 by default. If it's in use, check for other running instances or processes using the port.
+  </Accordion>
+  <Accordion title="Files not found">
+    Ensure your `upload_dir` in `wavedash.toml` points to the correct directory containing your built game files.
+  </Accordion>
+  <Accordion title="CORS errors">
+    The dev server automatically adds CORS headers for wavedash.com domains. If you're testing from a different origin, you may need to adjust your testing approach.
+  </Accordion>
+</AccordionGroup>

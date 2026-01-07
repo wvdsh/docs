@@ -1,0 +1,169 @@
+---
+title: "Achievements & Stats"
+description: "Track player statistics and unlock achievements"
+---
+
+The Achievements API lets you track player statistics and award achievements based on their progress. Stats persist across sessions and sync automatically.
+
+<Note>
+Achievements are currently created by the Wavedash team. Contact us at [developer@wavedash.com](mailto:developer@wavedash.com) or via [Discord](https://discord.gg/bBaWUjTJWx) to set up achievements for your game. Dashboard creation is coming soon.
+</Note>
+
+## Stats
+
+Stats are numeric values that track player progress, like total kills, distance traveled, or games played.
+
+### Setting a stat
+
+```javascript
+WavedashJS.setStat("total_kills", 150);
+WavedashJS.setStat("distance_traveled", 5280.5);
+WavedashJS.setStat("games_played", 42);
+```
+
+<Note>
+Stat updates are debounced (batched) to reduce network calls. Changes are synced automatically after a short delay.
+</Note>
+
+### Getting a stat
+
+```javascript
+const kills = WavedashJS.getStat("total_kills");
+console.log(`Total kills: ${kills}`);
+```
+
+### Incrementing a stat
+
+For cumulative stats, get the current value and add to it:
+
+```javascript
+const current = WavedashJS.getStat("coins_collected") || 0;
+WavedashJS.setStat("coins_collected", current + 10);
+```
+
+## Achievements
+
+Achievements are unlockable awards that recognize player accomplishments.
+
+### Unlocking an achievement
+
+```javascript
+const response = await WavedashJS.setAchievement("first_win");
+
+if (response.success) {
+  console.log("Achievement unlocked!");
+}
+```
+
+### Checking achievement status
+
+```javascript
+const isUnlocked = WavedashJS.getAchievement("first_win");
+
+if (isUnlocked) {
+  console.log("Player has already earned this achievement");
+}
+```
+
+### Achievements with progress
+
+Some achievements may be tied to stats. When a stat reaches a threshold, the achievement unlocks automatically (configured in the Wavedash dashboard).
+
+```javascript
+// Update the stat - achievement unlocks automatically if threshold is met
+WavedashJS.setStat("enemies_defeated", 100);
+// If there's an achievement for 100 enemies, it will unlock
+```
+
+## Stat-linked achievements
+
+In the Wavedash dashboard, you can configure achievements that automatically unlock when a stat reaches a certain value:
+
+| Achievement | Stat | Threshold |
+|-------------|------|-----------|
+| "First Blood" | kills | 1 |
+| "Centurion" | kills | 100 |
+| "Marathon" | distance_traveled | 26219 |
+
+When you update a stat, any linked achievements are checked and unlocked automatically.
+
+## Local caching
+
+Stats and achievements are cached locally for fast access:
+
+- `getStat()` and `getAchievement()` return cached values instantly
+- `setStat()` and `setAchievement()` update the cache immediately
+- Changes sync to the server automatically (debounced to reduce API calls)
+
+## Session handling
+
+The SDK automatically saves pending stat updates when the player leaves:
+
+- On page unload (`beforeunload` event)
+- On page hide (`pagehide` event)
+- When leaving a game session
+
+You don't need to manually flush stats.
+
+## Disabling stats
+
+For demo games or testing, you can disable stats tracking:
+
+```javascript
+// Typically configured in the game setup, not at runtime
+// This prevents demo play from polluting real stats
+```
+
+## Best practices
+
+<AccordionGroup>
+  <Accordion title="Use descriptive stat names">
+    Use clear, snake_case names like `total_kills`, `games_won`, or `highest_score`.
+  </Accordion>
+  <Accordion title="Update stats incrementally">
+    For cumulative stats, get the current value and add to it rather than tracking locally.
+  </Accordion>
+  <Accordion title="Don't spam stat updates">
+    The SDK debounces updates, but avoid calling `setStat` every frame. Batch updates where possible.
+  </Accordion>
+  <Accordion title="Configure achievements in the dashboard">
+    Define achievement names, descriptions, and icons in the Wavedash dashboard rather than hardcoding.
+  </Accordion>
+</AccordionGroup>
+
+## Example: Kill tracking
+
+```javascript
+// Player gets a kill
+function onEnemyKilled() {
+  // Increment kill stat
+  const kills = (WavedashJS.getStat("total_kills") || 0) + 1;
+  WavedashJS.setStat("total_kills", kills);
+
+  // Session kills (for display)
+  sessionKills++;
+
+  // Check for manual achievements
+  if (kills === 1) {
+    WavedashJS.setAchievement("first_blood");
+  }
+}
+```
+
+## Example: Score tracking
+
+```javascript
+// Game over - save high score
+function onGameOver(score) {
+  const highScore = WavedashJS.getStat("high_score") || 0;
+
+  if (score > highScore) {
+    WavedashJS.setStat("high_score", score);
+    console.log("New high score!");
+  }
+
+  // Track games played
+  const gamesPlayed = (WavedashJS.getStat("games_played") || 0) + 1;
+  WavedashJS.setStat("games_played", gamesPlayed);
+}
+```

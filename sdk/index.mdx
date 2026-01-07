@@ -1,0 +1,116 @@
+---
+title: "SDK Overview"
+description: "Integrate Wavedash Online Services into your game with the JavaScript SDK"
+---
+
+The Wavedash JavaScript SDK (`@wvdsh/sdk-js`) enables you to integrate online services into your web-based games. It provides APIs for leaderboards, multiplayer lobbies, peer-to-peer networking, achievements, cloud storage, and more.
+
+## Features
+
+<CardGroup cols={2}>
+  <Card title="Leaderboards" icon="trophy" href="/sdk/leaderboards">
+    Submit scores, query rankings, and display competitive leaderboards.
+  </Card>
+  <Card title="Lobbies" icon="users" href="/sdk/lobbies">
+    Create and manage multiplayer game lobbies with real-time messaging.
+  </Card>
+  <Card title="P2P Networking" icon="network-wired" href="/sdk/p2p">
+    Connect players directly with WebRTC for low-latency multiplayer.
+  </Card>
+  <Card title="Achievements" icon="medal" href="/sdk/achievements">
+    Track player stats and unlock achievements.
+  </Card>
+  <Card title="Cloud Storage" icon="cloud" href="/sdk/remote-storage">
+    Save and sync player data across sessions.
+  </Card>
+  <Card title="User Content" icon="file-upload" href="/sdk/ugc">
+    Enable players to upload and share content.
+  </Card>
+</CardGroup>
+
+## How it works
+
+The SDK is automatically loaded when your game runs on Wavedash. It's available as a global `WavedashJS` object that provides access to all online services.
+
+```javascript
+// The SDK is automatically available in your game
+const response = await WavedashJS.uploadLeaderboardScore({
+  leaderboardId: "high-scores",
+  score: 1000,
+  keepBest: true
+});
+
+if (response.success) {
+  console.log("Score submitted:", response.data);
+}
+```
+
+## Response format
+
+All SDK methods return a `WavedashResponse` object with a consistent structure:
+
+```typescript
+interface WavedashResponse<T> {
+  success: boolean;     // Whether the operation succeeded
+  data: T | null;       // The result data (null on failure)
+  args: Record<string, any>;  // Original arguments passed
+  message?: string;     // Error message if success is false
+}
+```
+
+**Example response handling:**
+
+```javascript
+const response = await WavedashJS.getLeaderboard("high-scores");
+
+if (response.success) {
+  const leaderboard = response.data;
+  console.log(`Leaderboard: ${leaderboard.name}`);
+  console.log(`Total entries: ${leaderboard.totalEntries}`);
+} else {
+  console.error(`Error: ${response.message}`);
+}
+```
+
+## Engine integration
+
+The SDK works with all supported game engines:
+
+| Engine | Integration |
+|--------|-------------|
+| Godot | Native GDScript bindings via Wavedash Godot SDK |
+| Unity | JavaScript interop via Unity WebGL |
+| Custom | Direct JavaScript API access |
+
+See the [Engine Guides](/engines/godot) for engine-specific setup instructions.
+
+## Signals (Events)
+
+The SDK emits signals to notify your game of real-time events like new lobby messages or P2P connections. See the [Signals Reference](/sdk/signals) for the complete list.
+
+```gdscript
+# Godot example
+func _ready():
+    Wavedash.lobby_message.connect(_on_lobby_message)
+
+func _on_lobby_message(message: Dictionary):
+    print("New message: ", message.content)
+```
+
+## Getting started
+
+<Steps>
+  <Step title="Set up your game">
+    Configure your project with `wavedash.toml` and test locally with `wvdsh dev`.
+  </Step>
+  <Step title="Initialize the SDK">
+    The SDK initializes automatically. Use `WavedashJS.isReady()` to check status.
+  </Step>
+  <Step title="Call SDK methods">
+    Access leaderboards, lobbies, and other services through the `WavedashJS` global.
+  </Step>
+</Steps>
+
+<Card title="SDK Initialization" icon="play" href="/sdk/initialization">
+  Learn how to initialize and configure the SDK in your game.
+</Card>

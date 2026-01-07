@@ -1,0 +1,232 @@
+---
+title: "Lobbies"
+description: "Create and manage multiplayer game lobbies"
+---
+
+The Lobbies API lets you create multiplayer rooms where players can gather before or during gameplay. Lobbies support real-time messaging, metadata storage, and automatic P2P connection setup.
+
+## Creating a lobby
+
+Create a new lobby and automatically join it:
+
+```javascript
+const response = await WavedashJS.createLobby({
+  visibility: "public",  // "public", "private", or "friends"
+  maxPlayers: 4         // Optional player limit
+});
+
+if (response.success) {
+  const lobbyId = response.data;
+  console.log(`Created lobby: ${lobbyId}`);
+}
+```
+
+### Visibility options
+
+| Value | Description |
+|-------|-------------|
+| `public` | Anyone can find and join |
+| `private` | Only joinable with the lobby ID |
+| `friends` | Only friends can see and join |
+
+## Joining a lobby
+
+Join an existing lobby by ID:
+
+```javascript
+const response = await WavedashJS.joinLobby(lobbyId);
+
+if (response.success) {
+  console.log("Joined lobby!");
+  // LOBBY_JOINED signal is emitted
+}
+```
+
+## Leaving a lobby
+
+Leave the current lobby:
+
+```javascript
+const response = await WavedashJS.leaveLobby(lobbyId);
+
+if (response.success) {
+  console.log("Left lobby");
+}
+```
+
+## Listing available lobbies
+
+Find public lobbies to join:
+
+```javascript
+const response = await WavedashJS.listLobbies();
+
+if (response.success) {
+  response.data.forEach(lobby => {
+    console.log(`${lobby.id}: ${lobby.numUsers}/${lobby.maxPlayers} players`);
+  });
+}
+```
+
+## Lobby users
+
+### Get users in a lobby
+
+```javascript
+const users = WavedashJS.getLobbyUsers(lobbyId);
+
+users.forEach(user => {
+  console.log(`- ${user.username} (${user.id})`);
+});
+```
+
+### Get the host
+
+```javascript
+const hostId = WavedashJS.getHostId(lobbyId);
+const isHost = hostId === WavedashJS.getUserId();
+
+if (isHost) {
+  console.log("You are the host!");
+}
+```
+
+### Get user count
+
+```javascript
+const count = WavedashJS.getNumLobbyUsers(lobbyId);
+console.log(`${count} players in lobby`);
+```
+
+## Lobby messaging
+
+Send messages to all players in the lobby:
+
+```javascript
+const response = await WavedashJS.sendLobbyMessage({
+  lobbyId: lobbyId,
+  content: "Hello everyone!"
+});
+```
+
+<Note>
+Messages have a maximum length of 1000 characters.
+</Note>
+
+### Receiving messages
+
+Listen for the `LOBBY_MESSAGE` signal:
+
+```javascript
+// Messages are delivered via signals
+// See your engine's signal handling documentation
+```
+
+```gdscript
+# Godot example
+func _ready():
+    Wavedash.lobby_message.connect(_on_lobby_message)
+
+func _on_lobby_message(message: Dictionary):
+    print(message.username, ": ", message.content)
+```
+
+## Lobby metadata
+
+Store custom key-value data on the lobby. Only the host can set metadata.
+
+### Set metadata (host only)
+
+```javascript
+// Set a single value
+WavedashJS.setLobbyData(lobbyId, "gameMode", "deathmatch");
+WavedashJS.setLobbyData(lobbyId, "mapName", "arena_01");
+
+// Changes are batched and sent automatically
+```
+
+<Note>
+Metadata updates are batched—you can call `setLobbyData` multiple times and changes are sent in a single request.
+</Note>
+
+### Get metadata
+
+```javascript
+const gameMode = WavedashJS.getLobbyData(lobbyId, "gameMode");
+const mapName = WavedashJS.getLobbyData(lobbyId, "mapName");
+```
+
+### Get max players
+
+```javascript
+const maxPlayers = WavedashJS.getLobbyMaxPlayers(lobbyId);
+```
+
+## Signals
+
+The SDK emits signals for lobby events:
+
+| Signal | Description | Data |
+|--------|-------------|------|
+| `LOBBY_JOINED` | Successfully joined a lobby | `{ lobbyId }` |
+| `LOBBY_USERS_UPDATED` | Users joined or left | `{ users }` |
+| `LOBBY_MESSAGE` | New message received | `{ username, content, ... }` |
+| `LOBBY_DATA_UPDATED` | Metadata changed | `{ key, value }` |
+| `LOBBY_KICKED` | Removed from lobby | `{ reason }` |
+
+See [Signals Reference](/sdk/signals) for handling these in your engine.
+
+## P2P integration
+
+When players join a lobby, P2P connections are automatically established between all members. See [P2P Networking](/sdk/p2p) for sending game data directly between players.
+
+```javascript
+// After joining a lobby, you can send P2P messages
+WavedashJS.broadcastP2PMessage({
+  channel: 0,
+  data: new Uint8Array([1, 2, 3])
+});
+```
+
+## Lobby structure
+
+```typescript
+interface Lobby {
+  id: string;                    // Lobby ID
+  hostId: string;                // Host's user ID
+  visibility: LobbyVisibility;   // "public" | "private" | "friends"
+  maxPlayers: number;            // Maximum allowed players
+  numUsers: number;              // Current player count
+  metadata: Record<string, any>; // Custom key-value data
+}
+
+interface LobbyUser {
+  id: string;       // User ID
+  username: string; // Display name
+}
+
+interface LobbyMessage {
+  id: string;       // Message ID
+  userId: string;   // Sender's user ID
+  username: string; // Sender's display name
+  content: string;  // Message content
+  createdAt: number; // Timestamp
+}
+```
+
+## Best practices
+
+<AccordionGroup>
+  <Accordion title="Use metadata for game settings">
+    Store game configuration (map, mode, rules) in lobby metadata so all players can see the settings before the game starts.
+  </Accordion>
+  <Accordion title="Handle user updates gracefully">
+    Listen for `LOBBY_USERS_UPDATED` to update your UI when players join or leave.
+  </Accordion>
+  <Accordion title="Validate on the host">
+    For authoritative game logic, have the host validate actions before broadcasting to other players.
+  </Accordion>
+  <Accordion title="Clean up on leave">
+    When leaving a lobby, clean up any P2P connections and local state.
+  </Accordion>
+</AccordionGroup>

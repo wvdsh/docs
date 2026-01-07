@@ -1,122 +1,116 @@
 {
   "$schema": "https://mintlify.com/docs.json",
+  "name": "Wavedash Developer Docs",
   "theme": "mint",
-  "name": "Mint Starter Kit",
   "colors": {
-    "primary": "#16A34A",
-    "light": "#07C983",
-    "dark": "#15803D"
+    "primary": "#6366F1",
+    "light": "#818CF8",
+    "dark": "#4F46E5"
+  },
+  "fonts": {
+    "family": "GT America",
+    "source": "/fonts/GT-America-Standard-Regular.woff2",
+    "format": "woff2",
+    "weight": 400
   },
   "favicon": "/favicon.svg",
+  "logo": {
+    "light": "/logo/light.svg",
+    "dark": "/logo/dark.svg"
+  },
   "navigation": {
     "tabs": [
       {
-        "tab": "Guides",
+        "tab": "Getting Started",
         "groups": [
           {
-            "group": "Getting started",
-            "pages": [
-              "index",
-              "quickstart",
-              "development"
-            ]
-          },
+            "group": "Introduction",
+            "pages": ["quickstart", "concepts"]
+          }
+        ]
+      },
+      {
+        "tab": "CLI",
+        "groups": [
           {
-            "group": "Customization",
+            "group": "CLI Reference",
             "pages": [
-              "essentials/settings",
-              "essentials/navigation"
-            ]
-          },
-          {
-            "group": "Writing content",
-            "pages": [
-              "essentials/markdown",
-              "essentials/code",
-              "essentials/images",
-              "essentials/reusable-snippets"
-            ]
-          },
-          {
-            "group": "AI tools",
-            "pages": [
-              "ai-tools/cursor",
-              "ai-tools/claude-code",
-              "ai-tools/windsurf"
+              "cli/index",
+              "cli/auth",
+              "cli/dev",
+              "cli/build",
+              "cli/configuration",
+              "cli/troubleshooting"
             ]
           }
         ]
       },
       {
-        "tab": "API reference",
+        "tab": "SDK",
         "groups": [
           {
-            "group": "API documentation",
+            "group": "Getting Started",
+            "pages": ["sdk/index", "sdk/initialization"]
+          },
+          {
+            "group": "Features",
             "pages": [
-              "api-reference/introduction"
+              "sdk/leaderboards",
+              "sdk/lobbies",
+              "sdk/p2p",
+              "sdk/achievements",
+              "sdk/ugc",
+              "sdk/remote-storage",
+              "sdk/presence"
             ]
           },
           {
-            "group": "Endpoint examples",
-            "pages": [
-              "api-reference/endpoint/get",
-              "api-reference/endpoint/create",
-              "api-reference/endpoint/delete",
-              "api-reference/endpoint/webhook"
-            ]
+            "group": "Reference",
+            "pages": ["sdk/types", "sdk/signals"]
+          }
+        ]
+      },
+      {
+        "tab": "Engines",
+        "groups": [
+          {
+            "group": "Integration Guides",
+            "pages": ["engines/godot", "engines/unity", "engines/custom"]
           }
         ]
       }
-    ],
-    "global": {
-      "anchors": [
-        {
-          "anchor": "Documentation",
-          "href": "https://mintlify.com/docs",
-          "icon": "book-open-cover"
-        },
-        {
-          "anchor": "Blog",
-          "href": "https://mintlify.com/blog",
-          "icon": "newspaper"
-        }
-      ]
-    }
-  },
-  "logo": {
-    "light": "/logo/light.svg",
-    "dark": "/logo/dark.svg"
+    ]
   },
   "navbar": {
     "links": [
       {
+        "label": "Discord",
+        "href": "https://discord.gg/bBaWUjTJWx"
+      },
+      {
         "label": "Support",
-        "href": "mailto:hi@mintlify.com"
+        "href": "mailto:developer@wavedash.com"
       }
     ],
     "primary": {
       "type": "button",
       "label": "Dashboard",
-      "href": "https://dashboard.mintlify.com"
+      "href": "https://wavedash.com/developers/dashboard"
     }
   },
   "contextual": {
     "options": [
-     "copy",
-     "view",
-     "chatgpt",
-     "claude",
-     "perplexity",
-     "mcp",
-     "cursor",
-     "vscode"
-   ]
+      "copy",
+      "view",
+      "chatgpt",
+      "claude"
+    ]
   },
   "footer": {
     "socials": {
-      "x": "https://x.com/mintlify",
-      "github": "https://github.com/mintlify",
-      "linkedin": "https://linkedin.com/company/mintlify"
+      "discord": "https://discord.gg/bBaWUjTJWx",
+      "github": "https://github.com/wvdsh",
+      "x": "https://x.com/wavedash"
     }
   }
 }

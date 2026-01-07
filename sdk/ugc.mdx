@@ -1,0 +1,239 @@
+---
+title: "User-Generated Content"
+description: "Enable players to upload and share custom content"
+---
+
+The UGC (User-Generated Content) API lets players upload and share content like replays, screenshots, custom levels, or other game-specific files.
+
+## Creating a UGC item
+
+Create a new UGC item to get an upload URL:
+
+```javascript
+const response = await WavedashJS.createUGCItem({
+  ugcType: "replay",
+  visibility: "public",
+  metadata: {
+    levelName: "World 1-1",
+    duration: 125
+  }
+});
+
+if (response.success) {
+  const ugcItem = response.data;
+  console.log(`UGC ID: ${ugcItem.id}`);
+  console.log(`Upload URL: ${ugcItem.uploadUrl}`);
+}
+```
+
+### Parameters
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `ugcType` | string | Yes | Type of content (e.g., "replay", "screenshot", "level") |
+| `visibility` | string | Yes | Access level: "public", "private", or "friends" |
+| `metadata` | object | No | Custom metadata for the content |
+
+### Visibility options
+
+| Value | Description |
+|-------|-------------|
+| `public` | Anyone can view |
+| `private` | Only the creator can view |
+| `friends` | Only friends can view |
+
+## Uploading content
+
+After creating a UGC item, upload the file to the provided URL:
+
+```javascript
+// Create the UGC item
+const createResponse = await WavedashJS.createUGCItem({
+  ugcType: "replay",
+  visibility: "public"
+});
+
+if (createResponse.success) {
+  const { uploadUrl } = createResponse.data;
+
+  // Upload the file
+  const fileData = new Uint8Array([/* your file data */]);
+
+  await fetch(uploadUrl, {
+    method: "PUT",
+    body: fileData,
+    headers: {
+      "Content-Type": "application/octet-stream"
+    }
+  });
+
+  console.log("Upload complete!");
+}
+```
+
+## Updating a UGC item
+
+Update an existing UGC item's metadata or visibility:
+
+```javascript
+const response = await WavedashJS.updateUGCItem({
+  ugcId: "ugc_abc123...",
+  visibility: "friends",
+  metadata: {
+    levelName: "World 1-1",
+    duration: 125,
+    verified: true
+  }
+});
+```
+
+## Downloading content
+
+Download a UGC item by ID:
+
+```javascript
+const response = await WavedashJS.downloadUGCItem("ugc_abc123...");
+
+if (response.success) {
+  const data = response.data; // Uint8Array
+  // Process the downloaded content
+}
+```
+
+## Attaching UGC to leaderboard entries
+
+You can attach UGC (like replays) to leaderboard scores:
+
+```javascript
+// 1. Create and upload the replay
+const ugcResponse = await WavedashJS.createUGCItem({
+  ugcType: "replay",
+  visibility: "public"
+});
+
+if (ugcResponse.success) {
+  // Upload replay data...
+  await uploadReplayData(ugcResponse.data.uploadUrl, replayData);
+
+  // 2. Submit score with UGC attachment
+  const scoreResponse = await WavedashJS.uploadLeaderboardScore({
+    leaderboardId: "speedrun-times",
+    score: 12345,
+    keepBest: true,
+    ugcId: ugcResponse.data.id
+  });
+}
+```
+
+## UGC types
+
+Common UGC types to consider:
+
+| Type | Description |
+|------|-------------|
+| `replay` | Game replay data |
+| `screenshot` | Image capture |
+| `level` | Custom level or map |
+| `save` | Save game data |
+| `skin` | Custom character/item skin |
+| `mod` | Game modification |
+
+<Note>
+UGC types are strings you define. Use consistent naming across your game.
+</Note>
+
+## Storage limits
+
+UGC storage limits depend on your Wavedash plan. Check the dashboard for your current limits and usage.
+
+## Best practices
+
+<AccordionGroup>
+  <Accordion title="Use appropriate visibility">
+    Default to "private" for save data and "public" for shareable content like replays.
+  </Accordion>
+  <Accordion title="Include useful metadata">
+    Add metadata that helps with discovery and display (level name, duration, thumbnail URL).
+  </Accordion>
+  <Accordion title="Validate content">
+    For custom levels or mods, validate the uploaded content before allowing it to be used.
+  </Accordion>
+  <Accordion title="Handle upload failures">
+    The upload URL is temporary. If an upload fails, create a new UGC item and try again.
+  </Accordion>
+</AccordionGroup>
+
+## Example: Screenshot sharing
+
+```javascript
+async function shareScreenshot(imageData) {
+  // Create UGC item
+  const response = await WavedashJS.createUGCItem({
+    ugcType: "screenshot",
+    visibility: "public",
+    metadata: {
+      width: 1920,
+      height: 1080,
+      level: currentLevel
+    }
+  });
+
+  if (!response.success) {
+    console.error("Failed to create UGC item");
+    return null;
+  }
+
+  // Upload the image
+  await fetch(response.data.uploadUrl, {
+    method: "PUT",
+    body: imageData,
+    headers: {
+      "Content-Type": "image/png"
+    }
+  });
+
+  return response.data.id;
+}
+```
+
+## Example: Replay system
+
+```javascript
+class ReplaySystem {
+  constructor() {
+    this.frames = [];
+  }
+
+  recordFrame(state) {
+    this.frames.push(state);
+  }
+
+  async saveReplay() {
+    const replayData = this.encodeReplay();
+
+    const response = await WavedashJS.createUGCItem({
+      ugcType: "replay",
+      visibility: "public",
+      metadata: {
+        frameCount: this.frames.length,
+        duration: this.frames.length / 60,
+        version: "1.0"
+      }
+    });
+
+    if (response.success) {
+      await fetch(response.data.uploadUrl, {
+        method: "PUT",
+        body: replayData
+      });
+      return response.data.id;
+    }
+    return null;
+  }
+
+  encodeReplay() {
+    // Encode frames to binary format
+    return new Uint8Array(/* encoded data */);
+  }
+}
+```

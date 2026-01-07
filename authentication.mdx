@@ -1,0 +1,206 @@
+---
+title: "Authentication"
+description: "How authentication works in Wavedash for developers and players"
+---
+
+This page explains how authentication works for both developers (CLI access) and players (game access).
+
+## Developer authentication
+
+Developers authenticate using the Wavedash CLI to push builds and manage games.
+
+### Logging in
+
+```bash
+wvdsh auth login
+```
+
+This opens your browser for OAuth authentication. After authorizing, your API key is stored locally.
+
+### Manual token entry
+
+For CI/CD or headless environments:
+
+```bash
+wvdsh auth login --token YOUR_API_KEY
+```
+
+Generate API keys in the [Developer Dashboard](https://wavedash.com/developers/dashboard).
+
+### Checking status
+
+```bash
+wvdsh auth status
+```
+
+Shows your current authentication state and a masked preview of your API key.
+
+### Logging out
+
+```bash
+wvdsh auth logout
+```
+
+Removes stored credentials from your machine.
+
+### Credentials storage
+
+| Platform | Location |
+|----------|----------|
+| macOS | `~/.config/gg/wavedash/cli/credentials.json` |
+| Linux | `~/.config/gg/wavedash/cli/credentials.json` |
+| Windows | `%APPDATA%\gg\wavedash\cli\credentials.json` |
+
+<Warning>
+Never share your credentials file or commit it to version control.
+</Warning>
+
+## Player authentication
+
+Players authenticate through Wavedash to access games. The SDK handles this automatically.
+
+### How it works
+
+1. Player logs into Wavedash (wavedash.com)
+2. Player launches your game
+3. SDK receives a JWT token automatically
+4. SDK uses the token for all API calls
+
+### Accessing user info
+
+In your game, access the authenticated player:
+
+```javascript
+// Get user ID
+const userId = WavedashJS.getUserId();
+
+// Get user info
+const user = WavedashJS.getUser();
+console.log(`Player: ${user.username}`);
+```
+
+### Token lifecycle
+
+- **Issued**: When player starts the game
+- **Refreshed**: Automatically by the SDK
+- **Expired**: When player ends their session
+
+You don't need to manage tokens directly—the SDK handles all token operations.
+
+## Gameplay tokens
+
+For features like leaderboards and lobbies, the SDK uses **gameplay-specific tokens** that include:
+
+- Game ID
+- Player ID
+- Permissions for that game
+
+These tokens are:
+- Scoped to the specific game
+- Short-lived for security
+- Automatically refreshed
+
+## API keys
+
+For automated workflows, generate API keys in the Developer Dashboard:
+
+1. Go to [wavedash.com](https://wavedash.com)
+2. Open Developer Dashboard
+3. Navigate to Settings > API Keys
+4. Create a new key
+
+### Key types
+
+| Type | Use case |
+|------|----------|
+| Personal | Individual developer CLI access |
+| CI/CD | Automated build pipelines |
+| Service | Server-to-server integrations |
+
+### Using API keys
+
+```bash
+# Set via environment variable
+export WAVEDASH_API_KEY=your_key_here
+wvdsh build push
+
+# Or pass directly
+wvdsh auth login --token your_key_here
+```
+
+### Key permissions
+
+API keys inherit the permissions of the user who created them:
+- Organization membership
+- Game access levels
+- Branch push permissions
+
+## CI/CD integration
+
+For automated deployments, use API keys in your CI/CD pipeline:
+
+<Tabs>
+  <Tab title="GitHub Actions">
+    ```yaml
+    - name: Push to Wavedash
+      env:
+        WAVEDASH_API_KEY: ${{ secrets.WAVEDASH_API_KEY }}
+      run: |
+        wvdsh auth login --token $WAVEDASH_API_KEY
+        wvdsh build push
+    ```
+  </Tab>
+  <Tab title="GitLab CI">
+    ```yaml
+    deploy:
+      script:
+        - wvdsh auth login --token $WAVEDASH_API_KEY
+        - wvdsh build push
+    ```
+  </Tab>
+</Tabs>
+
+## Security best practices
+
+<AccordionGroup>
+  <Accordion title="Protect API keys">
+    - Never commit keys to version control
+    - Use environment variables or secrets managers
+    - Rotate keys periodically
+  </Accordion>
+  <Accordion title="Use minimal permissions">
+    - Create separate keys for different purposes
+    - Limit CI/CD keys to specific branches
+    - Revoke unused keys
+  </Accordion>
+  <Accordion title="Monitor usage">
+    - Check API key usage in the dashboard
+    - Set up alerts for unusual activity
+    - Review access logs regularly
+  </Accordion>
+</AccordionGroup>
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion title="Authentication failed">
+    1. Check your internet connection
+    2. Verify the API key is valid
+    3. Try logging out and back in:
+    ```bash
+    wvdsh auth logout
+    wvdsh auth login
+    ```
+  </Accordion>
+  <Accordion title="Permission denied">
+    - Verify you're a member of the organization
+    - Check your role has the required permissions
+    - Ensure the API key hasn't been revoked
+  </Accordion>
+  <Accordion title="Token expired">
+    The SDK automatically refreshes tokens. If you see token errors:
+    - Refresh the game page
+    - Check your internet connection
+    - Contact support if the issue persists
+  </Accordion>
+</AccordionGroup>

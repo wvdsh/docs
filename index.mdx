@@ -1,97 +1,104 @@
 ---
 title: "Introduction"
-description: "Wavedash Developer Documentation"
+description: "Build and publish games with Wavedash Online Services"
 ---
 
-## Setting up
+Wavedash is a game distribution platform that provides everything you need to publish, host, and grow your game. With our SDK and CLI tools, you can integrate multiplayer features, leaderboards, achievements, and more into your game with minimal effort.
 
-Get your documentation site up and running in minutes.
+## What you can build
 
-<Card
-  title="Start here"
-  icon="rocket"
-  href="/quickstart"
-  horizontal
->
-  Follow our three step quickstart guide.
-</Card>
-
-## Make it yours
-
-Design a docs site that looks great and empowers your users.
-
-<Columns cols={2}>
-  <Card
-    title="Edit locally"
-    icon="pen-to-square"
-    href="/development"
-  >
-    Edit your docs locally and preview them in real time.
+<CardGroup cols={2}>
+  <Card title="Leaderboards" icon="trophy">
+    Create competitive leaderboards with configurable sorting, pagination, and score metadata.
   </Card>
-  <Card
-    title="Customize your site"
-    icon="palette"
-    href="/essentials/settings"
-  >
-    Customize the design and colors of your site to match your brand.
+  <Card title="Multiplayer Lobbies" icon="users">
+    Build real-time multiplayer experiences with lobby management and messaging.
   </Card>
-    <Card
-    title="Set up navigation"
-    icon="map"
-    href="/essentials/navigation"
-  >
-    Organize your docs to help users find what they need and succeed with your product.
+  <Card title="P2P Networking" icon="network-wired">
+    Connect players directly with WebRTC-based peer-to-peer networking and TURN fallback.
   </Card>
-  <Card
-    title="API documentation"
-    icon="terminal"
-    href="/api-reference/introduction"
-  >
-    Auto-generate API documentation from OpenAPI specifications.
+  <Card title="Achievements" icon="medal">
+    Track player progress with achievements and stats that sync across sessions.
   </Card>
-</Columns>
+  <Card title="Cloud Storage" icon="cloud">
+    Save player data and files to the cloud with per-user isolated storage.
+  </Card>
+  <Card title="User Content" icon="file-upload">
+    Enable players to upload and share user-generated content.
+  </Card>
+</CardGroup>
 
-## Create beautiful pages
+## How it works
 
-Everything you need to create world-class documentation.
+<Steps>
+  <Step title="Install the CLI">
+    Install the Wavedash CLI to authenticate and manage your game builds.
 
-<Columns cols={2}>
-  <Card
-    title="Write with MDX"
-    icon="pen-fancy"
-    href="/essentials/markdown"
-  >
-    Use MDX to style your docs pages.
-  </Card>
-  <Card
-    title="Code samples"
-    icon="code"
-    href="/essentials/code"
-  >
-    Add sample code to demonstrate how to use your product.
-  </Card>
-  <Card
-    title="Images"
-    icon="image"
-    href="/essentials/images"
-  >
-    Display images and other media.
-  </Card>
-  <Card
-    title="Reusable snippets"
-    icon="recycle"
-    href="/essentials/reusable-snippets"
-  >
-    Write once and reuse across your docs.
-  </Card>
-</Columns>
+    ```bash
+    brew install wvdsh/tap/wvdsh
+    ```
+  </Step>
+  <Step title="Configure your project">
+    Create a `wavedash.toml` file to define your game and build settings.
 
-## Need inspiration?
+    ```toml
+    org_slug = "your-org"
+    game_slug = "your-game"
+    branch_slug = "production"
+    upload_dir = "./build"
 
-<Card
-  title="See complete examples"
-  icon="stars"
-  href="https://mintlify.com/customers"
->
-  Browse our showcase of exceptional documentation sites.
+    [godot]
+    version = "4.5-stable"
+    ```
+  </Step>
+  <Step title="Integrate the SDK">
+    Add the Wavedash SDK to your game to access online services.
+
+    ```javascript
+    const response = await WavedashJS.uploadLeaderboardScore({
+      leaderboardId: "high-scores",
+      score: 1000
+    });
+    ```
+  </Step>
+  <Step title="Publish your game">
+    Push your build to Wavedash and share it with players.
+
+    ```bash
+    wvdsh build push
+    ```
+  </Step>
+</Steps>
+
+## Developer tools
+
+<CardGroup cols={2}>
+  <Card title="CLI" icon="terminal" href="/cli/index">
+    Authenticate, test locally, and publish builds from the command line.
+  </Card>
+  <Card title="JavaScript SDK" icon="code" href="/sdk/index">
+    Integrate leaderboards, lobbies, P2P, and more into your game.
+  </Card>
+</CardGroup>
+
+## Supported engines
+
+Wavedash supports web exports from popular game engines:
+
+<CardGroup cols={3}>
+  <Card title="Godot" icon="gamepad" href="/engines/godot">
+    Godot 4.x web exports with full SDK integration.
+  </Card>
+  <Card title="Unity" icon="cube" href="/engines/unity">
+    Unity WebGL builds with JavaScript interop.
+  </Card>
+  <Card title="Custom" icon="code" href="/engines/custom">
+    Any web-based game with a custom entrypoint.
+  </Card>
+</CardGroup>
+
+## Get started
+
+<Card title="Quickstart Guide" icon="rocket" href="/quickstart">
+  Set up your first game on Wavedash in under 5 minutes.
 </Card>

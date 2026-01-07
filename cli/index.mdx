@@ -1,0 +1,99 @@
+---
+title: "CLI Overview"
+description: "Install and use the Wavedash CLI to manage your game builds"
+---
+
+The Wavedash CLI (`wvdsh`) is a cross-platform command-line tool for uploading game projects to Wavedash. Use it to authenticate, test locally, and publish builds.
+
+## Installation
+
+<Tabs>
+  <Tab title="macOS">
+    ```bash
+    brew install wvdsh/tap/wvdsh
+    ```
+
+    Update to the latest version:
+    ```bash
+    brew upgrade wvdsh/tap/wvdsh
+    ```
+  </Tab>
+  <Tab title="Linux">
+    ```bash
+    curl --proto '=https' --tlsv1.2 -LsSf https://github.com/wvdsh/cli/releases/latest/download/wvdsh-installer.sh | sh
+    ```
+  </Tab>
+  <Tab title="Windows">
+    ```powershell
+    irm https://github.com/wvdsh/cli/releases/latest/download/wvdsh-installer.ps1 | iex
+    ```
+  </Tab>
+</Tabs>
+
+Verify your installation:
+
+```bash
+wvdsh --version
+```
+
+## Commands
+
+| Command | Description |
+|---------|-------------|
+| `wvdsh auth login` | Authenticate with Wavedash |
+| `wvdsh auth logout` | Clear stored credentials |
+| `wvdsh auth status` | Check authentication status |
+| `wvdsh dev` | Start local development server |
+| `wvdsh build push` | Upload a build to Wavedash |
+| `wvdsh update` | Check for and install updates |
+
+## Global options
+
+| Option | Description |
+|--------|-------------|
+| `--version` | Print version information |
+| `--help` | Print help for any command |
+| `--verbose` | Enable verbose logging |
+
+## Quick reference
+
+<CardGroup cols={2}>
+  <Card title="Authentication" icon="key" href="/cli/auth">
+    Log in, log out, and check your auth status.
+  </Card>
+  <Card title="Local Development" icon="laptop-code" href="/cli/dev">
+    Test your game locally with the dev server.
+  </Card>
+  <Card title="Build & Push" icon="cloud-arrow-up" href="/cli/build">
+    Upload your game build to Wavedash.
+  </Card>
+  <Card title="Configuration" icon="gear" href="/cli/configuration">
+    Configure your project with wavedash.toml.
+  </Card>
+</CardGroup>
+
+## Credentials storage
+
+The CLI stores your API key locally in a secure credentials file:
+
+| Platform | Location |
+|----------|----------|
+| macOS | `~/.config/gg/wavedash/cli/credentials.json` |
+| Linux | `~/.config/gg/wavedash/cli/credentials.json` |
+| Windows | `%APPDATA%\gg\wavedash\cli\credentials.json` |
+
+The credentials file is created with restricted permissions (readable only by the owner).
+
+## Updating
+
+Check for updates:
+
+```bash
+wvdsh update
+```
+
+If you installed via Homebrew, use:
+
+```bash
+brew upgrade wvdsh/tap/wvdsh
+```

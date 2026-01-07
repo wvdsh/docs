@@ -1,0 +1,191 @@
+---
+title: "Core Concepts"
+description: "Understand the key concepts of the Wavedash platform"
+---
+
+This page explains the fundamental concepts you'll encounter when building games on Wavedash.
+
+## Organizations
+
+An **organization** is the top-level entity that owns games. Organizations represent studios, teams, or individual developers.
+
+```
+Organization: "awesome-games-studio"
+├── Game: "space-shooter"
+├── Game: "puzzle-quest"
+└── Game: "racing-adventure"
+```
+
+### Organization slugs
+
+Each organization has a unique **slug** (URL-friendly identifier):
+
+- Must be lowercase
+- Can contain letters, numbers, and hyphens
+- Used in URLs and API calls
+- Example: `awesome-games-studio`
+
+Organizations are created in the Wavedash Developer Dashboard.
+
+## Games
+
+A **game** is a project within an organization. Each game has its own:
+
+- Branches and builds
+- Leaderboards
+- Achievements
+- Cloud storage
+- Configuration
+
+### Game slugs
+
+Games also have unique slugs within their organization:
+
+- Must be lowercase
+- Can contain letters, numbers, and hyphens
+- Example: `space-shooter`
+
+The full path to a game is: `organization-slug/game-slug`
+
+## Branches
+
+**Branches** organize different versions or stages of your game, similar to Git branches.
+
+```
+Game: "space-shooter"
+├── Branch: "production"    # Live version for players
+├── Branch: "staging"       # Pre-release testing
+└── Branch: "development"   # Internal development
+```
+
+### Common branch strategies
+
+| Branch | Purpose |
+|--------|---------|
+| `production` | Live builds that players access |
+| `staging` | QA testing before release |
+| `development` | Internal development builds |
+| `beta` | Beta testing with selected players |
+
+Each branch is independent—builds on one branch don't affect others.
+
+## Builds
+
+A **build** is a specific version of your game uploaded to a branch. Each time you run `wvdsh build push`, a new build is created.
+
+```
+Branch: "production"
+├── Build: v1.0.0 (current)
+├── Build: v0.9.5
+├── Build: v0.9.4
+└── Build: v0.9.3
+```
+
+Builds are:
+- **Immutable**: Once uploaded, builds don't change
+- **Versioned**: Each build has a unique identifier
+- **Switchable**: You can roll back to previous builds
+
+## Game Clouds
+
+A **game cloud** is the backend data layer for a game. It stores:
+
+- Leaderboard data
+- Player stats and achievements
+- User-generated content
+- Remote storage files
+
+Each game has one game cloud that persists across branches and builds.
+
+## Relationships
+
+Here's how all the concepts relate:
+
+```
+Wavedash
+└── Organization
+    └── Game
+        ├── Game Cloud (data layer)
+        │   ├── Leaderboards
+        │   ├── Achievements
+        │   └── Remote Storage
+        └── Branches
+            └── Builds
+```
+
+## Configuration file
+
+The `wavedash.toml` file ties these concepts together:
+
+```toml
+org_slug = "awesome-games-studio"    # Organization
+game_slug = "space-shooter"          # Game
+branch_slug = "production"           # Branch
+upload_dir = "./build"               # Local build directory
+
+[godot]
+version = "4.5-stable"               # Engine config
+```
+
+When you run `wvdsh build push`:
+1. The CLI reads `wavedash.toml`
+2. Uploads files from `upload_dir`
+3. Creates a new build on the specified branch
+
+## IDs vs slugs
+
+Wavedash uses both **slugs** (human-readable) and **IDs** (system-generated):
+
+| Type | Format | Example |
+|------|--------|---------|
+| Slug | Human-readable string | `space-shooter` |
+| ID | System-generated string | `j57abc123xyz...` |
+
+**Slugs** are used:
+- In configuration files
+- In URLs
+- When creating resources
+
+**IDs** are used:
+- In SDK method calls
+- In API responses
+- For referencing specific records
+
+```javascript
+// Get leaderboard by name (slug)
+const response = await WavedashJS.getLeaderboard("high-scores");
+
+// Use the returned ID for subsequent calls
+const leaderboardId = response.data.id;
+await WavedashJS.uploadLeaderboardScore({
+  leaderboardId: leaderboardId, // Use the ID
+  score: 1000
+});
+```
+
+## Player data
+
+Player data is scoped to the **game cloud**, not individual branches or builds:
+
+- Leaderboard scores persist across builds
+- Achievements carry over when you update
+- Cloud saves work across versions
+- Stats accumulate over time
+
+This means players don't lose progress when you release updates.
+
+## Access control
+
+Wavedash manages access at multiple levels:
+
+| Level | Controls |
+|-------|----------|
+| Organization | Who can manage games |
+| Game | Who can push builds |
+| Branch | Which builds are live |
+| Player | Game ownership/access |
+
+Players can access games through:
+- **Purchase**: Buying the game
+- **Gift code**: Redeeming a code
+- **Grant**: Developer-assigned access
