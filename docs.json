@@ -1,7 +1,7 @@
 {
   "$schema": "https://mintlify.com/docs.json",
   "name": "Wavedash Developer Docs",
-  "theme": "mint",
+  "theme": "aspen",
   "colors": {
     "primary": "#6366F1",
     "light": "#818CF8",
@@ -99,12 +99,7 @@
     }
   },
   "contextual": {
-    "options": [
-      "copy",
-      "view",
-      "chatgpt",
-      "claude"
-    ]
+    "options": ["copy", "view", "chatgpt", "claude"]
   },
   "footer": {
     "socials": {

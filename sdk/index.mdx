@@ -34,14 +34,17 @@ The SDK is automatically loaded when your game runs on Wavedash. It's available 
 
 ```javascript
 // The SDK is automatically available in your game
-const response = await WavedashJS.uploadLeaderboardScore({
-  leaderboardId: "high-scores",
-  score: 1000,
-  keepBest: true
-});
+const user = WavedashJS.getUser();
+console.log(`Playing as: ${user.username}`);
 
-if (response.success) {
-  console.log("Score submitted:", response.data);
+// Get a leaderboard and submit a score
+const leaderboard = await WavedashJS.getLeaderboard("high-scores");
+if (leaderboard.success) {
+  await WavedashJS.uploadLeaderboardScore({
+    leaderboardId: leaderboard.data.id,
+    score: 1000,
+    keepBest: true
+  });
 }
 ```
 

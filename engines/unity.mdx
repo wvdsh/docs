@@ -33,7 +33,14 @@ This guide walks you through integrating Wavedash into your Unity project, from 
   </Tab>
 </Tabs>
 
-### 2. Create wavedash.toml
+### 2. Install the Wavedash Unity SDK
+
+1. Download the SDK from the Wavedash dashboard or clone the repository
+2. In Unity, open **Window → Package Manager**
+3. Click the **+** button → **Add package from disk...**
+4. Select the `package.json` file from the SDK folder
+
+### 3. Create wavedash.toml
 
 In your Unity project root, create `wavedash.toml`:
 
@@ -51,7 +58,7 @@ version = "6000.0.2f1"
 Set `upload_dir` to where your Unity WebGL build is saved.
 </Note>
 
-### 3. Configure WebGL build settings
+### 4. Configure WebGL build settings
 
 1. Open **File > Build Settings**
 2. Select **WebGL** and click **Switch Platform**
@@ -60,304 +67,295 @@ Set `upload_dir` to where your Unity WebGL build is saved.
 **Recommended settings:**
 - **Compression Format**: Gzip or Brotli
 - **Memory Size**: 256 MB (adjust based on your game)
-- **Exception Support**: None (for performance)
 - **Publishing Settings > Decompression Fallback**: Enabled
 
 ## SDK integration
 
-### JavaScript plugin
-
-Create a JavaScript plugin to interface with the Wavedash SDK:
-
-**Assets/Plugins/WebGL/WavedashPlugin.jslib:**
-
-```javascript
-mergeInto(LibraryManager.library, {
-    WavedashIsReady: function() {
-        return window.WavedashJS && WavedashJS.isReady();
-    },
-
-    WavedashGetUserId: function() {
-        var userId = WavedashJS.getUserId();
-        var bufferSize = lengthBytesUTF8(userId) + 1;
-        var buffer = _malloc(bufferSize);
-        stringToUTF8(userId, buffer, bufferSize);
-        return buffer;
-    },
-
-    WavedashGetLeaderboard: function(namePtr, callbackObj, callbackMethod) {
-        var name = UTF8ToString(namePtr);
-        var obj = UTF8ToString(callbackObj);
-        var method = UTF8ToString(callbackMethod);
-
-        WavedashJS.getLeaderboard(name).then(function(response) {
-            SendMessage(obj, method, JSON.stringify(response));
-        });
-    },
-
-    WavedashUploadScore: function(leaderboardIdPtr, score, keepBest, callbackObj, callbackMethod) {
-        var leaderboardId = UTF8ToString(leaderboardIdPtr);
-        var obj = UTF8ToString(callbackObj);
-        var method = UTF8ToString(callbackMethod);
-
-        WavedashJS.uploadLeaderboardScore({
-            leaderboardId: leaderboardId,
-            score: score,
-            keepBest: keepBest
-        }).then(function(response) {
-            SendMessage(obj, method, JSON.stringify(response));
-        });
-    },
-
-    WavedashCreateLobby: function(visibilityPtr, maxPlayers, callbackObj, callbackMethod) {
-        var visibility = UTF8ToString(visibilityPtr);
-        var obj = UTF8ToString(callbackObj);
-        var method = UTF8ToString(callbackMethod);
-
-        WavedashJS.createLobby({
-            visibility: visibility,
-            maxPlayers: maxPlayers
-        }).then(function(response) {
-            SendMessage(obj, method, JSON.stringify(response));
-        });
-    },
-
-    WavedashJoinLobby: function(lobbyIdPtr, callbackObj, callbackMethod) {
-        var lobbyId = UTF8ToString(lobbyIdPtr);
-        var obj = UTF8ToString(callbackObj);
-        var method = UTF8ToString(callbackMethod);
-
-        WavedashJS.joinLobby(lobbyId).then(function(response) {
-            SendMessage(obj, method, JSON.stringify(response));
-        });
-    },
-
-    WavedashSetStat: function(namePtr, value) {
-        var name = UTF8ToString(namePtr);
-        WavedashJS.setStat(name, value);
-    },
-
-    WavedashGetStat: function(namePtr) {
-        var name = UTF8ToString(namePtr);
-        return WavedashJS.getStat(name) || 0;
-    }
-});
-```
-
-### C# wrapper
-
-Create a C# script to call the JavaScript functions:
-
-**Assets/Scripts/WavedashSDK.cs:**
+### Initialize the SDK
 
 ```csharp
-using UnityEngine;
-using System;
-using System.Runtime.InteropServices;
-
-public class WavedashSDK : MonoBehaviour
-{
-    public static WavedashSDK Instance { get; private set; }
-
-    // Events
-    public event Action<LeaderboardResponse> OnLeaderboardReceived;
-    public event Action<ScoreResponse> OnScoreUploaded;
-    public event Action<LobbyResponse> OnLobbyJoined;
-
-    #if UNITY_WEBGL && !UNITY_EDITOR
-    [DllImport("__Internal")]
-    private static extern bool WavedashIsReady();
-
-    [DllImport("__Internal")]
-    private static extern string WavedashGetUserId();
-
-    [DllImport("__Internal")]
-    private static extern void WavedashGetLeaderboard(string name, string callbackObj, string callbackMethod);
-
-    [DllImport("__Internal")]
-    private static extern void WavedashUploadScore(string leaderboardId, int score, bool keepBest, string callbackObj, string callbackMethod);
-
-    [DllImport("__Internal")]
-    private static extern void WavedashCreateLobby(string visibility, int maxPlayers, string callbackObj, string callbackMethod);
-
-    [DllImport("__Internal")]
-    private static extern void WavedashJoinLobby(string lobbyId, string callbackObj, string callbackMethod);
-
-    [DllImport("__Internal")]
-    private static extern void WavedashSetStat(string name, float value);
-
-    [DllImport("__Internal")]
-    private static extern float WavedashGetStat(string name);
-    #endif
-
-    void Awake()
-    {
-        if (Instance == null)
-        {
-            Instance = this;
-            DontDestroyOnLoad(gameObject);
-        }
-        else
-        {
-            Destroy(gameObject);
-        }
-    }
-
-    public bool IsReady()
-    {
-        #if UNITY_WEBGL && !UNITY_EDITOR
-        return WavedashIsReady();
-        #else
-        return false;
-        #endif
-    }
-
-    public string GetUserId()
-    {
-        #if UNITY_WEBGL && !UNITY_EDITOR
-        return WavedashGetUserId();
-        #else
-        return "";
-        #endif
-    }
-
-    public void GetLeaderboard(string name)
-    {
-        #if UNITY_WEBGL && !UNITY_EDITOR
-        WavedashGetLeaderboard(name, gameObject.name, "OnLeaderboardCallback");
-        #endif
-    }
-
-    public void UploadScore(string leaderboardId, int score, bool keepBest = true)
-    {
-        #if UNITY_WEBGL && !UNITY_EDITOR
-        WavedashUploadScore(leaderboardId, score, keepBest, gameObject.name, "OnScoreCallback");
-        #endif
-    }
-
-    public void CreateLobby(string visibility = "public", int maxPlayers = 4)
-    {
-        #if UNITY_WEBGL && !UNITY_EDITOR
-        WavedashCreateLobby(visibility, maxPlayers, gameObject.name, "OnLobbyCallback");
-        #endif
-    }
-
-    public void JoinLobby(string lobbyId)
-    {
-        #if UNITY_WEBGL && !UNITY_EDITOR
-        WavedashJoinLobby(lobbyId, gameObject.name, "OnLobbyCallback");
-        #endif
-    }
-
-    public void SetStat(string name, float value)
-    {
-        #if UNITY_WEBGL && !UNITY_EDITOR
-        WavedashSetStat(name, value);
-        #endif
-    }
-
-    public float GetStat(string name)
-    {
-        #if UNITY_WEBGL && !UNITY_EDITOR
-        return WavedashGetStat(name);
-        #else
-        return 0;
-        #endif
-    }
-
-    // Callbacks from JavaScript
-    void OnLeaderboardCallback(string json)
-    {
-        var response = JsonUtility.FromJson<LeaderboardResponse>(json);
-        OnLeaderboardReceived?.Invoke(response);
-    }
-
-    void OnScoreCallback(string json)
-    {
-        var response = JsonUtility.FromJson<ScoreResponse>(json);
-        OnScoreUploaded?.Invoke(response);
-    }
-
-    void OnLobbyCallback(string json)
-    {
-        var response = JsonUtility.FromJson<LobbyResponse>(json);
-        OnLobbyJoined?.Invoke(response);
-    }
-}
-
-// Response types
-[Serializable]
-public class LeaderboardResponse
-{
-    public bool success;
-    public LeaderboardData data;
-    public string message;
-}
-
-[Serializable]
-public class LeaderboardData
-{
-    public string id;
-    public string name;
-    public int totalEntries;
-}
-
-[Serializable]
-public class ScoreResponse
-{
-    public bool success;
-    public string message;
-}
-
-[Serializable]
-public class LobbyResponse
-{
-    public bool success;
-    public string data; // Lobby ID
-    public string message;
-}
-```
-
-### Usage example
-
-```csharp
-using UnityEngine;
+using Wavedash;
+using System.Collections.Generic;
 
 public class GameManager : MonoBehaviour
 {
     void Start()
     {
-        if (WavedashSDK.Instance.IsReady())
+        // Initialize once at game start
+        SDK.Init(new Dictionary<string, object>
         {
-            WavedashSDK.Instance.OnLeaderboardReceived += HandleLeaderboard;
-            WavedashSDK.Instance.OnScoreUploaded += HandleScoreUploaded;
+            { "debug", true }
+        });
 
-            WavedashSDK.Instance.GetLeaderboard("high-scores");
-        }
-    }
-
-    void HandleLeaderboard(LeaderboardResponse response)
-    {
-        if (response.success)
+        // SDK is ready immediately after Init
+        if (SDK.IsReady())
         {
-            Debug.Log($"Leaderboard: {response.data.name}");
+            var user = SDK.GetUser();
+            Debug.Log($"Playing as: {user["username"]}");
         }
-    }
-
-    void HandleScoreUploaded(ScoreResponse response)
-    {
-        if (response.success)
-        {
-            Debug.Log("Score uploaded!");
-        }
-    }
-
-    public void SubmitScore(int score)
-    {
-        WavedashSDK.Instance.UploadScore("j57abc...", score);
     }
 }
 ```
+
+### Subscribe to events
+
+```csharp
+using Wavedash;
+
+public class LobbyManager : MonoBehaviour
+{
+    void Awake()
+    {
+        // Subscribe to events
+        SDK.OnLobbyJoined += HandleLobbyJoined;
+        SDK.OnLobbyLeft += HandleLobbyLeft;
+        SDK.OnLobbyMessage += HandleLobbyMessage;
+        SDK.OnP2PConnectionEstablished += HandleP2PConnected;
+        SDK.OnP2PConnectionFailed += HandleP2PFailed;
+        SDK.OnP2PPeerDisconnected += HandleP2PDisconnected;
+    }
+
+    void OnDestroy()
+    {
+        // Unsubscribe on destroy
+        SDK.OnLobbyJoined -= HandleLobbyJoined;
+        SDK.OnLobbyLeft -= HandleLobbyLeft;
+        SDK.OnLobbyMessage -= HandleLobbyMessage;
+        SDK.OnP2PConnectionEstablished -= HandleP2PConnected;
+        SDK.OnP2PConnectionFailed -= HandleP2PFailed;
+        SDK.OnP2PPeerDisconnected -= HandleP2PDisconnected;
+    }
+
+    void HandleLobbyJoined(Dictionary<string, object> data)
+    {
+        Debug.Log($"Joined lobby: {data["id"]}");
+    }
+
+    void HandleLobbyLeft(Dictionary<string, object> data)
+    {
+        Debug.Log("Left lobby");
+    }
+
+    void HandleLobbyMessage(Dictionary<string, object> data)
+    {
+        Debug.Log($"Message: {data["content"]}");
+    }
+
+    void HandleP2PConnected(Dictionary<string, object> data)
+    {
+        Debug.Log($"P2P connected to: {data["userId"]}");
+    }
+
+    void HandleP2PFailed(Dictionary<string, object> data)
+    {
+        Debug.Log("P2P connection failed");
+    }
+
+    void HandleP2PDisconnected(Dictionary<string, object> data)
+    {
+        Debug.Log($"P2P peer disconnected: {data["userId"]}");
+    }
+}
+```
+
+## Leaderboards
+
+```csharp
+using Wavedash;
+
+public class LeaderboardManager : MonoBehaviour
+{
+    private string leaderboardId;
+
+    async void Start()
+    {
+        // Get a leaderboard by name
+        var leaderboard = await SDK.GetLeaderboard("high-scores");
+        if (leaderboard != null)
+        {
+            leaderboardId = leaderboard["id"].ToString();
+            Debug.Log($"Leaderboard: {leaderboard["name"]}");
+        }
+    }
+
+    public async void SubmitScore(int score)
+    {
+        if (string.IsNullOrEmpty(leaderboardId)) return;
+
+        var result = await SDK.UploadLeaderboardScore(
+            leaderboardId,
+            score,
+            keepBest: true
+        );
+
+        if (result != null)
+        {
+            Debug.Log("Score submitted!");
+        }
+    }
+
+    public async void GetTopScores()
+    {
+        var entries = await SDK.ListLeaderboardEntries(
+            leaderboardId,
+            offset: 0,
+            limit: 10
+        );
+
+        foreach (var entry in entries)
+        {
+            Debug.Log($"#{entry["rank"]} {entry["username"]}: {entry["score"]}");
+        }
+    }
+
+    public async void GetScoresAroundMe()
+    {
+        var entries = await SDK.ListLeaderboardEntriesAroundUser(
+            leaderboardId,
+            countAhead: 5,
+            countBehind: 5
+        );
+
+        foreach (var entry in entries)
+        {
+            Debug.Log($"#{entry["rank"]} {entry["username"]}: {entry["score"]}");
+        }
+    }
+}
+```
+
+## Lobbies
+
+```csharp
+using Wavedash;
+
+public class MultiplayerManager : MonoBehaviour
+{
+    private string currentLobbyId;
+
+    public async void CreateLobby()
+    {
+        // Lobby types: 0 = public, 1 = friends only, 2 = private
+        var lobbyId = await SDK.CreateLobby(
+            lobbyType: 0,
+            maxPlayers: 4
+        );
+
+        if (!string.IsNullOrEmpty(lobbyId))
+        {
+            currentLobbyId = lobbyId;
+            Debug.Log($"Created lobby: {lobbyId}");
+        }
+    }
+
+    public async void JoinLobby(string lobbyId)
+    {
+        var result = await SDK.JoinLobby(lobbyId);
+        if (!string.IsNullOrEmpty(result))
+        {
+            currentLobbyId = lobbyId;
+        }
+    }
+
+    public async void LeaveLobby()
+    {
+        if (!string.IsNullOrEmpty(currentLobbyId))
+        {
+            await SDK.LeaveLobby(currentLobbyId);
+            currentLobbyId = null;
+        }
+    }
+
+    public async void ListLobbies()
+    {
+        var lobbies = await SDK.ListAvailableLobbies();
+        foreach (var lobby in lobbies)
+        {
+            Debug.Log($"Lobby: {lobby["id"]}");
+        }
+    }
+}
+```
+
+## P2P messaging
+
+```csharp
+using Wavedash;
+
+public class P2PManager : MonoBehaviour
+{
+    // Broadcast to all peers
+    public void BroadcastMessage(byte[] data, int channel = 0, bool reliable = true)
+    {
+        SDK.BroadcastP2PMessage(data, channel, reliable);
+    }
+
+    // Send to specific peer
+    public void SendToPeer(string userId, byte[] data, int channel = 0, bool reliable = true)
+    {
+        SDK.SendP2PMessage(userId, data, channel, reliable);
+    }
+}
+```
+
+## Remote storage
+
+```csharp
+using Wavedash;
+using UnityEngine;
+
+public class SaveManager : MonoBehaviour
+{
+    public async void SaveGame(string saveData)
+    {
+        // Write to persistent data path first
+        string path = $"{Application.persistentDataPath}/saves/slot1.json";
+        System.IO.Directory.CreateDirectory(System.IO.Path.GetDirectoryName(path));
+        System.IO.File.WriteAllText(path, saveData);
+
+        // Upload to cloud
+        var result = await SDK.UploadRemoteFile(path);
+        if (!string.IsNullOrEmpty(result))
+        {
+            Debug.Log("Save uploaded!");
+        }
+    }
+
+    public async void LoadGame()
+    {
+        string path = $"{Application.persistentDataPath}/saves/slot1.json";
+
+        var result = await SDK.DownloadRemoteFile(path);
+        if (!string.IsNullOrEmpty(result))
+        {
+            string saveData = System.IO.File.ReadAllText(path);
+            Debug.Log($"Loaded save: {saveData}");
+        }
+    }
+
+    public async void ListSaves()
+    {
+        string path = $"{Application.persistentDataPath}/saves/";
+        var files = await SDK.ListRemoteDirectory(path);
+
+        foreach (var file in files)
+        {
+            Debug.Log($"Save file: {file["path"]}");
+        }
+    }
+}
+```
+
+## Available events
+
+| Event | Description |
+|-------|-------------|
+| `SDK.OnLobbyJoined` | Player joined a lobby |
+| `SDK.OnLobbyLeft` | Player left a lobby |
+| `SDK.OnLobbyMessage` | Received a lobby chat message |
+| `SDK.OnP2PConnectionEstablished` | P2P connection established with peer |
+| `SDK.OnP2PConnectionFailed` | P2P connection failed |
+| `SDK.OnP2PPeerDisconnected` | P2P peer disconnected |
 
 ## Testing locally
 
@@ -388,7 +386,7 @@ wvdsh build push
   <Accordion title="SDK not available">
     - Ensure you're running through `wvdsh dev` or on wavedash.com
     - Check browser console for JavaScript errors
-    - Verify the .jslib file is in the correct location
+    - Verify the SDK package is installed correctly
   </Accordion>
   <Accordion title="Build too large">
     - Enable compression (Gzip or Brotli)
@@ -408,16 +406,16 @@ wvdsh build push
 ```
 my-unity-game/
 ├── Assets/
-│   ├── Plugins/
-│   │   └── WebGL/
-│   │       └── WavedashPlugin.jslib
 │   ├── Scripts/
-│   │   ├── WavedashSDK.cs
-│   │   └── GameManager.cs
+│   │   ├── GameManager.cs
+│   │   ├── LeaderboardManager.cs
+│   │   └── MultiplayerManager.cs
 │   └── Scenes/
 │       └── Main.unity
 ├── Build/
 │   └── WebGL/         # WebGL build output
+├── Packages/
+│   └── manifest.json  # References Wavedash SDK
 ├── ProjectSettings/
 └── wavedash.toml
 ```

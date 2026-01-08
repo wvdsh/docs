@@ -55,9 +55,15 @@ Wavedash is a game distribution platform that provides everything you need to pu
     Add the Wavedash SDK to your game to access online services.
 
     ```javascript
-    const response = await WavedashJS.uploadLeaderboardScore({
-      leaderboardId: "high-scores",
-      score: 1000
+    // Get current player
+    const user = WavedashJS.getUser();
+    console.log(`Welcome, ${user.username}!`);
+
+    // Submit a score
+    await WavedashJS.uploadLeaderboardScore({
+      leaderboardId: leaderboard.id,
+      score: 1000,
+      keepBest: true
     });
     ```
   </Step>

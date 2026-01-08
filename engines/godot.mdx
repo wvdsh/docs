@@ -7,7 +7,7 @@ This guide walks you through integrating Wavedash into your Godot project, from 
 
 ## Requirements
 
-- Godot 4.5+ recommended
+- Godot 4.3+ recommended
 - Web export templates installed
 - A Wavedash account and game created
 
@@ -33,7 +33,18 @@ This guide walks you through integrating Wavedash into your Godot project, from 
   </Tab>
 </Tabs>
 
-### 2. Create wavedash.toml
+### 2. Install the Wavedash Godot SDK
+
+1. Download the SDK from the Wavedash dashboard or GitHub
+2. Copy the `wavedash` folder to your project's root directory
+3. Add the SDK as an autoload:
+   - Go to **Project > Project Settings > Autoload**
+   - Click **Add**
+   - Set path to `res://wavedash/WavedashSDK.gd`
+   - Set name to `WavedashSDK`
+   - Enable the autoload
+
+### 3. Create wavedash.toml
 
 In your Godot project root, create `wavedash.toml`:
 
@@ -44,189 +55,423 @@ branch_slug = "production"
 upload_dir = "./exports/web"
 
 [godot]
-version = "4.5-stable"
+version = "4.3-stable"
 ```
 
 <Note>
 Set `upload_dir` to where your Godot web export is saved.
 </Note>
 
-### 3. Configure web export
+### 4. Configure web export
 
 1. Open **Project > Export...**
 2. Add a **Web** export preset
 3. Configure the export path to match your `upload_dir`
 
 **Recommended export settings:**
-- **Threads Support**: Enabled (for P2P networking)
+- **Threads Support**: Enabled (required for P2P networking)
 - **VRAM Texture Compression**: For Web
 - **Export Type**: Regular
 
-### 4. Install the Wavedash Godot SDK
-
-Download the Wavedash Godot SDK addon and add it to your project:
-
-1. Download from the Wavedash dashboard or GitHub
-2. Copy the `addons/wavedash` folder to your project
-3. Enable the addon in **Project > Project Settings > Plugins**
-
 ## SDK integration
 
-### Autoload setup
-
-Add the Wavedash autoload to your project:
-
-1. Go to **Project > Project Settings > Autoload**
-2. Add `res://addons/wavedash/Wavedash.gd` as `Wavedash`
-
-### Basic usage
+### Initialize the SDK
 
 ```gdscript
 extends Node
 
 func _ready():
-    # Connect to signals
-    Wavedash.backend_connected.connect(_on_connected)
-    Wavedash.lobby_message.connect(_on_lobby_message)
+    # Connect to backend status signals
+    WavedashSDK.backend_connected.connect(_on_backend_connected)
+    WavedashSDK.backend_disconnected.connect(_on_backend_disconnected)
 
-func _on_connected():
+    # Initialize the SDK
+    WavedashSDK.init({"debug": true})
+
+    # Signal that we're ready to receive events
+    WavedashSDK.ready_for_events()
+
+func _on_backend_connected(payload):
     print("Connected to Wavedash!")
 
-    # Now you can use the SDK
-    var result = await Wavedash.get_leaderboard("high-scores")
-    if result.success:
-        print("Leaderboard: ", result.data.name)
+    # Get user info
+    var user_id = WavedashSDK.get_user_id()
+    var username = WavedashSDK.get_username()
+    print("Playing as: ", username)
 
-func _on_lobby_message(message: Dictionary):
-    print(message.username, ": ", message.content)
+func _on_backend_disconnected(payload):
+    print("Disconnected from Wavedash")
+```
+
+### Understanding the signal pattern
+
+The Godot SDK uses signals for async operations. Call a method, then handle the result in a connected signal:
+
+```gdscript
+extends Node
+
+func _ready():
+    # Connect signals before calling methods
+    WavedashSDK.got_leaderboard.connect(_on_got_leaderboard)
+    WavedashSDK.posted_leaderboard_score.connect(_on_score_posted)
+
+func fetch_leaderboard():
+    # This triggers got_leaderboard signal when complete
+    WavedashSDK.get_leaderboard("high-scores")
+
+func _on_got_leaderboard(response):
+    if response.get("success", false):
+        var leaderboard = response["data"]
+        print("Leaderboard: ", leaderboard["name"])
+        print("ID: ", leaderboard["id"])
+    else:
+        print("Failed to get leaderboard")
 ```
 
 ## Available signals
 
-Connect to these signals in your game code:
+Connect to these signals to handle SDK events:
 
 ```gdscript
+# Leaderboard signals
+WavedashSDK.got_leaderboard.connect(_on_got_leaderboard)
+WavedashSDK.got_leaderboard_entries.connect(_on_got_entries)
+WavedashSDK.posted_leaderboard_score.connect(_on_score_posted)
+
 # Lobby signals
-Wavedash.lobby_joined.connect(_on_lobby_joined)
-Wavedash.lobby_message.connect(_on_lobby_message)
-Wavedash.lobby_users_updated.connect(_on_users_updated)
-Wavedash.lobby_kicked.connect(_on_kicked)
-Wavedash.lobby_data_updated.connect(_on_data_updated)
+WavedashSDK.lobby_created.connect(_on_lobby_created)
+WavedashSDK.lobby_joined.connect(_on_lobby_joined)
+WavedashSDK.lobby_left.connect(_on_lobby_left)
+WavedashSDK.lobby_kicked.connect(_on_lobby_kicked)
+WavedashSDK.lobby_message.connect(_on_lobby_message)
+WavedashSDK.lobby_users_updated.connect(_on_lobby_users_updated)
+WavedashSDK.lobby_data_updated.connect(_on_lobby_data_updated)
+WavedashSDK.got_lobbies.connect(_on_got_lobbies)
 
 # P2P signals
-Wavedash.p2p_connection_established.connect(_on_peer_connected)
-Wavedash.p2p_connection_failed.connect(_on_peer_failed)
-Wavedash.p2p_peer_disconnected.connect(_on_peer_disconnected)
+WavedashSDK.p2p_connection_established.connect(_on_p2p_connected)
+WavedashSDK.p2p_connection_failed.connect(_on_p2p_failed)
+WavedashSDK.p2p_peer_disconnected.connect(_on_p2p_disconnected)
+
+# UGC signals
+WavedashSDK.ugc_item_created.connect(_on_ugc_created)
+WavedashSDK.ugc_item_updated.connect(_on_ugc_updated)
+WavedashSDK.ugc_item_downloaded.connect(_on_ugc_downloaded)
+
+# Remote storage signals
+WavedashSDK.remote_file_uploaded.connect(_on_file_uploaded)
+WavedashSDK.remote_file_downloaded.connect(_on_file_downloaded)
+WavedashSDK.remote_directory_downloaded.connect(_on_directory_downloaded)
+
+# Stats signals
+WavedashSDK.current_stats_received.connect(_on_stats_received)
 
 # Backend signals
-Wavedash.backend_connected.connect(_on_backend_connected)
-Wavedash.backend_disconnected.connect(_on_backend_disconnected)
-Wavedash.backend_reconnecting.connect(_on_backend_reconnecting)
+WavedashSDK.backend_connected.connect(_on_backend_connected)
+WavedashSDK.backend_reconnecting.connect(_on_backend_reconnecting)
+WavedashSDK.backend_disconnected.connect(_on_backend_disconnected)
 ```
 
-## SDK methods
-
-### Leaderboards
+## Leaderboards
 
 ```gdscript
-# Get a leaderboard
-var result = await Wavedash.get_leaderboard("high-scores")
+extends Node
 
-# Get or create a leaderboard
-var result = await Wavedash.get_or_create_leaderboard(
-    "speedrun",
-    "ascending",  # or "descending"
-    "time"        # or "numeric"
-)
+var leaderboard_id: String = ""
 
-# Submit a score
-var result = await Wavedash.upload_leaderboard_score(
-    leaderboard_id,
-    score,
-    true  # keep_best
-)
+func _ready():
+    WavedashSDK.got_leaderboard.connect(_on_got_leaderboard)
+    WavedashSDK.got_leaderboard_entries.connect(_on_got_entries)
+    WavedashSDK.posted_leaderboard_score.connect(_on_score_posted)
 
-# List entries
-var result = await Wavedash.list_leaderboard_entries(
-    leaderboard_id,
-    0,   # offset
-    10   # limit
-)
+func fetch_leaderboard():
+    # Get an existing leaderboard by name
+    WavedashSDK.get_leaderboard("high-scores")
+
+func create_leaderboard_if_needed():
+    # Get or create with sort method and display type
+    # Sort: 0 = ascending, 1 = descending
+    # Display: 0 = numeric, 1 = time (seconds), 2 = time (ms)
+    WavedashSDK.get_or_create_leaderboard(
+        "speedrun-times",
+        WavedashConstants.LEADERBOARD_SORT_ASCENDING,
+        WavedashConstants.LEADERBOARD_DISPLAY_TYPE_TIME_MILLISECONDS
+    )
+
+func submit_score(score: int):
+    if leaderboard_id.is_empty():
+        return
+    # Submit score, keep_best = true to only update if better
+    WavedashSDK.post_leaderboard_score(leaderboard_id, score, true)
+
+func get_top_scores():
+    if leaderboard_id.is_empty():
+        return
+    # Get entries with offset and limit
+    WavedashSDK.get_leaderboard_entries(leaderboard_id, 0, 10, false)
+
+func get_scores_around_me():
+    if leaderboard_id.is_empty():
+        return
+    # Get entries around current player
+    WavedashSDK.get_leaderboard_entries_around_player(leaderboard_id, 5, 5, false)
+
+func _on_got_leaderboard(response):
+    if response.get("success", false):
+        leaderboard_id = response["data"]["id"]
+        print("Got leaderboard: ", response["data"]["name"])
+
+func _on_got_entries(response):
+    if response.get("success", false):
+        for entry in response["data"]:
+            print("#", entry["rank"], " ", entry["username"], ": ", entry["score"])
+
+func _on_score_posted(response):
+    if response.get("success", false):
+        print("Score submitted!")
 ```
 
-### Lobbies
+## Lobbies
 
 ```gdscript
-# Create a lobby
-var result = await Wavedash.create_lobby("public", 4)
-if result.success:
-    var lobby_id = result.data
+extends Node
 
-# Join a lobby
-var result = await Wavedash.join_lobby(lobby_id)
+var current_lobby_id: String = ""
 
-# Leave a lobby
-var result = await Wavedash.leave_lobby(lobby_id)
+func _ready():
+    WavedashSDK.lobby_created.connect(_on_lobby_created)
+    WavedashSDK.lobby_joined.connect(_on_lobby_joined)
+    WavedashSDK.lobby_left.connect(_on_lobby_left)
+    WavedashSDK.lobby_message.connect(_on_lobby_message)
+    WavedashSDK.lobby_users_updated.connect(_on_lobby_users_updated)
+    WavedashSDK.got_lobbies.connect(_on_got_lobbies)
 
-# Send a message
-await Wavedash.send_lobby_message(lobby_id, "Hello!")
+func create_lobby():
+    # Lobby types: 0 = public, 1 = friends only, 2 = private
+    WavedashSDK.create_lobby(WavedashConstants.LOBBY_TYPE_PUBLIC, 4)
 
-# Get users
-var users = Wavedash.get_lobby_users(lobby_id)
+func join_lobby(lobby_id: String):
+    WavedashSDK.join_lobby(lobby_id)
 
-# Set lobby data (host only)
-Wavedash.set_lobby_data(lobby_id, "map", "arena")
+func leave_lobby():
+    if not current_lobby_id.is_empty():
+        WavedashSDK.leave_lobby(current_lobby_id)
+        current_lobby_id = ""
 
-# Get lobby data
-var map = Wavedash.get_lobby_data(lobby_id, "map")
+func send_chat_message(message: String):
+    if not current_lobby_id.is_empty():
+        WavedashSDK.send_lobby_chat_message(current_lobby_id, message)
+
+func list_public_lobbies():
+    WavedashSDK.list_available_lobbies()
+
+func get_lobby_users_list() -> Array:
+    if current_lobby_id.is_empty():
+        return []
+    return WavedashSDK.get_lobby_users(current_lobby_id)
+
+func is_host() -> bool:
+    if current_lobby_id.is_empty():
+        return false
+    var host_id = WavedashSDK.get_lobby_host_id(current_lobby_id)
+    return host_id == WavedashSDK.get_user_id()
+
+func set_game_data(key: String, value: String):
+    # Only the host can set lobby data
+    if is_host():
+        WavedashSDK.set_lobby_data(current_lobby_id, key, value)
+
+func get_game_data(key: String) -> String:
+    return WavedashSDK.get_lobby_data(current_lobby_id, key)
+
+func _on_lobby_created(response):
+    if response.get("success", false):
+        current_lobby_id = response["data"]
+        print("Created lobby: ", current_lobby_id)
+
+func _on_lobby_joined(response):
+    if response.get("success", false):
+        current_lobby_id = response["data"]
+        print("Joined lobby: ", current_lobby_id)
+
+func _on_lobby_left(payload):
+    print("Left lobby")
+    current_lobby_id = ""
+
+func _on_lobby_message(payload):
+    print(payload["username"], ": ", payload["content"])
+
+func _on_lobby_users_updated(payload):
+    print("Users updated: ", payload)
+
+func _on_got_lobbies(lobbies: Array):
+    for lobby in lobbies:
+        print("Available lobby: ", lobby["id"])
 ```
 
-### P2P networking
+## P2P messaging
 
 ```gdscript
-# Broadcast to all peers
-Wavedash.broadcast_p2p_message(channel, data, reliable)
+extends Node
 
-# Send to specific peer
-Wavedash.send_p2p_message(user_id, channel, data, reliable)
+func _ready():
+    WavedashSDK.p2p_connection_established.connect(_on_p2p_connected)
+    WavedashSDK.p2p_connection_failed.connect(_on_p2p_failed)
+    WavedashSDK.p2p_peer_disconnected.connect(_on_p2p_disconnected)
 
-# Read messages from a channel
-var message = Wavedash.read_p2p_message_from_channel(0)
-if message:
-    print("From: ", message.from_user_id)
-    print("Data: ", message.payload)
+func _process(_delta):
+    # Poll for incoming P2P messages each frame
+    var messages = WavedashSDK.receive_p2p_messages_on_channel(0, 32)
+    for msg in messages:
+        handle_message(msg)
+
+func handle_message(msg: Dictionary):
+    var from_user = msg["identity"]
+    var channel = msg["channel"]
+    var payload: PackedByteArray = msg["payload"]
+
+    # Decode your game data from the payload
+    var data_string = payload.get_string_from_utf8()
+    print("From ", from_user, ": ", data_string)
+
+func broadcast_to_all(data: String, reliable: bool = true):
+    var payload = data.to_utf8_buffer()
+    # Empty string for target = broadcast to all peers
+    WavedashSDK.send_p2p_message("", payload, 0, reliable)
+
+func send_to_peer(user_id: String, data: String, reliable: bool = true):
+    var payload = data.to_utf8_buffer()
+    WavedashSDK.send_p2p_message(user_id, payload, 0, reliable)
+
+func _on_p2p_connected(payload):
+    print("P2P connected to: ", payload["userId"])
+
+func _on_p2p_failed(payload):
+    print("P2P connection failed")
+
+func _on_p2p_disconnected(payload):
+    print("P2P peer disconnected: ", payload["userId"])
 ```
 
-### Stats and achievements
+## Stats and achievements
 
 ```gdscript
-# Set a stat
-Wavedash.set_stat("total_kills", 100)
+extends Node
 
-# Get a stat
-var kills = Wavedash.get_stat("total_kills")
+func _ready():
+    WavedashSDK.current_stats_received.connect(_on_stats_received)
 
-# Unlock an achievement
-await Wavedash.set_achievement("first_win")
+    # Request current stats from server
+    WavedashSDK.request_stats()
 
-# Check achievement
-var unlocked = Wavedash.get_achievement("first_win")
+func set_stat(stat_name: String, value: int, store_now: bool = true):
+    # Set a stat value
+    # store_now = true will immediately sync to server
+    WavedashSDK.set_stat_int(stat_name, value, store_now)
+
+func get_stat(stat_name: String) -> int:
+    return WavedashSDK.get_stat_int(stat_name)
+
+func unlock_achievement(achievement_name: String):
+    # Unlocks and immediately stores
+    WavedashSDK.set_achievement(achievement_name)
+
+func is_achievement_unlocked(achievement_name: String) -> bool:
+    return WavedashSDK.get_achievement(achievement_name)
+
+func _on_stats_received(response):
+    if response.get("success", false):
+        print("Stats loaded from server")
 ```
 
-### Remote storage
+## Remote storage
 
 ```gdscript
-# Upload a file
-var data = "save data".to_utf8_buffer()
-await Wavedash.upload_remote_file("saves/slot1.json", data)
+extends Node
 
-# Download a file
-var result = await Wavedash.download_remote_file("saves/slot1.json")
-if result.success:
-    var save_data = result.data.get_string_from_utf8()
+const SAVE_PATH = "user://saves/slot1.json"
 
-# List files
-var result = await Wavedash.list_remote_directory("saves/")
+func _ready():
+    WavedashSDK.remote_file_uploaded.connect(_on_file_uploaded)
+    WavedashSDK.remote_file_downloaded.connect(_on_file_downloaded)
+    WavedashSDK.remote_directory_downloaded.connect(_on_directory_downloaded)
+
+func save_game(save_data: Dictionary):
+    # First write to local file system
+    var dir = DirAccess.open("user://")
+    if not dir.dir_exists("saves"):
+        dir.make_dir("saves")
+
+    var file = FileAccess.open(SAVE_PATH, FileAccess.WRITE)
+    file.store_string(JSON.stringify(save_data))
+    file.close()
+
+    # Then upload to cloud
+    WavedashSDK.upload_remote_file(SAVE_PATH)
+
+func load_game():
+    # Download from cloud to local file
+    WavedashSDK.download_remote_file(SAVE_PATH)
+
+func list_saves():
+    WavedashSDK.download_remote_directory("user://saves/")
+
+func _on_file_uploaded(response):
+    if response.get("success", false):
+        print("Save uploaded to cloud!")
+
+func _on_file_downloaded(response):
+    if response.get("success", false):
+        # File is now available locally
+        if FileAccess.file_exists(SAVE_PATH):
+            var file = FileAccess.open(SAVE_PATH, FileAccess.READ)
+            var save_data = JSON.parse_string(file.get_as_text())
+            file.close()
+            print("Loaded save: ", save_data)
+
+func _on_directory_downloaded(response):
+    if response.get("success", false):
+        print("Directory listing: ", response["data"])
+```
+
+## User-generated content (UGC)
+
+```gdscript
+extends Node
+
+func _ready():
+    WavedashSDK.ugc_item_created.connect(_on_ugc_created)
+    WavedashSDK.ugc_item_downloaded.connect(_on_ugc_downloaded)
+
+func upload_screenshot(local_path: String):
+    # UGC types: 0 = screenshot, 1 = video, 2 = community, 3 = game managed
+    # Visibility: 0 = public, 1 = friends only, 2 = private
+    WavedashSDK.create_ugc_item(
+        WavedashConstants.UGC_TYPE_SCREENSHOT,
+        "My Screenshot",
+        "A cool moment in the game",
+        WavedashConstants.UGC_VISIBILITY_PUBLIC,
+        local_path
+    )
+
+func download_ugc(ugc_id: String, local_path: String):
+    WavedashSDK.download_ugc_item(ugc_id, local_path)
+
+func _on_ugc_created(response):
+    if response.get("success", false):
+        print("UGC created: ", response["data"])
+
+func _on_ugc_downloaded(response):
+    if response.get("success", false):
+        print("UGC downloaded to local path")
+```
+
+## Overlay
+
+```gdscript
+# Show the Wavedash overlay (friends list, achievements, etc.)
+func show_wavedash_overlay():
+    WavedashSDK.show_overlay()
 ```
 
 ## Testing locally
@@ -263,7 +508,8 @@ wvdsh build push
   <Accordion title="SDK not connecting">
     - Ensure you're running through `wvdsh dev` or on wavedash.com
     - Check the browser console for errors
-    - Verify the Wavedash addon is enabled
+    - Verify WavedashSDK is added as an autoload
+    - Make sure you call `WavedashSDK.init()` and `WavedashSDK.ready_for_events()`
   </Accordion>
   <Accordion title="Export fails">
     - Ensure web export templates are installed
@@ -271,14 +517,15 @@ wvdsh build push
     - Verify your export settings match the requirements
   </Accordion>
   <Accordion title="Signals not firing">
-    - Connect signals in `_ready()` before SDK initialization
-    - Check that you're using the correct signal names
-    - Ensure you're awaiting async operations properly
+    - Connect signals in `_ready()` before calling SDK methods
+    - Check that you're using the correct signal names (e.g., `got_leaderboard` not `leaderboard_received`)
+    - Verify the SDK initialized successfully
   </Accordion>
   <Accordion title="P2P not working">
     - Enable Threads Support in export settings
     - Ensure SharedArrayBuffer is available (requires HTTPS)
     - Check browser console for WebRTC errors
+    - Remember to poll `receive_p2p_messages_on_channel()` in `_process()`
   </Accordion>
 </AccordionGroup>
 
@@ -286,9 +533,9 @@ wvdsh build push
 
 ```
 my-godot-game/
-├── addons/
-│   └── wavedash/
-│       └── Wavedash.gd
+├── wavedash/
+│   ├── WavedashSDK.gd
+│   └── WavedashConstants.gd
 ├── exports/
 │   └── web/           # Web export output
 ├── scenes/

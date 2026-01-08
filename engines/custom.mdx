@@ -212,168 +212,73 @@ function handleSignal(signal, data) {
 }
 ```
 
-## Complete example
+## Complete entrypoint example
 
-Here's a complete example game with Wavedash integration:
+Here's a complete entrypoint file that initializes a canvas game:
 
-**index.html:**
-```html
-<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="utf-8">
-  <title>My Game</title>
-  <style>
-    body { margin: 0; background: #1a1a2e; }
-    canvas { display: block; }
-  </style>
-</head>
-<body>
-  <canvas id="game"></canvas>
-  <script src="game.js"></script>
-</body>
-</html>
-```
-
-**game.js:**
+**entrypoint.js:**
 ```javascript
-class Game {
-  constructor() {
-    this.canvas = document.getElementById('game');
-    this.ctx = this.canvas.getContext('2d');
-    this.score = 0;
-    this.leaderboardId = null;
+(async function () {
+  // Create canvas inside wavedash-target
+  const canvas = document.createElement('canvas');
+  canvas.id = 'game';
+  canvas.style.width = '100%';
+  canvas.style.height = '100%';
+  document.getElementById('wavedash-target').appendChild(canvas);
 
-    this.init();
+  const ctx = canvas.getContext('2d');
+  let score = 0;
+  let leaderboardId = null;
+
+  // Report initial loading progress
+  WavedashJS.updateLoadProgressZeroToOne(0.3);
+
+  // Set up signal handling
+  WavedashJS.setEngineInstance({
+    type: "custom",
+    SendMessage: (obj, signal, value) => {
+      const data = value ? JSON.parse(value) : {};
+      handleSignal(signal, data);
+    }
+  });
+
+  WavedashJS.updateLoadProgressZeroToOne(0.6);
+
+  // Load leaderboard
+  const response = await WavedashJS.getLeaderboard("high-scores");
+  if (response.success) {
+    leaderboardId = response.data.id;
   }
 
-  async init() {
-    // Wait for Wavedash SDK
-    await this.waitForSDK();
+  WavedashJS.updateLoadProgressZeroToOne(1.0);
 
-    // Set up signal handling
-    this.setupSignals();
+  // Signal load complete - required!
+  WavedashJS.loadComplete();
 
-    // Load leaderboard
-    await this.loadLeaderboard();
+  // Start game loop
+  function gameLoop() {
+    // Resize canvas to container
+    const container = document.getElementById('wavedash-target');
+    canvas.width = container.clientWidth;
+    canvas.height = container.clientHeight;
 
-    // Start game loop
-    this.gameLoop();
+    // Clear and render
+    ctx.fillStyle = '#1a1a2e';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    ctx.fillStyle = '#fff';
+    ctx.font = '24px sans-serif';
+    ctx.fillText(`Score: ${score}`, 20, 40);
+
+    requestAnimationFrame(gameLoop);
   }
 
-  waitForSDK() {
-    return new Promise((resolve) => {
-      const check = () => {
-        if (window.WavedashJS && WavedashJS.isReady()) {
-          resolve();
-        } else {
-          setTimeout(check, 100);
-        }
-      };
-      check();
-    });
-  }
+  gameLoop();
 
-  setupSignals() {
-    WavedashJS.setEngineInstance({
-      type: "custom",
-      SendMessage: (obj, signal, value) => {
-        const data = value ? JSON.parse(value) : {};
-        this.handleSignal(signal, data);
-      }
-    });
-  }
-
-  handleSignal(signal, data) {
+  function handleSignal(signal, data) {
     console.log(`Signal: ${signal}`, data);
-
-    switch (signal) {
-      case "LobbyMessage":
-        this.onChatMessage(data);
-        break;
-      case "P2PConnectionEstablished":
-        this.onPeerConnected(data);
-        break;
-    }
   }
-
-  async loadLeaderboard() {
-    const response = await WavedashJS.getOrCreateLeaderboard(
-      "high-scores",
-      "descending",
-      "numeric"
-    );
-
-    if (response.success) {
-      this.leaderboardId = response.data.id;
-      console.log("Leaderboard loaded:", response.data);
-    }
-  }
-
-  async submitScore() {
-    if (!this.leaderboardId) return;
-
-    const response = await WavedashJS.uploadLeaderboardScore({
-      leaderboardId: this.leaderboardId,
-      score: this.score,
-      keepBest: true
-    });
-
-    if (response.success) {
-      console.log("Score submitted! Rank:", response.data.rank);
-    }
-  }
-
-  async createLobby() {
-    const response = await WavedashJS.createLobby({
-      visibility: "public",
-      maxPlayers: 4
-    });
-
-    if (response.success) {
-      this.lobbyId = response.data;
-      console.log("Created lobby:", this.lobbyId);
-    }
-  }
-
-  onChatMessage(data) {
-    console.log(`${data.username}: ${data.content}`);
-  }
-
-  onPeerConnected(data) {
-    console.log(`Connected to: ${data.username}`);
-  }
-
-  gameLoop() {
-    // Update game state
-    this.update();
-
-    // Render
-    this.render();
-
-    requestAnimationFrame(() => this.gameLoop());
-  }
-
-  update() {
-    // Game logic here
-  }
-
-  render() {
-    this.ctx.fillStyle = '#1a1a2e';
-    this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
-
-    this.ctx.fillStyle = '#fff';
-    this.ctx.font = '24px sans-serif';
-    this.ctx.fillText(`Score: ${this.score}`, 20, 40);
-  }
-
-  addScore(points) {
-    this.score += points;
-  }
-}
-
-// Start the game
-new Game();
+})();
 ```
 
 ## Frameworks
