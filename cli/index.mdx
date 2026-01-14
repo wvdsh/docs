@@ -45,7 +45,6 @@ wvdsh --version
 | `wvdsh auth status` | Check authentication status |
 | `wvdsh dev` | Start local development server |
 | `wvdsh build push` | Upload a build to Wavedash |
-| `wvdsh update` | Check for and install updates |
 
 ## Global options
 
@@ -86,14 +85,20 @@ The credentials file is created with restricted permissions (readable only by th
 
 ## Updating
 
-Check for updates:
-
-```bash
-wvdsh update
-```
-
-If you installed via Homebrew, use:
-
-```bash
-brew upgrade wvdsh/tap/wvdsh
-```
+<Tabs>
+  <Tab title="macOS">
+    ```bash
+    brew upgrade wvdsh/tap/wvdsh
+    ```
+  </Tab>
+  <Tab title="Linux">
+    ```bash
+    curl --proto '=https' --tlsv1.2 -LsSf https://github.com/wvdsh/cli/releases/latest/download/wvdsh-installer.sh | sh
+    ```
+  </Tab>
+  <Tab title="Windows">
+    ```powershell
+    irm https://github.com/wvdsh/cli/releases/latest/download/wvdsh-installer.ps1 | iex
+    ```
+  </Tab>
+</Tabs>
