@@ -46,11 +46,11 @@ public void SendGameState(string jsonState)
 ```
 
 ```javascript JavaScript
-const response = await WavedashJS.broadcastP2PMessage({
-  channel: 0,
-  data: new Uint8Array([1, 2, 3, 4]),
-  reliable: true
-});
+WavedashJS.broadcastP2PMessage(
+  0,                           // channel
+  true,                        // reliable
+  new Uint8Array([1, 2, 3, 4]) // payload
+);
 ```
 </CodeGroup>
 
@@ -70,12 +70,12 @@ public void SendToPeer(string userId, byte[] data, int channel = 0, bool reliabl
 ```
 
 ```javascript JavaScript
-const response = await WavedashJS.sendP2PMessage({
-  userId: targetUserId,
-  channel: 0,
-  data: new Uint8Array([1, 2, 3, 4]),
-  reliable: false
-});
+WavedashJS.sendP2PMessage(
+  targetUserId,                // userId (or undefined for broadcast)
+  0,                           // channel
+  false,                       // reliable
+  new Uint8Array([1, 2, 3, 4]) // payload
+);
 ```
 </CodeGroup>
 
@@ -178,57 +178,40 @@ public void SendPositionUpdate(byte[] data)
 ```
 
 ```javascript JavaScript
-// Reliable
-WavedashJS.broadcastP2PMessage({ channel: 0, data: gameStateData, reliable: true });
+// Reliable - guaranteed delivery (like TCP)
+WavedashJS.broadcastP2PMessage(0, true, gameStateData);
 
-// Unreliable
-WavedashJS.broadcastP2PMessage({ channel: 1, data: positionData, reliable: false });
+// Unreliable - faster but may drop (like UDP)
+WavedashJS.broadcastP2PMessage(1, false, positionData);
 ```
 </CodeGroup>
 
 ## Connection state
 
+Check if peers are ready for messaging:
+
 <CodeGroup>
 ```gdscript Godot
-func check_connection_state():
-    var connection = WavedashSDK.get_p2p_connection()
-    if connection:
-        print("Lobby: ", connection["lobbyId"])
-        print("State: ", connection["state"])
-        print("Peers: ", connection["peers"].size())
+# Check if we can broadcast to at least one peer
+func can_broadcast() -> bool:
+    # P2P connections are managed automatically when in a lobby
+    # Use signals to track connection state
+    return true  # Check via p2p_connection_established signal
 ```
 
 ```csharp Unity
-public void CheckConnectionState()
-{
-    var connection = SDK.GetP2PConnection();
-    if (connection != null)
-    {
-        Debug.Log($"Lobby: {connection["lobbyId"]}");
-        Debug.Log($"State: {connection["state"]}");
-    }
-}
+// P2P connections are managed automatically when in a lobby
+// Listen to OnP2PConnectionEstablished to know when peers are ready
 ```
 
 ```javascript JavaScript
-const connection = WavedashJS.getP2PConnection();
+// Check if a specific peer is ready
+const isReady = WavedashJS.isPeerReady(userId);
 
-if (connection) {
-  console.log(`Lobby: ${connection.lobbyId}`);
-  console.log(`State: ${connection.state}`);
-  console.log(`Peers: ${Object.keys(connection.peers).length}`);
-}
+// Check if broadcast is ready (at least one peer connected)
+const canBroadcast = WavedashJS.isBroadcastReady();
 ```
 </CodeGroup>
-
-### Connection states
-
-| State | Description |
-|-------|-------------|
-| `connecting` | Establishing connections |
-| `connected` | All peers connected |
-| `disconnected` | Connection closed normally |
-| `failed` | Connection failed |
 
 ## Signals
 

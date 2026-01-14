@@ -102,7 +102,7 @@ public async void CreateLeaderboard()
 const response = await WavedashJS.getOrCreateLeaderboard(
   "speedrun-times",      // Leaderboard name
   "ascending",           // Sort order: "ascending" or "descending"
-  "time"                 // Display type: "numeric" or "time"
+  "time_milliseconds"    // Display type: "numeric", "time_seconds", or "time_milliseconds"
 );
 
 if (response.success) {
@@ -124,7 +124,8 @@ if (response.success) {
 | Value | Description |
 |-------|-------------|
 | `numeric` | Display as a number (e.g., "1,000") |
-| `time` | Display as time (e.g., "1:23.45") |
+| `time_seconds` | Display as time in seconds (e.g., "1:23") |
+| `time_milliseconds` | Display as time with milliseconds (e.g., "1:23.45") |
 
 ## Submitting scores
 
@@ -164,11 +165,11 @@ public async void SubmitScore(string leaderboardId, int score)
 ```
 
 ```javascript JavaScript
-const response = await WavedashJS.uploadLeaderboardScore({
-  leaderboardId: "j57abc123...",  // Leaderboard ID
-  score: 1500,                     // Score value
-  keepBest: true                   // Only update if better than existing
-});
+const response = await WavedashJS.uploadLeaderboardScore(
+  "j57abc123...",  // Leaderboard ID
+  1500,            // Score value
+  true             // keepBest: Only update if better than existing
+);
 
 if (response.success) {
   const entry = response.data;
@@ -229,14 +230,14 @@ public async void GetTopScores(string leaderboardId)
 ```
 
 ```javascript JavaScript
-const response = await WavedashJS.listLeaderboardEntries({
-  leaderboardId: "j57abc123...",
-  offset: 0,    // Start from rank 1
-  limit: 10     // Get top 10
-});
+const response = await WavedashJS.listLeaderboardEntries(
+  "j57abc123...",  // Leaderboard ID
+  0,               // offset: Start from rank 1
+  10               // limit: Get top 10
+);
 
 if (response.success) {
-  response.data.forEach((entry, index) => {
+  response.data.entries.forEach(entry => {
     console.log(`#${entry.rank} ${entry.username}: ${entry.score}`);
   });
 }
@@ -282,15 +283,15 @@ public async void GetScoresAroundMe(string leaderboardId)
 ```
 
 ```javascript JavaScript
-const response = await WavedashJS.listLeaderboardEntriesAroundUser({
-  leaderboardId: "j57abc123...",
-  countAhead: 5,   // 5 entries with better scores
-  countBehind: 5   // 5 entries with worse scores
-});
+const response = await WavedashJS.listLeaderboardEntriesAroundUser(
+  "j57abc123...",  // Leaderboard ID
+  5,               // countAhead: 5 entries with better scores
+  5                // countBehind: 5 entries with worse scores
+);
 
 if (response.success) {
   // Returns up to 11 entries centered on the player
-  response.data.forEach(entry => {
+  response.data.entries.forEach(entry => {
     const isMe = entry.userId === WavedashJS.getUserId();
     console.log(`${isMe ? ">" : " "} #${entry.rank} ${entry.username}: ${entry.score}`);
   });
@@ -329,12 +330,10 @@ public async void GetMyEntry(string leaderboardId)
 ```
 
 ```javascript JavaScript
-const response = await WavedashJS.getMyLeaderboardEntries({
-  leaderboardId: "j57abc123..."
-});
+const response = await WavedashJS.getMyLeaderboardEntries("j57abc123...");
 
-if (response.success && response.data.length > 0) {
-  const myEntry = response.data[0];
+if (response.success && response.data.entries.length > 0) {
+  const myEntry = response.data.entries[0];
   console.log(`Your rank: #${myEntry.rank}`);
   console.log(`Your score: ${myEntry.score}`);
 }
@@ -404,22 +403,23 @@ public async void SubmitScoreWithReplay(string leaderboardId, int score, string 
 ```
 
 ```javascript JavaScript
-// First, create the UGC item
-const ugcResponse = await WavedashJS.createUGCItem({
-  ugcType: "replay",
-  visibility: "public"
-});
+// First, create the UGC item with file path
+const ugcResponse = await WavedashJS.createUGCItem(
+  "replay",     // ugcType
+  "My Replay",  // title
+  "",           // description
+  "public",     // visibility
+  "/path/to/replay.dat"  // filePath (optional)
+);
 
 if (ugcResponse.success) {
-  // Upload the replay data...
-
   // Then submit score with UGC attachment
-  const scoreResponse = await WavedashJS.uploadLeaderboardScore({
-    leaderboardId: "speedrun-times",
-    score: 12345,
-    keepBest: true,
-    ugcId: ugcResponse.data.id
-  });
+  const scoreResponse = await WavedashJS.uploadLeaderboardScore(
+    "speedrun-times",     // leaderboardId
+    12345,                // score
+    true,                 // keepBest
+    ugcResponse.data      // ugcId
+  );
 }
 ```
 </CodeGroup>

@@ -74,11 +74,29 @@ You may see a security prompt asking to trust the certificate. Accept it to enab
 
 Certificates are stored in your config directory:
 
-```
-~/.config/gg/wavedash/cli/dev-server/
-├── cert.pem
-└── key.pem
-```
+<Tabs>
+  <Tab title="macOS">
+    ```
+    ~/Library/Application Support/gg.wavedash.cli/dev-server/
+    ├── cert.pem
+    └── key.pem
+    ```
+  </Tab>
+  <Tab title="Linux">
+    ```
+    ~/.config/cli/dev-server/
+    ├── cert.pem
+    └── key.pem
+    ```
+  </Tab>
+  <Tab title="Windows">
+    ```
+    %APPDATA%\wavedash\cli\dev-server\
+    ├── cert.pem
+    └── key.pem
+    ```
+  </Tab>
+</Tabs>
 
 ## Supported features
 

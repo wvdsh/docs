@@ -25,10 +25,8 @@ WavedashSDK.set_stat_int("games_played", 42, true)
 ```
 
 ```csharp Unity
-// Set stat values
-SDK.SetStat("total_kills", 150);
-SDK.SetStat("distance_traveled", 5280.5f);
-SDK.SetStat("games_played", 42);
+// Stats are not yet available in the Unity SDK.
+// This feature is currently only available in Godot and JavaScript SDKs.
 ```
 
 ```javascript JavaScript
@@ -51,8 +49,7 @@ print("Total kills: ", kills)
 ```
 
 ```csharp Unity
-var kills = SDK.GetStat("total_kills");
-Debug.Log($"Total kills: {kills}");
+// Stats are not yet available in the Unity SDK.
 ```
 
 ```javascript JavaScript
@@ -71,11 +68,7 @@ func add_coins(amount: int):
 ```
 
 ```csharp Unity
-public void AddCoins(int amount)
-{
-    var current = SDK.GetStat("coins_collected");
-    SDK.SetStat("coins_collected", current + amount);
-}
+// Stats are not yet available in the Unity SDK.
 ```
 
 ```javascript JavaScript
@@ -98,19 +91,13 @@ func unlock_first_win():
 ```
 
 ```csharp Unity
-public void UnlockFirstWin()
-{
-    SDK.SetAchievement("first_win");
-    Debug.Log("Achievement unlocked!");
-}
+// Achievements are not yet available in the Unity SDK.
+// This feature is currently only available in Godot and JavaScript SDKs.
 ```
 
 ```javascript JavaScript
-const response = await WavedashJS.setAchievement("first_win");
-
-if (response.success) {
-  console.log("Achievement unlocked!");
-}
+WavedashJS.setAchievement("first_win");
+console.log("Achievement unlocked!");
 ```
 </CodeGroup>
 
@@ -126,15 +113,7 @@ func check_achievement(achievement_name: String) -> bool:
 ```
 
 ```csharp Unity
-public bool CheckAchievement(string achievementName)
-{
-    var isUnlocked = SDK.GetAchievement(achievementName);
-    if (isUnlocked)
-    {
-        Debug.Log("Player has already earned this achievement");
-    }
-    return isUnlocked;
-}
+// Achievements are not yet available in the Unity SDK.
 ```
 
 ```javascript JavaScript
@@ -159,11 +138,7 @@ func on_enemy_defeated():
 ```
 
 ```csharp Unity
-public void OnEnemyDefeated()
-{
-    var enemies = SDK.GetStat("enemies_defeated") + 1;
-    SDK.SetStat("enemies_defeated", enemies);
-}
+// Stats are not yet available in the Unity SDK.
 ```
 
 ```javascript JavaScript
@@ -198,19 +173,7 @@ func on_enemy_killed():
 ```
 
 ```csharp Unity
-private int sessionKills = 0;
-
-public void OnEnemyKilled()
-{
-    var kills = SDK.GetStat("total_kills") + 1;
-    SDK.SetStat("total_kills", kills);
-    sessionKills++;
-
-    if (kills == 1)
-    {
-        SDK.SetAchievement("first_blood");
-    }
-}
+// Stats and achievements are not yet available in the Unity SDK.
 ```
 
 ```javascript JavaScript
@@ -242,19 +205,7 @@ func on_game_over(score: int):
 ```
 
 ```csharp Unity
-public void OnGameOver(int score)
-{
-    var highScore = SDK.GetStat("high_score");
-
-    if (score > highScore)
-    {
-        SDK.SetStat("high_score", score);
-        Debug.Log("New high score!");
-    }
-
-    var gamesPlayed = SDK.GetStat("games_played") + 1;
-    SDK.SetStat("games_played", gamesPlayed);
-}
+// Stats are not yet available in the Unity SDK.
 ```
 
 ```javascript JavaScript

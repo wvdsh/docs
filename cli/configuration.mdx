@@ -11,16 +11,38 @@ Create `wavedash.toml` in your project root. The CLI looks for it in the current
 
 ## Basic structure
 
-```toml wavedash.toml
+<CodeGroup>
+```toml Godot
 org_slug = "your-organization"
 game_slug = "your-game"
 branch_slug = "production"
-upload_dir = "./build"
+upload_dir = "./exports/web"
 
-# Choose ONE engine section
 [godot]
 version = "4.5-stable"
 ```
+
+```toml Unity
+org_slug = "your-organization"
+game_slug = "your-game"
+branch_slug = "production"
+upload_dir = "./Builds/WebGL"
+
+[unity]
+version = "6000.0.2f1"
+```
+
+```toml Custom
+org_slug = "your-organization"
+game_slug = "your-game"
+branch_slug = "production"
+upload_dir = "./dist"
+
+[custom]
+version = "1.0.0"
+entrypoint = "game.js"
+```
+</CodeGroup>
 
 ## Required fields
 
@@ -86,43 +108,34 @@ entrypoint = "game.js"
 Use the custom engine for HTML5 games, js-dos games, or any web-based game with a JavaScript entry point.
 </Tip>
 
-## Complete examples
+**Example entrypoint:**
 
-### Godot project
+```javascript game.js
+(async function () {
+  const target = document.getElementById("wavedash-target");
 
-```toml wavedash.toml
-org_slug = "awesome-games"
-game_slug = "space-shooter"
-branch_slug = "production"
-upload_dir = "./exports/web"
+  // Create a container for your game
+  const container = document.createElement("div");
+  container.id = "game-container";
+  container.style.width = "100%";
+  container.style.height = "100%";
+  target.appendChild(container);
 
-[godot]
-version = "4.5-stable"
-```
+  // Load any required libraries
+  await window.WavedashJS.loadScript("./lib/library.js");
+  window.WavedashJS.updateLoadProgressZeroToOne(0.5);
 
-### Unity project
+  // Load your game script
+  await window.WavedashJS.loadScript("./game-bundle.js");
+  window.WavedashJS.updateLoadProgressZeroToOne(1.0);
 
-```toml wavedash.toml
-org_slug = "indie-studio"
-game_slug = "puzzle-quest"
-branch_slug = "staging"
-upload_dir = "./Builds/WebGL"
+  // Initialize your game
+  Game.init("game-container");
 
-[unity]
-version = "6000.0.2f1"
-```
-
-### Custom HTML5 game
-
-```toml wavedash.toml
-org_slug = "retro-games"
-game_slug = "classic-adventure"
-branch_slug = "production"
-upload_dir = "./dist"
-
-[custom]
-version = "2.1.0"
-entrypoint = "src/main.js"
+  // REQUIRED
+  // Signal that loading is complete
+  window.WavedashJS.loadComplete();
+})();
 ```
 
 ## Multiple configurations
@@ -154,31 +167,3 @@ project/
 └── build/
     └── index.html
 ```
-
-## Validation
-
-The CLI validates your configuration before running commands. Common validation errors:
-
-| Error | Cause |
-|-------|-------|
-| Missing required field | A required field is not set |
-| Invalid engine section | More than one engine section, or none |
-| Upload directory not found | The `upload_dir` path doesn't exist |
-| Invalid slug format | Slugs contain invalid characters |
-
-## Best practices
-
-<AccordionGroup>
-  <Accordion title="Version control">
-    Commit your `wavedash.toml` to version control so team members can push builds.
-  </Accordion>
-  <Accordion title="Branch strategy">
-    Use different branches for different stages:
-    - `production` for live builds
-    - `staging` for QA testing
-    - `development` for internal builds
-  </Accordion>
-  <Accordion title="CI/CD integration">
-    Use environment variables or separate config files for automated deployments.
-  </Accordion>
-</AccordionGroup>

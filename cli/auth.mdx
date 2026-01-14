@@ -27,7 +27,7 @@ You can generate API keys in the Developer Dashboard at [wavedash.com](https://w
 
 ### How it works
 
-1. The CLI starts a local HTTP server on an available port (starting at 7777)
+1. The CLI starts a local HTTP server on a random available port
 2. Your browser opens the Wavedash authorization page
 3. After you authorize, Wavedash redirects back to the local server with your API key
 4. The CLI stores the key in your credentials file
@@ -59,11 +59,23 @@ API Key: wd_abc...xyz
 
 Your API key is stored in a JSON file with restricted permissions:
 
-| Platform | Location |
-|----------|----------|
-| macOS | `~/.config/gg/wavedash/cli/credentials.json` |
-| Linux | `~/.config/gg/wavedash/cli/credentials.json` |
-| Windows | `%APPDATA%\gg\wavedash\cli\credentials.json` |
+<Tabs>
+  <Tab title="macOS">
+    ```
+    ~/Library/Application Support/gg.wavedash.cli/credentials.json
+    ```
+  </Tab>
+  <Tab title="Linux">
+    ```
+    ~/.config/cli/credentials.json
+    ```
+  </Tab>
+  <Tab title="Windows">
+    ```
+    %APPDATA%\wavedash\cli\credentials.json
+    ```
+  </Tab>
+</Tabs>
 
 <Warning>
 Never share your credentials file or commit it to version control.

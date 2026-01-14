@@ -13,31 +13,13 @@ This guide walks you through setting up the Wavedash CLI, configuring your proje
 
 Before you begin, make sure you have:
 
-- A Wavedash account at [wavedash.com](https://wavedash.com)
+- A Wavedash developer account at [wavedash.com](https://wavedash.com)
 - A game exported for web (Godot, Unity WebGL, or custom HTML5)
 - A terminal application
 
 ## Install the CLI
 
-<Tabs>
-  <Tab title="macOS">
-    ```bash
-    brew install wvdsh/tap/wvdsh
-    ```
-  </Tab>
-  <Tab title="Linux">
-    ```bash
-    curl --proto '=https' --tlsv1.2 -LsSf https://github.com/wvdsh/cli/releases/latest/download/wvdsh-installer.sh | sh
-    ```
-  </Tab>
-  <Tab title="Windows">
-    ```powershell
-    irm https://github.com/wvdsh/cli/releases/latest/download/wvdsh-installer.ps1 | iex
-    ```
-  </Tab>
-</Tabs>
-
-Verify the installation:
+Follow the [installation instructions](/cli#installation) for your platform, then verify:
 
 ```bash
 wvdsh --version
@@ -66,56 +48,11 @@ Run `wvdsh auth status` to confirm you're authenticated.
 
 ## Configure your project
 
-Create a `wavedash.toml` file in your project root:
+Create a `wavedash.toml` file in your project root. See [Configuration](/cli/configuration) for your engine:
 
-<Tabs>
-  <Tab title="Godot">
-    ```toml wavedash.toml
-    org_slug = "your-org"
-    game_slug = "your-game"
-    branch_slug = "production"
-    upload_dir = "./build/web"
-
-    [godot]
-    version = "4.5-stable"
-    ```
-
-    <Note>
-    Set `upload_dir` to your Godot web export folder.
-    </Note>
-  </Tab>
-  <Tab title="Unity">
-    ```toml wavedash.toml
-    org_slug = "your-org"
-    game_slug = "your-game"
-    branch_slug = "production"
-    upload_dir = "./Build/WebGL"
-
-    [unity]
-    version = "6000.0.2f1"
-    ```
-
-    <Note>
-    Set `upload_dir` to your Unity WebGL build folder.
-    </Note>
-  </Tab>
-  <Tab title="Custom">
-    ```toml wavedash.toml
-    org_slug = "your-org"
-    game_slug = "your-game"
-    branch_slug = "production"
-    upload_dir = "./dist"
-
-    [custom]
-    version = "1.0.0"
-    entrypoint = "game.js"
-    ```
-
-    <Note>
-    The `entrypoint` is the JavaScript file that initializes your game. See [Entrypoint file requirements](/engines/custom#entrypoint-file) for what your entrypoint must do.
-    </Note>
-  </Tab>
-</Tabs>
+- [Godot configuration](/cli/configuration#godot)
+- [Unity configuration](/cli/configuration#unity)
+- [Custom engine configuration](/cli/configuration#custom-engine)
 
 ## Test locally
 

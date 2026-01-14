@@ -46,10 +46,9 @@ public class CloudSaveExample : MonoBehaviour
 ```
 
 ```javascript JavaScript
-const response = await WavedashJS.uploadRemoteFile({
-  path: "saves/slot1.json",
-  data: new Uint8Array(/* file data */)
-});
+// For JS games, first write to local storage, then upload
+await WavedashJS.writeLocalFile("saves/slot1.json", new Uint8Array(/* file data */));
+const response = await WavedashJS.uploadRemoteFile("saves/slot1.json");
 
 if (response.success) {
   console.log("File uploaded successfully");
@@ -89,12 +88,13 @@ public async void SaveGame(int slot, Dictionary<string, object> gameState)
 ```javascript JavaScript
 async function saveGame(slot, gameState) {
   const data = new TextEncoder().encode(JSON.stringify(gameState));
+  const path = `saves/slot${slot}.json`;
 
-  const response = await WavedashJS.uploadRemoteFile({
-    path: `saves/slot${slot}.json`,
-    data: data
-  });
+  // Write to local storage first
+  await WavedashJS.writeLocalFile(path, data);
 
+  // Then upload to remote
+  const response = await WavedashJS.uploadRemoteFile(path);
   return response.success;
 }
 ```
@@ -128,14 +128,15 @@ public async void LoadFromCloud(string localPath)
 ```
 
 ```javascript JavaScript
-const response = await WavedashJS.downloadRemoteFile({
-  path: "saves/slot1.json"
-});
+const response = await WavedashJS.downloadRemoteFile("saves/slot1.json");
 
 if (response.success) {
-  const data = response.data;
-  const text = new TextDecoder().decode(data);
-  const gameState = JSON.parse(text);
+  // File is now in local storage, read it
+  const data = await WavedashJS.readLocalFile("saves/slot1.json");
+  if (data) {
+    const text = new TextDecoder().decode(data);
+    const gameState = JSON.parse(text);
+  }
 }
 ```
 </CodeGroup>
@@ -177,13 +178,15 @@ public async Task<Dictionary<string, object>> LoadGame(int slot)
 
 ```javascript JavaScript
 async function loadGame(slot) {
-  const response = await WavedashJS.downloadRemoteFile({
-    path: `saves/slot${slot}.json`
-  });
+  const path = `saves/slot${slot}.json`;
+  const response = await WavedashJS.downloadRemoteFile(path);
 
-  if (response.success && response.data) {
-    const text = new TextDecoder().decode(response.data);
-    return JSON.parse(text);
+  if (response.success) {
+    const data = await WavedashJS.readLocalFile(path);
+    if (data) {
+      const text = new TextDecoder().decode(data);
+      return JSON.parse(text);
+    }
   }
 
   return null;
@@ -221,9 +224,7 @@ public async void ListSaves()
 ```
 
 ```javascript JavaScript
-const response = await WavedashJS.listRemoteDirectory({
-  path: "saves/"
-});
+const response = await WavedashJS.listRemoteDirectory("saves/");
 
 if (response.success) {
   response.data.forEach(file => {
@@ -321,26 +322,31 @@ class CloudSaveSystem {
       state: gameState
     };
 
+    const path = `saves/slot${slot}.json`;
     const data = new TextEncoder().encode(JSON.stringify(saveData));
 
-    const response = await WavedashJS.uploadRemoteFile({
-      path: `saves/slot${slot}.json`,
-      data: data
-    });
+    // Write locally first
+    await WavedashJS.writeLocalFile(path, data);
 
+    // Then sync to cloud
+    const response = await WavedashJS.uploadRemoteFile(path);
     return response.success;
   }
 
   async load(slot) {
-    const response = await WavedashJS.downloadRemoteFile({
-      path: `saves/slot${slot}.json`
-    });
+    const path = `saves/slot${slot}.json`;
+    const response = await WavedashJS.downloadRemoteFile(path);
 
-    if (!response.success || !response.data) {
+    if (!response.success) {
       return null;
     }
 
-    const text = new TextDecoder().decode(response.data);
+    const data = await WavedashJS.readLocalFile(path);
+    if (!data) {
+      return null;
+    }
+
+    const text = new TextDecoder().decode(data);
     return JSON.parse(text).state;
   }
 }

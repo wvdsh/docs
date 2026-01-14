@@ -34,6 +34,7 @@ func _on_connected(payload):
 
 ```csharp Unity
 using Wavedash;
+using System.Collections.Generic;
 
 public class GameManager : MonoBehaviour
 {
@@ -47,7 +48,10 @@ public class GameManager : MonoBehaviour
         if (SDK.IsReady())
         {
             var user = SDK.GetUser();
-            Debug.Log($"Playing as: {user["username"]}");
+            if (user != null)
+            {
+                Debug.Log($"Playing as: {user["username"]}");
+            }
         }
     }
 }
@@ -99,7 +103,7 @@ void Start()
 
 ## Event deferral
 
-By default, the SDK starts sending signals immediately. If you need to defer events:
+By default, the SDK starts sending signals immediately. If you need to defer events until your game is ready:
 
 <CodeGroup>
 ```gdscript Godot
@@ -127,7 +131,7 @@ void Awake()
 void Start()
 {
     SDK.Init(new Dictionary<string, object> { { "debug", true } });
-    SDK.ReadyForEvents();
+    // Unity SDK events fire immediately after Init
 }
 ```
 
@@ -150,10 +154,12 @@ func get_current_user():
 ```csharp Unity
 public void GetCurrentUser()
 {
-    var userId = SDK.GetUserId();
     var user = SDK.GetUser();
-    Debug.Log($"User ID: {userId}");
-    Debug.Log($"Username: {user["username"]}");
+    if (user != null)
+    {
+        Debug.Log($"User ID: {user["id"]}");
+        Debug.Log($"Username: {user["username"]}");
+    }
 }
 ```
 
@@ -184,12 +190,9 @@ func _on_backend_reconnecting(payload):
 ```
 
 ```csharp Unity
-void Awake()
-{
-    SDK.OnBackendConnected += data => Debug.Log("Connected to Wavedash!");
-    SDK.OnBackendDisconnected += data => Debug.Log("Disconnected from Wavedash");
-    SDK.OnBackendReconnecting += data => Debug.Log("Reconnecting...");
-}
+// Backend connection events are not yet available in the Unity SDK.
+// The SDK automatically manages connection state.
+// Use SDK.IsReady() to check if the SDK is initialized.
 ```
 
 ```javascript JavaScript
@@ -236,8 +239,8 @@ public class WavedashManager : MonoBehaviour
 {
     void Awake()
     {
-        SDK.OnBackendConnected += HandleConnected;
-        SDK.OnBackendDisconnected += HandleDisconnected;
+        SDK.OnLobbyJoined += HandleLobbyJoined;
+        SDK.OnP2PConnectionEstablished += HandleP2PConnected;
     }
 
     void Start()
@@ -250,18 +253,21 @@ public class WavedashManager : MonoBehaviour
         if (SDK.IsReady())
         {
             var user = SDK.GetUser();
-            Debug.Log($"Playing as: {user["username"]}");
+            if (user != null)
+            {
+                Debug.Log($"Playing as: {user["username"]}");
+            }
         }
     }
 
-    void HandleConnected(Dictionary<string, object> data)
+    void HandleLobbyJoined(Dictionary<string, object> data)
     {
-        Debug.Log("Connected to Wavedash!");
+        Debug.Log("Joined lobby!");
     }
 
-    void HandleDisconnected(Dictionary<string, object> data)
+    void HandleP2PConnected(Dictionary<string, object> data)
     {
-        Debug.Log("Disconnected from Wavedash");
+        Debug.Log("P2P connection established!");
     }
 }
 ```

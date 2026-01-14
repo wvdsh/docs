@@ -9,60 +9,36 @@ The Presence API lets you share player status and activity with friends and othe
 
 <CodeGroup>
 ```gdscript Godot
-func set_presence(status: String, details: String, game_data: Dictionary = {}):
-    WavedashSDK.update_user_presence(status, details, game_data)
-
-# Example usage
-func on_game_start():
-    set_presence("In Game", "Playing Level 5", {
-        "level": 5,
-        "score": 12500,
-        "lobbyId": current_lobby_id
-    })
+# Presence is not yet available in the Godot SDK.
+# This feature is currently only available in the JavaScript SDK.
 ```
 
 ```csharp Unity
-using Wavedash;
-
-public class PresenceExample : MonoBehaviour
-{
-    public void SetPresence(string status, string details, Dictionary<string, object> gameData = null)
-    {
-        SDK.UpdateUserPresence(status, details, gameData ?? new Dictionary<string, object>());
-    }
-
-    public void OnGameStart()
-    {
-        SetPresence("In Game", "Playing Level 5", new Dictionary<string, object>
-        {
-            { "level", 5 },
-            { "score", 12500 },
-            { "lobbyId", currentLobbyId }
-        });
-    }
-}
+// UpdateUserPresence is not yet available in the Unity SDK.
+// Presence features are currently only available in the JavaScript SDK.
 ```
 
 ```javascript JavaScript
-const response = await WavedashJS.updateUserPresence({
+await WavedashJS.updateUserPresence({
   status: "In Game",
   details: "Playing Level 5",
-  gameData: {
-    level: 5,
-    score: 12500,
-    lobbyId: "lobby_abc123"
-  }
+  level: 5,
+  score: 12500,
+  lobbyId: "lobby_abc123"
 });
 ```
 </CodeGroup>
 
 ### Parameters
 
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| `status` | string | No | Short status text (e.g., "In Menu", "In Game") |
-| `details` | string | No | Detailed activity description |
-| `gameData` | object | No | Custom data for join functionality |
+The `updateUserPresence` function accepts an object with custom key-value pairs:
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `status` | string | Short status text (e.g., "In Menu", "In Game") |
+| `details` | string | Detailed activity description |
+| `lobbyId` | string | Include to enable "Join Game" functionality |
+| `...` | any | Any additional custom data |
 
 ## Use cases
 
@@ -70,65 +46,31 @@ const response = await WavedashJS.updateUserPresence({
 
 <CodeGroup>
 ```gdscript Godot
-func on_enter_menu():
-    WavedashSDK.update_user_presence("In Menu", "Main Menu", {})
-
-func on_start_game(mode: String, map: String):
-    WavedashSDK.update_user_presence("In Game", mode + " on " + map, {
-        "mode": mode,
-        "map": map
-    })
-
-func on_join_lobby(lobby_id: String, player_count: int, max_players: int):
-    WavedashSDK.update_user_presence(
-        "In Lobby",
-        "Waiting (" + str(player_count) + "/" + str(max_players) + ")",
-        { "lobbyId": lobby_id, "canJoin": player_count < max_players }
-    )
+# Presence is not yet available in the Godot SDK.
 ```
 
 ```csharp Unity
-public void OnEnterMenu()
-{
-    SDK.UpdateUserPresence("In Menu", "Main Menu", new Dictionary<string, object>());
-}
-
-public void OnStartGame(string mode, string map)
-{
-    SDK.UpdateUserPresence("In Game", $"{mode} on {map}", new Dictionary<string, object>
-    {
-        { "mode", mode },
-        { "map", map }
-    });
-}
-
-public void OnJoinLobby(string lobbyId, int playerCount, int maxPlayers)
-{
-    SDK.UpdateUserPresence("In Lobby", $"Waiting ({playerCount}/{maxPlayers})",
-        new Dictionary<string, object>
-        {
-            { "lobbyId", lobbyId },
-            { "canJoin", playerCount < maxPlayers }
-        });
-}
+// UpdateUserPresence is not yet available in the Unity SDK.
 ```
 
 ```javascript JavaScript
 // In menu
-WavedashJS.updateUserPresence({ status: "In Menu", details: "Main Menu" });
+await WavedashJS.updateUserPresence({ status: "In Menu", details: "Main Menu" });
 
 // In game
-WavedashJS.updateUserPresence({
+await WavedashJS.updateUserPresence({
   status: "In Game",
   details: "Deathmatch on Arena",
-  gameData: { mode: "deathmatch", map: "arena" }
+  mode: "deathmatch",
+  map: "arena"
 });
 
 // In lobby
-WavedashJS.updateUserPresence({
+await WavedashJS.updateUserPresence({
   status: "In Lobby",
   details: "Waiting (2/4)",
-  gameData: { lobbyId: currentLobbyId, canJoin: true }
+  lobbyId: currentLobbyId,
+  canJoin: true
 });
 ```
 </CodeGroup>
@@ -139,33 +81,19 @@ Include a `lobbyId` in `gameData` to enable "Join Game" functionality:
 
 <CodeGroup>
 ```gdscript Godot
-func update_lobby_presence(lobby_id: String, current_players: int, max_players: int):
-    WavedashSDK.update_user_presence(
-        "In Lobby",
-        "Arena - Waiting",
-        { "lobbyId": lobby_id, "canJoin": current_players < max_players }
-    )
+# Presence is not yet available in the Godot SDK.
 ```
 
 ```csharp Unity
-public void UpdateLobbyPresence(string lobbyId, int currentPlayers, int maxPlayers)
-{
-    SDK.UpdateUserPresence("In Lobby", "Arena - Waiting", new Dictionary<string, object>
-    {
-        { "lobbyId", lobbyId },
-        { "canJoin", currentPlayers < maxPlayers }
-    });
-}
+// UpdateUserPresence is not yet available in the Unity SDK.
 ```
 
 ```javascript JavaScript
-WavedashJS.updateUserPresence({
+await WavedashJS.updateUserPresence({
   status: "In Lobby",
   details: "Arena - Waiting",
-  gameData: {
-    lobbyId: lobbyId,
-    canJoin: lobbyUsers.length < maxPlayers
-  }
+  lobbyId: lobbyId,
+  canJoin: lobbyUsers.length < maxPlayers
 });
 ```
 </CodeGroup>
@@ -190,12 +118,8 @@ func _on_reconnecting(payload):
 ```
 
 ```csharp Unity
-void Awake()
-{
-    SDK.OnBackendConnected += data => HideConnectionIndicators();
-    SDK.OnBackendDisconnected += data => ShowOfflineIndicator();
-    SDK.OnBackendReconnecting += data => ShowReconnectingIndicator();
-}
+// Backend connection events are not yet available in the Unity SDK.
+// Use SDK.IsReady() to check connection status.
 ```
 
 ```javascript JavaScript
@@ -216,18 +140,14 @@ void Awake()
 
 <CodeGroup>
 ```gdscript Godot
-func clear_presence():
-    WavedashSDK.update_user_presence("", "", {})
+# Presence is not yet available in the Godot SDK.
 ```
 
 ```csharp Unity
-public void ClearPresence()
-{
-    SDK.UpdateUserPresence("", "", new Dictionary<string, object>());
-}
+// UpdateUserPresence is not yet available in the Unity SDK.
 ```
 
 ```javascript JavaScript
-WavedashJS.updateUserPresence({ status: "", details: "" });
+await WavedashJS.updateUserPresence({});
 ```
 </CodeGroup>

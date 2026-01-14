@@ -53,19 +53,17 @@ public class UGCExample : MonoBehaviour
 ```
 
 ```javascript JavaScript
-const response = await WavedashJS.createUGCItem({
-  ugcType: "replay",
-  visibility: "public",
-  metadata: {
-    levelName: "World 1-1",
-    duration: 125
-  }
-});
+const response = await WavedashJS.createUGCItem(
+  "replay",           // ugcType
+  "My Replay",        // title
+  "World 1-1 run",    // description
+  "public",           // visibility: "public", "private", or "friends"
+  "/path/to/file"     // filePath (optional)
+);
 
 if (response.success) {
-  const ugcItem = response.data;
-  console.log(`UGC ID: ${ugcItem.id}`);
-  console.log(`Upload URL: ${ugcItem.uploadUrl}`);
+  const ugcId = response.data;
+  console.log(`UGC ID: ${ugcId}`);
 }
 ```
 </CodeGroup>
@@ -109,19 +107,19 @@ public async void UploadScreenshot(string localPath)
 ```
 
 ```javascript JavaScript
-const createResponse = await WavedashJS.createUGCItem({
-  ugcType: "replay",
-  visibility: "public"
-});
+// For JS games, write to local storage first, then create UGC with the path
+await WavedashJS.writeLocalFile("replays/my-replay.dat", replayData);
 
-if (createResponse.success) {
-  const { uploadUrl } = createResponse.data;
+const response = await WavedashJS.createUGCItem(
+  "replay",
+  "My Replay",
+  "Description",
+  "public",
+  "replays/my-replay.dat"  // The SDK handles uploading from this path
+);
 
-  await fetch(uploadUrl, {
-    method: "PUT",
-    body: fileData,
-    headers: { "Content-Type": "application/octet-stream" }
-  });
+if (response.success) {
+  console.log(`UGC created: ${response.data}`);
 }
 ```
 </CodeGroup>
@@ -154,10 +152,14 @@ public async void DownloadUGC(string ugcId, string localPath)
 ```
 
 ```javascript JavaScript
-const response = await WavedashJS.downloadUGCItem("ugc_abc123...");
+const response = await WavedashJS.downloadUGCItem(
+  "ugc_abc123...",       // ugcId
+  "downloads/item.dat"   // filePath to download to
+);
 
 if (response.success) {
-  const data = response.data; // Uint8Array
+  // File is now in local storage
+  const data = await WavedashJS.readLocalFile("downloads/item.dat");
 }
 ```
 </CodeGroup>
@@ -183,12 +185,12 @@ public async void SubmitScoreWithReplay(string leaderboardId, int score, string 
 ```
 
 ```javascript JavaScript
-const scoreResponse = await WavedashJS.uploadLeaderboardScore({
-  leaderboardId: "speedrun-times",
-  score: 12345,
-  keepBest: true,
-  ugcId: ugcResponse.data.id
-});
+const scoreResponse = await WavedashJS.uploadLeaderboardScore(
+  "speedrun-times",     // leaderboardId
+  12345,                // score
+  true,                 // keepBest
+  ugcResponse.data      // ugcId
+);
 ```
 </CodeGroup>
 
@@ -243,19 +245,20 @@ public async void ShareScreenshot()
 
 ```javascript JavaScript
 async function shareScreenshot(imageData) {
-  const response = await WavedashJS.createUGCItem({
-    ugcType: "screenshot",
-    visibility: "public",
-    metadata: { width: 1920, height: 1080, level: currentLevel }
-  });
+  // Save screenshot to local storage first
+  await WavedashJS.writeLocalFile("screenshots/capture.png", imageData);
+
+  // Create UGC item with the file path
+  const response = await WavedashJS.createUGCItem(
+    "screenshot",
+    "Game Screenshot",
+    `Captured at level ${currentLevel}`,
+    "public",
+    "screenshots/capture.png"
+  );
 
   if (response.success) {
-    await fetch(response.data.uploadUrl, {
-      method: "PUT",
-      body: imageData,
-      headers: { "Content-Type": "image/png" }
-    });
-    return response.data.id;
+    return response.data;  // Returns the ugcId
   }
   return null;
 }
