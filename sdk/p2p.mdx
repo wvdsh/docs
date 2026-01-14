@@ -34,7 +34,7 @@ func send_game_state(state: Dictionary):
 ```csharp Unity
 public void BroadcastToAll(byte[] data, int channel = 0, bool reliable = true)
 {
-    SDK.BroadcastP2PMessage(data, channel, reliable);
+    Wavedash.SDK.BroadcastP2PMessage(data, channel, reliable);
 }
 
 // Example: Send game state
@@ -65,7 +65,7 @@ func send_to_peer(user_id: String, data: PackedByteArray, reliable: bool = true)
 ```csharp Unity
 public void SendToPeer(string userId, byte[] data, int channel = 0, bool reliable = true)
 {
-    SDK.SendP2PMessage(userId, data, channel, reliable);
+    Wavedash.SDK.SendP2PMessage(userId, data, channel, reliable);
 }
 ```
 
@@ -107,7 +107,7 @@ func handle_message(msg: Dictionary):
 ```csharp Unity
 void Update()
 {
-    var messages = SDK.ReceiveP2PMessagesOnChannel(0, maxMessages: 32);
+    var messages = Wavedash.SDK.ReceiveP2PMessagesOnChannel(0, maxMessages: 32);
     foreach (var msg in messages)
     {
         HandleMessage(msg);
@@ -167,13 +167,13 @@ func send_position_update(data: PackedByteArray):
 // Reliable - guaranteed delivery (like TCP)
 public void SendImportantEvent(byte[] data)
 {
-    SDK.BroadcastP2PMessage(data, channel: 0, reliable: true);
+    Wavedash.SDK.BroadcastP2PMessage(data, channel: 0, reliable: true);
 }
 
 // Unreliable - faster but may drop (like UDP)
 public void SendPositionUpdate(byte[] data)
 {
-    SDK.BroadcastP2PMessage(data, channel: 1, reliable: false);
+    Wavedash.SDK.BroadcastP2PMessage(data, channel: 1, reliable: false);
 }
 ```
 
@@ -235,9 +235,9 @@ func _on_p2p_disconnected(payload):
 ```csharp Unity
 void Awake()
 {
-    SDK.OnP2PConnectionEstablished += data => Debug.Log($"P2P connected to: {data["userId"]}");
-    SDK.OnP2PConnectionFailed += data => Debug.Log("P2P connection failed");
-    SDK.OnP2PPeerDisconnected += data => Debug.Log($"P2P peer disconnected: {data["userId"]}");
+    Wavedash.SDK.OnP2PConnectionEstablished += data => Debug.Log($"P2P connected to: {data["userId"]}");
+    Wavedash.SDK.OnP2PConnectionFailed += data => Debug.Log("P2P connection failed");
+    Wavedash.SDK.OnP2PPeerDisconnected += data => Debug.Log($"P2P peer disconnected: {data["userId"]}");
 }
 ```
 

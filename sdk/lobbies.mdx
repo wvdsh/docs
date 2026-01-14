@@ -25,14 +25,12 @@ func _on_lobby_created(response):
 ```
 
 ```csharp Unity
-using Wavedash;
-
 public class LobbyExample : MonoBehaviour
 {
     public async void CreateLobby()
     {
         // Lobby types: 0 = public, 1 = friends only, 2 = private
-        var lobbyId = await SDK.CreateLobby(
+        var lobbyId = await Wavedash.SDK.CreateLobby(
             lobbyType: 0,
             maxPlayers: 4
         );
@@ -86,7 +84,7 @@ func _on_lobby_joined(response):
 ```csharp Unity
 public async void JoinLobby(string lobbyId)
 {
-    var result = await SDK.JoinLobby(lobbyId);
+    var result = await Wavedash.SDK.JoinLobby(lobbyId);
     if (!string.IsNullOrEmpty(result))
     {
         Debug.Log("Joined lobby!");
@@ -117,7 +115,7 @@ func _on_lobby_left(payload):
 ```csharp Unity
 public async void LeaveLobby(string lobbyId)
 {
-    await SDK.LeaveLobby(lobbyId);
+    await Wavedash.SDK.LeaveLobby(lobbyId);
     Debug.Log("Left lobby");
 }
 ```
@@ -151,7 +149,7 @@ func _on_got_lobbies(lobbies: Array):
 ```csharp Unity
 public async void ListLobbies()
 {
-    var lobbies = await SDK.ListAvailableLobbies();
+    var lobbies = await Wavedash.SDK.ListAvailableLobbies();
 
     foreach (var lobby in lobbies)
     {
@@ -213,8 +211,8 @@ func is_host(lobby_id: String) -> bool:
 ```csharp Unity
 public bool IsHost(string lobbyId)
 {
-    var hostId = SDK.GetLobbyHostId(lobbyId);
-    var isHost = hostId == SDK.GetUserId();
+    var hostId = Wavedash.SDK.GetLobbyHostId(lobbyId);
+    var isHost = hostId == Wavedash.SDK.GetUserId();
 
     if (isHost)
     {
@@ -291,7 +289,7 @@ func _on_lobby_message(payload):
 ```csharp Unity
 void Awake()
 {
-    SDK.OnLobbyMessage += HandleLobbyMessage;
+    Wavedash.SDK.OnLobbyMessage += HandleLobbyMessage;
 }
 
 void HandleLobbyMessage(Dictionary<string, object> data)
@@ -301,7 +299,7 @@ void HandleLobbyMessage(Dictionary<string, object> data)
 
 void OnDestroy()
 {
-    SDK.OnLobbyMessage -= HandleLobbyMessage;
+    Wavedash.SDK.OnLobbyMessage -= HandleLobbyMessage;
 }
 ```
 
@@ -382,7 +380,7 @@ func broadcast_game_data(data: PackedByteArray):
 // After joining a lobby, you can send P2P messages
 public void BroadcastGameData(byte[] data)
 {
-    SDK.BroadcastP2PMessage(data, channel: 0, reliable: true);
+    Wavedash.SDK.BroadcastP2PMessage(data, channel: 0, reliable: true);
 }
 ```
 

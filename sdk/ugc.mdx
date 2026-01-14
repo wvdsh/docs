@@ -30,13 +30,11 @@ func _on_ugc_created(response):
 ```
 
 ```csharp Unity
-using Wavedash;
-
 public class UGCExample : MonoBehaviour
 {
     public async void CreateScreenshotUGC(string localPath)
     {
-        var result = await SDK.CreateUGCItem(
+        var result = await Wavedash.SDK.CreateUGCItem(
             ugcType: 0,        // 0 = screenshot
             title: "My Screenshot",
             description: "A cool moment in the game",
@@ -96,7 +94,7 @@ func upload_screenshot(local_path: String):
 // In Unity, pass the local file path when creating the UGC item
 public async void UploadScreenshot(string localPath)
 {
-    var result = await SDK.CreateUGCItem(
+    var result = await Wavedash.SDK.CreateUGCItem(
         ugcType: 0,
         title: "Screenshot",
         description: "Game screenshot",
@@ -142,7 +140,7 @@ func _on_ugc_downloaded(response):
 ```csharp Unity
 public async void DownloadUGC(string ugcId, string localPath)
 {
-    var result = await SDK.DownloadUGCItem(ugcId, localPath);
+    var result = await Wavedash.SDK.DownloadUGCItem(ugcId, localPath);
 
     if (result != null)
     {
@@ -175,7 +173,7 @@ func submit_score_with_replay(leaderboard_id: String, score: int, ugc_id: String
 ```csharp Unity
 public async void SubmitScoreWithReplay(string leaderboardId, int score, string ugcId)
 {
-    var result = await SDK.UploadLeaderboardScore(
+    var result = await Wavedash.SDK.UploadLeaderboardScore(
         leaderboardId,
         score,
         keepBest: true,
@@ -233,7 +231,7 @@ public async void ShareScreenshot()
 
     await Task.Yield();
 
-    var result = await SDK.CreateUGCItem(
+    var result = await Wavedash.SDK.CreateUGCItem(
         ugcType: 0,
         title: "Game Screenshot",
         description: $"Captured at level {currentLevel}",
