@@ -14,49 +14,70 @@ When players join a lobby, the SDK automatically:
 3. Handles NAT traversal using TURN servers when needed
 4. Notifies your game when connections are ready
 
-## Connection lifecycle
-
-<Steps>
-  <Step title="Join a lobby">
-    P2P connections are established automatically when you join a lobby.
-  </Step>
-  <Step title="Wait for connections">
-    Listen for `P2P_CONNECTION_ESTABLISHED` signals as each peer connects.
-  </Step>
-  <Step title="Send and receive data">
-    Use `sendP2PMessage` or `broadcastP2PMessage` to communicate.
-  </Step>
-  <Step title="Handle disconnections">
-    Listen for `P2P_PEER_DISCONNECTED` to handle players leaving.
-  </Step>
-</Steps>
-
 ## Sending messages
 
 ### Broadcast to all peers
 
-Send a message to all connected peers:
+<CodeGroup>
+```gdscript Godot
+func broadcast_to_all(data: PackedByteArray, reliable: bool = true):
+    # Empty string for target = broadcast to all peers
+    WavedashSDK.send_p2p_message("", data, 0, reliable)
 
-```javascript
+# Example: Send game state
+func send_game_state(state: Dictionary):
+    var json = JSON.stringify(state)
+    var data = json.to_utf8_buffer()
+    broadcast_to_all(data, true)
+```
+
+```csharp Unity
+public void BroadcastToAll(byte[] data, int channel = 0, bool reliable = true)
+{
+    SDK.BroadcastP2PMessage(data, channel, reliable);
+}
+
+// Example: Send game state
+public void SendGameState(string jsonState)
+{
+    var data = System.Text.Encoding.UTF8.GetBytes(jsonState);
+    BroadcastToAll(data, channel: 0, reliable: true);
+}
+```
+
+```javascript JavaScript
 const response = await WavedashJS.broadcastP2PMessage({
   channel: 0,
   data: new Uint8Array([1, 2, 3, 4]),
-  reliable: true  // Use reliable channel (default)
+  reliable: true
 });
 ```
+</CodeGroup>
 
 ### Send to a specific peer
 
-Send a message to one peer:
+<CodeGroup>
+```gdscript Godot
+func send_to_peer(user_id: String, data: PackedByteArray, reliable: bool = true):
+    WavedashSDK.send_p2p_message(user_id, data, 0, reliable)
+```
 
-```javascript
+```csharp Unity
+public void SendToPeer(string userId, byte[] data, int channel = 0, bool reliable = true)
+{
+    SDK.SendP2PMessage(userId, data, channel, reliable);
+}
+```
+
+```javascript JavaScript
 const response = await WavedashJS.sendP2PMessage({
   userId: targetUserId,
   channel: 0,
   data: new Uint8Array([1, 2, 3, 4]),
-  reliable: false  // Use unreliable channel for speed
+  reliable: false
 });
 ```
+</CodeGroup>
 
 ### Parameters
 
@@ -69,32 +90,52 @@ const response = await WavedashJS.sendP2PMessage({
 
 ## Receiving messages
 
-Messages are delivered via the `P2P_MESSAGE` signal or can be read from message queues:
+<CodeGroup>
+```gdscript Godot
+func _process(_delta):
+    var messages = WavedashSDK.receive_p2p_messages_on_channel(0, 32)
+    for msg in messages:
+        handle_message(msg)
 
-```javascript
-// Read from a specific channel
+func handle_message(msg: Dictionary):
+    var from_user = msg["identity"]
+    var payload: PackedByteArray = msg["payload"]
+    var data_string = payload.get_string_from_utf8()
+    print("From ", from_user, ": ", data_string)
+```
+
+```csharp Unity
+void Update()
+{
+    var messages = SDK.ReceiveP2PMessagesOnChannel(0, maxMessages: 32);
+    foreach (var msg in messages)
+    {
+        HandleMessage(msg);
+    }
+}
+
+void HandleMessage(Dictionary<string, object> msg)
+{
+    var fromUser = msg["identity"].ToString();
+    var payload = (byte[])msg["payload"];
+    var dataString = System.Text.Encoding.UTF8.GetString(payload);
+    Debug.Log($"From {fromUser}: {dataString}");
+}
+```
+
+```javascript JavaScript
 const message = WavedashJS.readP2PMessageFromChannel(0);
 
 if (message) {
   console.log(`From: ${message.fromUserId}`);
-  console.log(`Channel: ${message.channel}`);
   console.log(`Data: ${message.payload}`);
 }
 ```
-
-### Message structure
-
-```typescript
-interface P2PMessage {
-  fromUserId: string;   // Sender's user ID
-  channel: number;      // Channel the message was sent on
-  payload: Uint8Array;  // Binary data
-}
-```
+</CodeGroup>
 
 ## Channels
 
-The SDK supports up to 8 channels (0-7) for organizing different types of game data:
+The SDK supports up to 8 channels (0-7):
 
 | Channel | Suggested use |
 |---------|---------------|
@@ -104,40 +145,72 @@ The SDK supports up to 8 channels (0-7) for organizing different types of game d
 | 3 | Voice data |
 | 4-7 | Custom use |
 
-<Tip>
-Use separate channels for different data types to help organize your networking code and potentially prioritize certain messages.
-</Tip>
-
 ## Reliable vs unreliable
-
-The SDK provides two types of data channels:
 
 | Type | Description | Best for |
 |------|-------------|----------|
 | **Reliable** | Guaranteed delivery, ordered | Important state, chat, game events |
 | **Unreliable** | Best-effort, faster | Position updates, input, frequent data |
 
-```javascript
+<CodeGroup>
+```gdscript Godot
+# Reliable - guaranteed delivery (like TCP)
+func send_important_event(data: PackedByteArray):
+    WavedashSDK.send_p2p_message("", data, 0, true)
+
+# Unreliable - faster but may drop (like UDP)
+func send_position_update(data: PackedByteArray):
+    WavedashSDK.send_p2p_message("", data, 1, false)
+```
+
+```csharp Unity
 // Reliable - guaranteed delivery (like TCP)
-WavedashJS.broadcastP2PMessage({
-  channel: 0,
-  data: gameStateData,
-  reliable: true
-});
+public void SendImportantEvent(byte[] data)
+{
+    SDK.BroadcastP2PMessage(data, channel: 0, reliable: true);
+}
 
 // Unreliable - faster but may drop (like UDP)
-WavedashJS.broadcastP2PMessage({
-  channel: 1,
-  data: positionData,
-  reliable: false
-});
+public void SendPositionUpdate(byte[] data)
+{
+    SDK.BroadcastP2PMessage(data, channel: 1, reliable: false);
+}
 ```
+
+```javascript JavaScript
+// Reliable
+WavedashJS.broadcastP2PMessage({ channel: 0, data: gameStateData, reliable: true });
+
+// Unreliable
+WavedashJS.broadcastP2PMessage({ channel: 1, data: positionData, reliable: false });
+```
+</CodeGroup>
 
 ## Connection state
 
-Check the P2P connection state:
+<CodeGroup>
+```gdscript Godot
+func check_connection_state():
+    var connection = WavedashSDK.get_p2p_connection()
+    if connection:
+        print("Lobby: ", connection["lobbyId"])
+        print("State: ", connection["state"])
+        print("Peers: ", connection["peers"].size())
+```
 
-```javascript
+```csharp Unity
+public void CheckConnectionState()
+{
+    var connection = SDK.GetP2PConnection();
+    if (connection != null)
+    {
+        Debug.Log($"Lobby: {connection["lobbyId"]}");
+        Debug.Log($"State: {connection["state"]}");
+    }
+}
+```
+
+```javascript JavaScript
 const connection = WavedashJS.getP2PConnection();
 
 if (connection) {
@@ -146,6 +219,7 @@ if (connection) {
   console.log(`Peers: ${Object.keys(connection.peers).length}`);
 }
 ```
+</CodeGroup>
 
 ### Connection states
 
@@ -158,60 +232,50 @@ if (connection) {
 
 ## Signals
 
+<CodeGroup>
+```gdscript Godot
+func _ready():
+    WavedashSDK.p2p_connection_established.connect(_on_p2p_connected)
+    WavedashSDK.p2p_connection_failed.connect(_on_p2p_failed)
+    WavedashSDK.p2p_peer_disconnected.connect(_on_p2p_disconnected)
+
+func _on_p2p_connected(payload):
+    print("P2P connected to: ", payload["userId"])
+
+func _on_p2p_failed(payload):
+    print("P2P connection failed")
+
+func _on_p2p_disconnected(payload):
+    print("P2P peer disconnected: ", payload["userId"])
+```
+
+```csharp Unity
+void Awake()
+{
+    SDK.OnP2PConnectionEstablished += data => Debug.Log($"P2P connected to: {data["userId"]}");
+    SDK.OnP2PConnectionFailed += data => Debug.Log("P2P connection failed");
+    SDK.OnP2PPeerDisconnected += data => Debug.Log($"P2P peer disconnected: {data["userId"]}");
+}
+```
+
+```javascript JavaScript
+// Signals emitted for P2P events:
+// P2P_CONNECTION_ESTABLISHED - { userId, username }
+// P2P_CONNECTION_FAILED - { userId, error }
+// P2P_PEER_DISCONNECTED - { userId }
+```
+</CodeGroup>
+
 | Signal | Description | Data |
 |--------|-------------|------|
-| `P2P_CONNECTION_ESTABLISHED` | Peer connected successfully | `{ userId, username }` |
-| `P2P_CONNECTION_FAILED` | Connection to peer failed | `{ userId, error }` |
+| `P2P_CONNECTION_ESTABLISHED` | Peer connected | `{ userId, username }` |
+| `P2P_CONNECTION_FAILED` | Connection failed | `{ userId, error }` |
 | `P2P_PEER_DISCONNECTED` | Peer disconnected | `{ userId }` |
-| `P2P_MESSAGE` | Message received | `{ fromUserId, channel, payload }` |
 
 ## TURN fallback
 
-When direct peer-to-peer connections fail (due to strict NAT or firewalls), the SDK automatically falls back to TURN servers for relay. This ensures connectivity at the cost of slightly higher latency.
+When direct connections fail, the SDK automatically falls back to TURN servers for relay.
 
 <Note>
-TURN credentials are managed automatically by the SDK. No configuration is required.
+TURN credentials are managed automatically. No configuration required.
 </Note>
-
-## Peer information
-
-Access information about connected peers:
-
-```javascript
-const connection = WavedashJS.getP2PConnection();
-
-if (connection) {
-  for (const [userId, peer] of Object.entries(connection.peers)) {
-    console.log(`Peer: ${peer.username} (${peer.userId})`);
-  }
-}
-```
-
-### Peer structure
-
-```typescript
-interface P2PPeer {
-  userId: string;    // Peer's user ID
-  username: string;  // Peer's display name
-}
-```
-
-## Best practices
-
-<AccordionGroup>
-  <Accordion title="Use unreliable for frequent updates">
-    Position updates, input, and other frequently-sent data should use the unreliable channel to avoid head-of-line blocking.
-  </Accordion>
-  <Accordion title="Use reliable for important events">
-    Game state changes, chat messages, and critical events should use the reliable channel.
-  </Accordion>
-  <Accordion title="Handle disconnections gracefully">
-    Always listen for `P2P_PEER_DISCONNECTED` and update your game state accordingly.
-  </Accordion>
-  <Accordion title="Keep messages small">
-    P2P messages should be as small as possible. Consider compression for larger data.
-  </Accordion>
-  <Accordion title="Use channels to organize data">
-    Separate different types of data into different channels for cleaner code and easier debugging.
-  </Accordion>
-</AccordionGroup>

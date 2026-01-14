@@ -18,19 +18,49 @@ You don't need to manually initialize the SDK in most cases.
 
 ## Checking ready state
 
-Before calling SDK methods, verify the SDK is ready:
+<CodeGroup>
+```gdscript Godot
+func _ready():
+    WavedashSDK.backend_connected.connect(_on_connected)
+    WavedashSDK.init({"debug": true})
+    WavedashSDK.ready_for_events()
 
-```javascript
-// Check if SDK is ready
-if (WavedashJS.isReady()) {
-  // SDK is ready to use
-  const response = await WavedashJS.getLeaderboard("high-scores");
+func _on_connected(payload):
+    print("SDK is ready!")
+    var user_id = WavedashSDK.get_user_id()
+    var username = WavedashSDK.get_username()
+    print("Playing as: ", username)
+```
+
+```csharp Unity
+using Wavedash;
+
+public class GameManager : MonoBehaviour
+{
+    void Start()
+    {
+        SDK.Init(new Dictionary<string, object>
+        {
+            { "debug", true }
+        });
+
+        if (SDK.IsReady())
+        {
+            var user = SDK.GetUser();
+            Debug.Log($"Playing as: {user["username"]}");
+        }
+    }
 }
 ```
 
-## Configuration options
+```javascript JavaScript
+if (WavedashJS.isReady()) {
+  const response = await WavedashJS.getLeaderboard("high-scores");
+}
+```
+</CodeGroup>
 
-The SDK accepts configuration through the `init()` method. While this is typically called automatically, you can customize behavior:
+## Configuration options
 
 ```typescript
 interface WavedashConfig {
@@ -45,52 +75,130 @@ interface WavedashConfig {
 
 ### Debug mode
 
-Enable verbose logging to help debug SDK issues:
-
-```javascript
-// Debug mode is typically set via the Wavedash dashboard
-// or automatically enabled in development
+<CodeGroup>
+```gdscript Godot
+func _ready():
+    WavedashSDK.init({"debug": true})
 ```
 
-### P2P configuration
-
-Customize peer-to-peer networking:
-
-```typescript
-interface P2PConfig {
-  maxPeers: number;              // Maximum concurrent peer connections
-  enableReliableChannel: boolean;  // Enable reliable (TCP-like) channel
-  enableUnreliableChannel: boolean; // Enable unreliable (UDP-like) channel
+```csharp Unity
+void Start()
+{
+    SDK.Init(new Dictionary<string, object>
+    {
+        { "debug", true }
+    });
 }
 ```
 
+```javascript JavaScript
+// Debug mode is typically set via the Wavedash dashboard
+// or automatically enabled in development
+```
+</CodeGroup>
+
 ## Event deferral
 
-By default, the SDK starts sending signals to your game immediately. If you need to defer events until your game is ready:
+By default, the SDK starts sending signals immediately. If you need to defer events:
 
-```javascript
-// Signal you're ready to receive events
-WavedashJS.readyForEvents();
+<CodeGroup>
+```gdscript Godot
+func _ready():
+    # Connect all your signal handlers first
+    WavedashSDK.lobby_joined.connect(_on_lobby_joined)
+    WavedashSDK.lobby_message.connect(_on_lobby_message)
+    WavedashSDK.p2p_connection_established.connect(_on_p2p_connected)
+
+    # Initialize the SDK
+    WavedashSDK.init({"debug": true})
+
+    # Then signal you're ready to receive events
+    WavedashSDK.ready_for_events()
 ```
 
-This is useful when your game needs time to set up event listeners before receiving signals.
+```csharp Unity
+void Awake()
+{
+    SDK.OnLobbyJoined += HandleLobbyJoined;
+    SDK.OnLobbyMessage += HandleLobbyMessage;
+    SDK.OnP2PConnectionEstablished += HandleP2PConnected;
+}
+
+void Start()
+{
+    SDK.Init(new Dictionary<string, object> { { "debug", true } });
+    SDK.ReadyForEvents();
+}
+```
+
+```javascript JavaScript
+WavedashJS.readyForEvents();
+```
+</CodeGroup>
 
 ## Current user
 
-Access the authenticated user's information:
+<CodeGroup>
+```gdscript Godot
+func get_current_user():
+    var user_id = WavedashSDK.get_user_id()
+    var username = WavedashSDK.get_username()
+    print("User ID: ", user_id)
+    print("Username: ", username)
+```
 
-```javascript
-// Get the current user's ID
+```csharp Unity
+public void GetCurrentUser()
+{
+    var userId = SDK.GetUserId();
+    var user = SDK.GetUser();
+    Debug.Log($"User ID: {userId}");
+    Debug.Log($"Username: {user["username"]}");
+}
+```
+
+```javascript JavaScript
 const userId = WavedashJS.getUserId();
-
-// Get user info (username, etc.)
 const user = WavedashJS.getUser();
 console.log(`Playing as: ${user.username}`);
 ```
+</CodeGroup>
 
 ## Backend connection
 
-The SDK automatically manages the connection to the Wavedash backend and emits signals for connection state changes:
+<CodeGroup>
+```gdscript Godot
+func _ready():
+    WavedashSDK.backend_connected.connect(_on_backend_connected)
+    WavedashSDK.backend_disconnected.connect(_on_backend_disconnected)
+    WavedashSDK.backend_reconnecting.connect(_on_backend_reconnecting)
+
+func _on_backend_connected(payload):
+    print("Connected to Wavedash!")
+
+func _on_backend_disconnected(payload):
+    print("Disconnected from Wavedash")
+
+func _on_backend_reconnecting(payload):
+    print("Reconnecting...")
+```
+
+```csharp Unity
+void Awake()
+{
+    SDK.OnBackendConnected += data => Debug.Log("Connected to Wavedash!");
+    SDK.OnBackendDisconnected += data => Debug.Log("Disconnected from Wavedash");
+    SDK.OnBackendReconnecting += data => Debug.Log("Reconnecting...");
+}
+```
+
+```javascript JavaScript
+// Connection signals are emitted automatically:
+// BACKEND_CONNECTED - Successfully connected to backend
+// BACKEND_DISCONNECTED - Disconnected from backend
+// BACKEND_RECONNECTING - Attempting to reconnect
+```
+</CodeGroup>
 
 | Signal | Description |
 |--------|-------------|
@@ -98,65 +206,78 @@ The SDK automatically manages the connection to the Wavedash backend and emits s
 | `BACKEND_DISCONNECTED` | Disconnected from backend |
 | `BACKEND_RECONNECTING` | Attempting to reconnect |
 
-See [Signals Reference](/sdk/signals) for handling these events.
-
 ## Engine-specific initialization
 
-<Tabs>
-  <Tab title="Godot">
-    The Wavedash Godot SDK wraps the JavaScript SDK. Initialize in your autoload:
+<CodeGroup>
+```gdscript Godot
+# Wavedash.gd (Autoload)
+extends Node
 
-    ```gdscript
-    # Wavedash.gd (Autoload)
-    extends Node
+func _ready():
+    WavedashSDK.backend_connected.connect(_on_connected)
+    WavedashSDK.backend_disconnected.connect(_on_disconnected)
+    WavedashSDK.init({"debug": true})
+    WavedashSDK.ready_for_events()
 
-    func _ready():
-        # SDK is automatically initialized
-        # Connect to signals you need
-        Wavedash.backend_connected.connect(_on_connected)
+func _on_connected(payload):
+    print("Connected to Wavedash!")
+    var username = WavedashSDK.get_username()
+    print("Playing as: ", username)
 
-    func _on_connected():
-        print("Connected to Wavedash!")
-    ```
-  </Tab>
-  <Tab title="Unity">
-    Access the SDK through JavaScript interop:
+func _on_disconnected(payload):
+    print("Disconnected from Wavedash")
+```
 
-    ```csharp
-    using System.Runtime.InteropServices;
+```csharp Unity
+using Wavedash;
+using System.Collections.Generic;
 
-    public class WavedashSDK : MonoBehaviour
+public class WavedashManager : MonoBehaviour
+{
+    void Awake()
     {
-        [DllImport("__Internal")]
-        private static extern bool WavedashIsReady();
+        SDK.OnBackendConnected += HandleConnected;
+        SDK.OnBackendDisconnected += HandleDisconnected;
+    }
 
-        void Start()
+    void Start()
+    {
+        SDK.Init(new Dictionary<string, object>
         {
-            if (WavedashIsReady())
-            {
-                Debug.Log("Wavedash SDK is ready!");
-            }
+            { "debug", true }
+        });
+
+        if (SDK.IsReady())
+        {
+            var user = SDK.GetUser();
+            Debug.Log($"Playing as: {user["username"]}");
         }
     }
-    ```
-  </Tab>
-  <Tab title="Custom">
-    Access the SDK directly through JavaScript:
 
-    ```javascript
-    // Wait for SDK to be ready
-    function waitForWavedash() {
-      if (window.WavedashJS && WavedashJS.isReady()) {
-        initGame();
-      } else {
-        setTimeout(waitForWavedash, 100);
-      }
+    void HandleConnected(Dictionary<string, object> data)
+    {
+        Debug.Log("Connected to Wavedash!");
     }
 
-    waitForWavedash();
-    ```
-  </Tab>
-</Tabs>
+    void HandleDisconnected(Dictionary<string, object> data)
+    {
+        Debug.Log("Disconnected from Wavedash");
+    }
+}
+```
+
+```javascript JavaScript
+function waitForWavedash() {
+  if (window.WavedashJS && WavedashJS.isReady()) {
+    initGame();
+  } else {
+    setTimeout(waitForWavedash, 100);
+  }
+}
+
+waitForWavedash();
+```
+</CodeGroup>
 
 ## Troubleshooting
 

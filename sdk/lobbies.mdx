@@ -9,7 +9,43 @@ The Lobbies API lets you create multiplayer rooms where players can gather befor
 
 Create a new lobby and automatically join it:
 
-```javascript
+<CodeGroup>
+```gdscript Godot
+func _ready():
+    WavedashSDK.lobby_created.connect(_on_lobby_created)
+
+func create_lobby():
+    # Lobby types: PUBLIC, FRIENDS_ONLY, or PRIVATE
+    WavedashSDK.create_lobby(WavedashConstants.LOBBY_TYPE_PUBLIC, 4)
+
+func _on_lobby_created(response):
+    if response.get("success", false):
+        var lobby_id = response["data"]
+        print("Created lobby: ", lobby_id)
+```
+
+```csharp Unity
+using Wavedash;
+
+public class LobbyExample : MonoBehaviour
+{
+    public async void CreateLobby()
+    {
+        // Lobby types: 0 = public, 1 = friends only, 2 = private
+        var lobbyId = await SDK.CreateLobby(
+            lobbyType: 0,
+            maxPlayers: 4
+        );
+
+        if (!string.IsNullOrEmpty(lobbyId))
+        {
+            Debug.Log($"Created lobby: {lobbyId}");
+        }
+    }
+}
+```
+
+```javascript JavaScript
 const response = await WavedashJS.createLobby({
   visibility: "public",  // "public", "private", or "friends"
   maxPlayers: 4         // Optional player limit
@@ -20,6 +56,7 @@ if (response.success) {
   console.log(`Created lobby: ${lobbyId}`);
 }
 ```
+</CodeGroup>
 
 ### Visibility options
 
@@ -33,32 +70,97 @@ if (response.success) {
 
 Join an existing lobby by ID:
 
-```javascript
+<CodeGroup>
+```gdscript Godot
+func _ready():
+    WavedashSDK.lobby_joined.connect(_on_lobby_joined)
+
+func join_lobby(lobby_id: String):
+    WavedashSDK.join_lobby(lobby_id)
+
+func _on_lobby_joined(response):
+    if response.get("success", false):
+        print("Joined lobby!")
+```
+
+```csharp Unity
+public async void JoinLobby(string lobbyId)
+{
+    var result = await SDK.JoinLobby(lobbyId);
+    if (!string.IsNullOrEmpty(result))
+    {
+        Debug.Log("Joined lobby!");
+    }
+}
+```
+
+```javascript JavaScript
 const response = await WavedashJS.joinLobby(lobbyId);
 
 if (response.success) {
   console.log("Joined lobby!");
-  // LOBBY_JOINED signal is emitted
 }
 ```
+</CodeGroup>
 
 ## Leaving a lobby
 
-Leave the current lobby:
+<CodeGroup>
+```gdscript Godot
+func leave_lobby(lobby_id: String):
+    WavedashSDK.leave_lobby(lobby_id)
 
-```javascript
+func _on_lobby_left(payload):
+    print("Left lobby")
+```
+
+```csharp Unity
+public async void LeaveLobby(string lobbyId)
+{
+    await SDK.LeaveLobby(lobbyId);
+    Debug.Log("Left lobby");
+}
+```
+
+```javascript JavaScript
 const response = await WavedashJS.leaveLobby(lobbyId);
 
 if (response.success) {
   console.log("Left lobby");
 }
 ```
+</CodeGroup>
 
 ## Listing available lobbies
 
 Find public lobbies to join:
 
-```javascript
+<CodeGroup>
+```gdscript Godot
+func _ready():
+    WavedashSDK.got_lobbies.connect(_on_got_lobbies)
+
+func list_lobbies():
+    WavedashSDK.list_available_lobbies()
+
+func _on_got_lobbies(lobbies: Array):
+    for lobby in lobbies:
+        print(lobby["id"], ": ", lobby["numUsers"], "/", lobby["maxPlayers"], " players")
+```
+
+```csharp Unity
+public async void ListLobbies()
+{
+    var lobbies = await SDK.ListAvailableLobbies();
+
+    foreach (var lobby in lobbies)
+    {
+        Debug.Log($"{lobby["id"]}: {lobby["numUsers"]}/{lobby["maxPlayers"]} players");
+    }
+}
+```
+
+```javascript JavaScript
 const response = await WavedashJS.listLobbies();
 
 if (response.success) {
@@ -67,22 +169,69 @@ if (response.success) {
   });
 }
 ```
+</CodeGroup>
 
 ## Lobby users
 
 ### Get users in a lobby
 
-```javascript
+<CodeGroup>
+```gdscript Godot
+func get_lobby_users_list(lobby_id: String) -> Array:
+    var users = WavedashSDK.get_lobby_users(lobby_id)
+    for user in users:
+        print("- ", user["username"], " (", user["id"], ")")
+    return users
+```
+
+```csharp Unity
+public void GetLobbyUsers(string lobbyId)
+{
+    var users = SDK.GetLobbyUsers(lobbyId);
+
+    foreach (var user in users)
+    {
+        Debug.Log($"- {user["username"]} ({user["id"]})");
+    }
+}
+```
+
+```javascript JavaScript
 const users = WavedashJS.getLobbyUsers(lobbyId);
 
 users.forEach(user => {
   console.log(`- ${user.username} (${user.id})`);
 });
 ```
+</CodeGroup>
 
 ### Get the host
 
-```javascript
+<CodeGroup>
+```gdscript Godot
+func is_host(lobby_id: String) -> bool:
+    var host_id = WavedashSDK.get_lobby_host_id(lobby_id)
+    var is_host = host_id == WavedashSDK.get_user_id()
+    if is_host:
+        print("You are the host!")
+    return is_host
+```
+
+```csharp Unity
+public bool IsHost(string lobbyId)
+{
+    var hostId = SDK.GetLobbyHostId(lobbyId);
+    var isHost = hostId == SDK.GetUserId();
+
+    if (isHost)
+    {
+        Debug.Log("You are the host!");
+    }
+    return isHost;
+}
+```
+
+```javascript JavaScript
 const hostId = WavedashJS.getHostId(lobbyId);
 const isHost = hostId === WavedashJS.getUserId();
 
@@ -90,24 +239,51 @@ if (isHost) {
   console.log("You are the host!");
 }
 ```
+</CodeGroup>
 
 ### Get user count
 
-```javascript
+<CodeGroup>
+```gdscript Godot
+var count = WavedashSDK.get_num_lobby_users(lobby_id)
+print(count, " players in lobby")
+```
+
+```csharp Unity
+var count = SDK.GetNumLobbyUsers(lobbyId);
+Debug.Log($"{count} players in lobby");
+```
+
+```javascript JavaScript
 const count = WavedashJS.getNumLobbyUsers(lobbyId);
 console.log(`${count} players in lobby`);
 ```
+</CodeGroup>
 
 ## Lobby messaging
 
 Send messages to all players in the lobby:
 
-```javascript
+<CodeGroup>
+```gdscript Godot
+func send_chat_message(lobby_id: String, message: String):
+    WavedashSDK.send_lobby_chat_message(lobby_id, message)
+```
+
+```csharp Unity
+public void SendChatMessage(string lobbyId, string message)
+{
+    SDK.SendLobbyChatMessage(lobbyId, message);
+}
+```
+
+```javascript JavaScript
 const response = await WavedashJS.sendLobbyMessage({
   lobbyId: lobbyId,
   content: "Hello everyone!"
 });
 ```
+</CodeGroup>
 
 <Note>
 Messages have a maximum length of 1000 characters.
@@ -115,21 +291,39 @@ Messages have a maximum length of 1000 characters.
 
 ### Receiving messages
 
-Listen for the `LOBBY_MESSAGE` signal:
-
-```javascript
-// Messages are delivered via signals
-// See your engine's signal handling documentation
-```
-
-```gdscript
-# Godot example
+<CodeGroup>
+```gdscript Godot
 func _ready():
-    Wavedash.lobby_message.connect(_on_lobby_message)
+    WavedashSDK.lobby_message.connect(_on_lobby_message)
 
-func _on_lobby_message(message: Dictionary):
-    print(message.username, ": ", message.content)
+func _on_lobby_message(payload):
+    print(payload["username"], ": ", payload["content"])
 ```
+
+```csharp Unity
+void Awake()
+{
+    SDK.OnLobbyMessage += HandleLobbyMessage;
+}
+
+void HandleLobbyMessage(Dictionary<string, object> data)
+{
+    Debug.Log($"{data["username"]}: {data["content"]}");
+}
+
+void OnDestroy()
+{
+    SDK.OnLobbyMessage -= HandleLobbyMessage;
+}
+```
+
+```javascript JavaScript
+// Messages are delivered via signals
+function onLobbyMessage(message) {
+  console.log(`${message.username}: ${message.content}`);
+}
+```
+</CodeGroup>
 
 ## Lobby metadata
 
@@ -137,34 +331,49 @@ Store custom key-value data on the lobby. Only the host can set metadata.
 
 ### Set metadata (host only)
 
-```javascript
-// Set a single value
-WavedashJS.setLobbyData(lobbyId, "gameMode", "deathmatch");
-WavedashJS.setLobbyData(lobbyId, "mapName", "arena_01");
-
-// Changes are batched and sent automatically
+<CodeGroup>
+```gdscript Godot
+func set_game_settings(lobby_id: String):
+    # Only the host can set lobby data
+    WavedashSDK.set_lobby_data(lobby_id, "gameMode", "deathmatch")
+    WavedashSDK.set_lobby_data(lobby_id, "mapName", "arena_01")
 ```
 
-<Note>
-Metadata updates are batched—you can call `setLobbyData` multiple times and changes are sent in a single request.
-</Note>
+```csharp Unity
+public void SetGameSettings(string lobbyId)
+{
+    // Only the host can set lobby data
+    SDK.SetLobbyData(lobbyId, "gameMode", "deathmatch");
+    SDK.SetLobbyData(lobbyId, "mapName", "arena_01");
+}
+```
+
+```javascript JavaScript
+WavedashJS.setLobbyData(lobbyId, "gameMode", "deathmatch");
+WavedashJS.setLobbyData(lobbyId, "mapName", "arena_01");
+```
+</CodeGroup>
 
 ### Get metadata
 
-```javascript
+<CodeGroup>
+```gdscript Godot
+var game_mode = WavedashSDK.get_lobby_data(lobby_id, "gameMode")
+var map_name = WavedashSDK.get_lobby_data(lobby_id, "mapName")
+```
+
+```csharp Unity
+var gameMode = SDK.GetLobbyData(lobbyId, "gameMode");
+var mapName = SDK.GetLobbyData(lobbyId, "mapName");
+```
+
+```javascript JavaScript
 const gameMode = WavedashJS.getLobbyData(lobbyId, "gameMode");
 const mapName = WavedashJS.getLobbyData(lobbyId, "mapName");
 ```
-
-### Get max players
-
-```javascript
-const maxPlayers = WavedashJS.getLobbyMaxPlayers(lobbyId);
-```
+</CodeGroup>
 
 ## Signals
-
-The SDK emits signals for lobby events:
 
 | Signal | Description | Data |
 |--------|-------------|------|
@@ -174,59 +383,30 @@ The SDK emits signals for lobby events:
 | `LOBBY_DATA_UPDATED` | Metadata changed | `{ key, value }` |
 | `LOBBY_KICKED` | Removed from lobby | `{ reason }` |
 
-See [Signals Reference](/sdk/signals) for handling these in your engine.
-
 ## P2P integration
 
-When players join a lobby, P2P connections are automatically established between all members. See [P2P Networking](/sdk/p2p) for sending game data directly between players.
+When players join a lobby, P2P connections are automatically established. See [P2P Networking](/sdk/p2p).
 
-```javascript
+<CodeGroup>
+```gdscript Godot
+# After joining a lobby, you can send P2P messages
+func broadcast_game_data(data: PackedByteArray):
+    WavedashSDK.send_p2p_message("", data, 0, true)
+```
+
+```csharp Unity
+// After joining a lobby, you can send P2P messages
+public void BroadcastGameData(byte[] data)
+{
+    SDK.BroadcastP2PMessage(data, channel: 0, reliable: true);
+}
+```
+
+```javascript JavaScript
 // After joining a lobby, you can send P2P messages
 WavedashJS.broadcastP2PMessage({
   channel: 0,
   data: new Uint8Array([1, 2, 3])
 });
 ```
-
-## Lobby structure
-
-```typescript
-interface Lobby {
-  id: string;                    // Lobby ID
-  hostId: string;                // Host's user ID
-  visibility: LobbyVisibility;   // "public" | "private" | "friends"
-  maxPlayers: number;            // Maximum allowed players
-  numUsers: number;              // Current player count
-  metadata: Record<string, any>; // Custom key-value data
-}
-
-interface LobbyUser {
-  id: string;       // User ID
-  username: string; // Display name
-}
-
-interface LobbyMessage {
-  id: string;       // Message ID
-  userId: string;   // Sender's user ID
-  username: string; // Sender's display name
-  content: string;  // Message content
-  createdAt: number; // Timestamp
-}
-```
-
-## Best practices
-
-<AccordionGroup>
-  <Accordion title="Use metadata for game settings">
-    Store game configuration (map, mode, rules) in lobby metadata so all players can see the settings before the game starts.
-  </Accordion>
-  <Accordion title="Handle user updates gracefully">
-    Listen for `LOBBY_USERS_UPDATED` to update your UI when players join or leave.
-  </Accordion>
-  <Accordion title="Validate on the host">
-    For authoritative game logic, have the host validate actions before broadcasting to other players.
-  </Accordion>
-  <Accordion title="Clean up on leave">
-    When leaving a lobby, clean up any P2P connections and local state.
-  </Accordion>
-</AccordionGroup>
+</CodeGroup>

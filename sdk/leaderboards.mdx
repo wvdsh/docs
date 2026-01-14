@@ -13,7 +13,41 @@ Leaderboards are currently created by the Wavedash team. Contact us at [develope
 
 Retrieve an existing leaderboard by name:
 
-```javascript
+<CodeGroup>
+```gdscript Godot
+func _ready():
+    WavedashSDK.got_leaderboard.connect(_on_got_leaderboard)
+
+func fetch_leaderboard():
+    WavedashSDK.get_leaderboard("high-scores")
+
+func _on_got_leaderboard(response):
+    if response.get("success", false):
+        var leaderboard = response["data"]
+        print("Leaderboard: ", leaderboard["name"])
+        print("Total entries: ", leaderboard["totalEntries"])
+        print("Sort order: ", leaderboard["sortOrder"])
+```
+
+```csharp Unity
+using Wavedash;
+
+public class LeaderboardExample : MonoBehaviour
+{
+    async void Start()
+    {
+        var leaderboard = await SDK.GetLeaderboard("high-scores");
+        if (leaderboard != null)
+        {
+            Debug.Log($"Leaderboard: {leaderboard["name"]}");
+            Debug.Log($"Total entries: {leaderboard["totalEntries"]}");
+            Debug.Log($"Sort order: {leaderboard["sortOrder"]}");
+        }
+    }
+}
+```
+
+```javascript JavaScript
 const response = await WavedashJS.getLeaderboard("high-scores");
 
 if (response.success) {
@@ -23,12 +57,48 @@ if (response.success) {
   console.log(`Sort order: ${leaderboard.sortOrder}`);
 }
 ```
+</CodeGroup>
 
 ## Creating a leaderboard
 
 Create a leaderboard if it doesn't exist, or get it if it does:
 
-```javascript
+<CodeGroup>
+```gdscript Godot
+func create_leaderboard():
+    # Sort: ASCENDING (lower is better) or DESCENDING (higher is better)
+    # Display: NUMERIC, TIME_SECONDS, or TIME_MILLISECONDS
+    WavedashSDK.get_or_create_leaderboard(
+        "speedrun-times",
+        WavedashConstants.LEADERBOARD_SORT_ASCENDING,
+        WavedashConstants.LEADERBOARD_DISPLAY_TYPE_TIME_MILLISECONDS
+    )
+
+func _on_got_leaderboard(response):
+    if response.get("success", false):
+        var leaderboard_id = response["data"]["id"]
+        print("Leaderboard ID: ", leaderboard_id)
+```
+
+```csharp Unity
+public async void CreateLeaderboard()
+{
+    // Sort: 0 = ascending, 1 = descending
+    // Display: 0 = numeric, 1 = time
+    var leaderboard = await SDK.GetOrCreateLeaderboard(
+        "speedrun-times",
+        sortOrder: 0,
+        displayType: 1
+    );
+
+    if (leaderboard != null)
+    {
+        Debug.Log($"Leaderboard ID: {leaderboard["id"]}");
+    }
+}
+```
+
+```javascript JavaScript
 const response = await WavedashJS.getOrCreateLeaderboard(
   "speedrun-times",      // Leaderboard name
   "ascending",           // Sort order: "ascending" or "descending"
@@ -40,6 +110,7 @@ if (response.success) {
   console.log(`Leaderboard ID: ${leaderboard.id}`);
 }
 ```
+</CodeGroup>
 
 ### Sort order
 
@@ -59,7 +130,40 @@ if (response.success) {
 
 Upload a player's score to a leaderboard:
 
-```javascript
+<CodeGroup>
+```gdscript Godot
+func _ready():
+    WavedashSDK.posted_leaderboard_score.connect(_on_score_posted)
+
+func submit_score(leaderboard_id: String, score: int):
+    # keep_best = true to only update if better than existing
+    WavedashSDK.post_leaderboard_score(leaderboard_id, score, true)
+
+func _on_score_posted(response):
+    if response.get("success", false):
+        var entry = response["data"]
+        print("Rank: ", entry["rank"])
+        print("Score: ", entry["score"])
+```
+
+```csharp Unity
+public async void SubmitScore(string leaderboardId, int score)
+{
+    var result = await SDK.UploadLeaderboardScore(
+        leaderboardId,
+        score,
+        keepBest: true  // Only update if better than existing
+    );
+
+    if (result != null)
+    {
+        Debug.Log($"Rank: {result["rank"]}");
+        Debug.Log($"Score: {result["score"]}");
+    }
+}
+```
+
+```javascript JavaScript
 const response = await WavedashJS.uploadLeaderboardScore({
   leaderboardId: "j57abc123...",  // Leaderboard ID
   score: 1500,                     // Score value
@@ -72,6 +176,7 @@ if (response.success) {
   console.log(`Score: ${entry.score}`);
 }
 ```
+</CodeGroup>
 
 ### Parameters
 
@@ -92,7 +197,38 @@ Use `keepBest: true` to automatically handle personal best tracking. The SDK com
 
 Get the top entries from a leaderboard:
 
-```javascript
+<CodeGroup>
+```gdscript Godot
+func _ready():
+    WavedashSDK.got_leaderboard_entries.connect(_on_got_entries)
+
+func get_top_scores(leaderboard_id: String):
+    # offset, limit, include_ugc
+    WavedashSDK.get_leaderboard_entries(leaderboard_id, 0, 10, false)
+
+func _on_got_entries(response):
+    if response.get("success", false):
+        for entry in response["data"]:
+            print("#", entry["rank"], " ", entry["username"], ": ", entry["score"])
+```
+
+```csharp Unity
+public async void GetTopScores(string leaderboardId)
+{
+    var entries = await SDK.ListLeaderboardEntries(
+        leaderboardId,
+        offset: 0,
+        limit: 10
+    );
+
+    foreach (var entry in entries)
+    {
+        Debug.Log($"#{entry["rank"]} {entry["username"]}: {entry["score"]}");
+    }
+}
+```
+
+```javascript JavaScript
 const response = await WavedashJS.listLeaderboardEntries({
   leaderboardId: "j57abc123...",
   offset: 0,    // Start from rank 1
@@ -105,12 +241,47 @@ if (response.success) {
   });
 }
 ```
+</CodeGroup>
 
 ### List entries around user
 
 Get entries around the current player's rank:
 
-```javascript
+<CodeGroup>
+```gdscript Godot
+func get_scores_around_me(leaderboard_id: String):
+    # count_ahead, count_behind, include_ugc
+    WavedashSDK.get_leaderboard_entries_around_player(leaderboard_id, 5, 5, false)
+
+func _on_got_entries(response):
+    if response.get("success", false):
+        var my_id = WavedashSDK.get_user_id()
+        for entry in response["data"]:
+            var is_me = entry["userId"] == my_id
+            var prefix = "> " if is_me else "  "
+            print(prefix, "#", entry["rank"], " ", entry["username"], ": ", entry["score"])
+```
+
+```csharp Unity
+public async void GetScoresAroundMe(string leaderboardId)
+{
+    var entries = await SDK.ListLeaderboardEntriesAroundUser(
+        leaderboardId,
+        countAhead: 5,
+        countBehind: 5
+    );
+
+    var myId = SDK.GetUserId();
+    foreach (var entry in entries)
+    {
+        var isMe = entry["userId"].ToString() == myId;
+        var prefix = isMe ? "> " : "  ";
+        Debug.Log($"{prefix}#{entry["rank"]} {entry["username"]}: {entry["score"]}");
+    }
+}
+```
+
+```javascript JavaScript
 const response = await WavedashJS.listLeaderboardEntriesAroundUser({
   leaderboardId: "j57abc123...",
   countAhead: 5,   // 5 entries with better scores
@@ -125,12 +296,39 @@ if (response.success) {
   });
 }
 ```
+</CodeGroup>
 
 ### Get player's entry
 
 Get the current player's leaderboard entry:
 
-```javascript
+<CodeGroup>
+```gdscript Godot
+func get_my_entry(leaderboard_id: String):
+    WavedashSDK.get_my_leaderboard_entries(leaderboard_id)
+
+func _on_got_my_entries(response):
+    if response.get("success", false) and response["data"].size() > 0:
+        var my_entry = response["data"][0]
+        print("Your rank: #", my_entry["rank"])
+        print("Your score: ", my_entry["score"])
+```
+
+```csharp Unity
+public async void GetMyEntry(string leaderboardId)
+{
+    var entries = await SDK.GetMyLeaderboardEntries(leaderboardId);
+
+    if (entries != null && entries.Count > 0)
+    {
+        var myEntry = entries[0];
+        Debug.Log($"Your rank: #{myEntry["rank"]}");
+        Debug.Log($"Your score: {myEntry["score"]}");
+    }
+}
+```
+
+```javascript JavaScript
 const response = await WavedashJS.getMyLeaderboardEntries({
   leaderboardId: "j57abc123..."
 });
@@ -141,15 +339,28 @@ if (response.success && response.data.length > 0) {
   console.log(`Your score: ${myEntry.score}`);
 }
 ```
+</CodeGroup>
 
 ## Entry count
 
 Get the total number of entries (cached, synchronous):
 
-```javascript
+<CodeGroup>
+```gdscript Godot
+var count = WavedashSDK.get_leaderboard_entry_count(leaderboard_id)
+print("Total players: ", count)
+```
+
+```csharp Unity
+var count = SDK.GetLeaderboardEntryCount(leaderboardId);
+Debug.Log($"Total players: {count}");
+```
+
+```javascript JavaScript
 const count = WavedashJS.getLeaderboardEntryCount("j57abc123...");
 console.log(`Total players: ${count}`);
 ```
+</CodeGroup>
 
 <Note>
 This returns a cached value from the last query. Returns -1 if the leaderboard hasn't been queried yet.
@@ -173,7 +384,26 @@ interface LeaderboardEntry {
 
 You can attach user-generated content (like replays or screenshots) to leaderboard entries:
 
-```javascript
+<CodeGroup>
+```gdscript Godot
+func submit_score_with_replay(leaderboard_id: String, score: int, ugc_id: String):
+    # Submit score with UGC attachment
+    WavedashSDK.post_leaderboard_score_with_ugc(leaderboard_id, score, true, ugc_id)
+```
+
+```csharp Unity
+public async void SubmitScoreWithReplay(string leaderboardId, int score, string ugcId)
+{
+    var result = await SDK.UploadLeaderboardScore(
+        leaderboardId,
+        score,
+        keepBest: true,
+        ugcId: ugcId
+    );
+}
+```
+
+```javascript JavaScript
 // First, create the UGC item
 const ugcResponse = await WavedashJS.createUGCItem({
   ugcType: "replay",
@@ -192,6 +422,7 @@ if (ugcResponse.success) {
   });
 }
 ```
+</CodeGroup>
 
 See [User-Generated Content](/sdk/ugc) for more on UGC.
 

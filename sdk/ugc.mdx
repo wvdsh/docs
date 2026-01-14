@@ -9,7 +9,50 @@ The UGC (User-Generated Content) API lets players upload and share content like 
 
 Create a new UGC item to get an upload URL:
 
-```javascript
+<CodeGroup>
+```gdscript Godot
+func _ready():
+    WavedashSDK.ugc_item_created.connect(_on_ugc_created)
+
+func create_screenshot_ugc(local_path: String):
+    WavedashSDK.create_ugc_item(
+        WavedashConstants.UGC_TYPE_SCREENSHOT,
+        "My Screenshot",
+        "A cool moment in the game",
+        WavedashConstants.UGC_VISIBILITY_PUBLIC,
+        local_path
+    )
+
+func _on_ugc_created(response):
+    if response.get("success", false):
+        var ugc_id = response["data"]["id"]
+        print("UGC created: ", ugc_id)
+```
+
+```csharp Unity
+using Wavedash;
+
+public class UGCExample : MonoBehaviour
+{
+    public async void CreateScreenshotUGC(string localPath)
+    {
+        var result = await SDK.CreateUGCItem(
+            ugcType: 0,        // 0 = screenshot
+            title: "My Screenshot",
+            description: "A cool moment in the game",
+            visibility: 0,     // 0 = public
+            localPath: localPath
+        );
+
+        if (result != null)
+        {
+            Debug.Log($"UGC created: {result["id"]}");
+        }
+    }
+}
+```
+
+```javascript JavaScript
 const response = await WavedashJS.createUGCItem({
   ugcType: "replay",
   visibility: "public",
@@ -25,14 +68,7 @@ if (response.success) {
   console.log(`Upload URL: ${ugcItem.uploadUrl}`);
 }
 ```
-
-### Parameters
-
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| `ugcType` | string | Yes | Type of content (e.g., "replay", "screenshot", "level") |
-| `visibility` | string | Yes | Access level: "public", "private", or "friends" |
-| `metadata` | object | No | Custom metadata for the content |
+</CodeGroup>
 
 ### Visibility options
 
@@ -44,10 +80,35 @@ if (response.success) {
 
 ## Uploading content
 
-After creating a UGC item, upload the file to the provided URL:
+<CodeGroup>
+```gdscript Godot
+# In Godot, pass the local file path when creating the UGC item
+# The SDK handles the upload automatically
+func upload_screenshot(local_path: String):
+    WavedashSDK.create_ugc_item(
+        WavedashConstants.UGC_TYPE_SCREENSHOT,
+        "Screenshot",
+        "Game screenshot",
+        WavedashConstants.UGC_VISIBILITY_PUBLIC,
+        local_path
+    )
+```
 
-```javascript
-// Create the UGC item
+```csharp Unity
+// In Unity, pass the local file path when creating the UGC item
+public async void UploadScreenshot(string localPath)
+{
+    var result = await SDK.CreateUGCItem(
+        ugcType: 0,
+        title: "Screenshot",
+        description: "Game screenshot",
+        visibility: 0,
+        localPath: localPath
+    );
+}
+```
+
+```javascript JavaScript
 const createResponse = await WavedashJS.createUGCItem({
   ugcType: "replay",
   visibility: "public"
@@ -56,78 +117,82 @@ const createResponse = await WavedashJS.createUGCItem({
 if (createResponse.success) {
   const { uploadUrl } = createResponse.data;
 
-  // Upload the file
-  const fileData = new Uint8Array([/* your file data */]);
-
   await fetch(uploadUrl, {
     method: "PUT",
     body: fileData,
-    headers: {
-      "Content-Type": "application/octet-stream"
-    }
+    headers: { "Content-Type": "application/octet-stream" }
   });
-
-  console.log("Upload complete!");
 }
 ```
-
-## Updating a UGC item
-
-Update an existing UGC item's metadata or visibility:
-
-```javascript
-const response = await WavedashJS.updateUGCItem({
-  ugcId: "ugc_abc123...",
-  visibility: "friends",
-  metadata: {
-    levelName: "World 1-1",
-    duration: 125,
-    verified: true
-  }
-});
-```
+</CodeGroup>
 
 ## Downloading content
 
-Download a UGC item by ID:
+<CodeGroup>
+```gdscript Godot
+func _ready():
+    WavedashSDK.ugc_item_downloaded.connect(_on_ugc_downloaded)
 
-```javascript
+func download_ugc(ugc_id: String, local_path: String):
+    WavedashSDK.download_ugc_item(ugc_id, local_path)
+
+func _on_ugc_downloaded(response):
+    if response.get("success", false):
+        print("UGC downloaded to local path")
+```
+
+```csharp Unity
+public async void DownloadUGC(string ugcId, string localPath)
+{
+    var result = await SDK.DownloadUGCItem(ugcId, localPath);
+
+    if (result != null)
+    {
+        Debug.Log("UGC downloaded to local path");
+    }
+}
+```
+
+```javascript JavaScript
 const response = await WavedashJS.downloadUGCItem("ugc_abc123...");
 
 if (response.success) {
   const data = response.data; // Uint8Array
-  // Process the downloaded content
 }
 ```
+</CodeGroup>
 
 ## Attaching UGC to leaderboard entries
 
-You can attach UGC (like replays) to leaderboard scores:
+<CodeGroup>
+```gdscript Godot
+func submit_score_with_replay(leaderboard_id: String, score: int, ugc_id: String):
+    WavedashSDK.post_leaderboard_score_with_ugc(leaderboard_id, score, true, ugc_id)
+```
 
-```javascript
-// 1. Create and upload the replay
-const ugcResponse = await WavedashJS.createUGCItem({
-  ugcType: "replay",
-  visibility: "public"
-});
-
-if (ugcResponse.success) {
-  // Upload replay data...
-  await uploadReplayData(ugcResponse.data.uploadUrl, replayData);
-
-  // 2. Submit score with UGC attachment
-  const scoreResponse = await WavedashJS.uploadLeaderboardScore({
-    leaderboardId: "speedrun-times",
-    score: 12345,
-    keepBest: true,
-    ugcId: ugcResponse.data.id
-  });
+```csharp Unity
+public async void SubmitScoreWithReplay(string leaderboardId, int score, string ugcId)
+{
+    var result = await SDK.UploadLeaderboardScore(
+        leaderboardId,
+        score,
+        keepBest: true,
+        ugcId: ugcId
+    );
 }
 ```
 
-## UGC types
+```javascript JavaScript
+const scoreResponse = await WavedashJS.uploadLeaderboardScore({
+  leaderboardId: "speedrun-times",
+  score: 12345,
+  keepBest: true,
+  ugcId: ugcResponse.data.id
+});
+```
+</CodeGroup>
 
-Common UGC types to consider:
+## UGC types
 
 | Type | Description |
 |------|-------------|
@@ -136,104 +201,63 @@ Common UGC types to consider:
 | `level` | Custom level or map |
 | `save` | Save game data |
 | `skin` | Custom character/item skin |
-| `mod` | Game modification |
-
-<Note>
-UGC types are strings you define. Use consistent naming across your game.
-</Note>
-
-## Storage limits
-
-UGC storage limits depend on your Wavedash plan. Check the dashboard for your current limits and usage.
-
-## Best practices
-
-<AccordionGroup>
-  <Accordion title="Use appropriate visibility">
-    Default to "private" for save data and "public" for shareable content like replays.
-  </Accordion>
-  <Accordion title="Include useful metadata">
-    Add metadata that helps with discovery and display (level name, duration, thumbnail URL).
-  </Accordion>
-  <Accordion title="Validate content">
-    For custom levels or mods, validate the uploaded content before allowing it to be used.
-  </Accordion>
-  <Accordion title="Handle upload failures">
-    The upload URL is temporary. If an upload fails, create a new UGC item and try again.
-  </Accordion>
-</AccordionGroup>
 
 ## Example: Screenshot sharing
 
-```javascript
+<CodeGroup>
+```gdscript Godot
+func share_screenshot():
+    var image = get_viewport().get_texture().get_image()
+    var path = "user://screenshots/capture.png"
+
+    DirAccess.make_dir_recursive_absolute("user://screenshots")
+    image.save_png(path)
+
+    WavedashSDK.create_ugc_item(
+        WavedashConstants.UGC_TYPE_SCREENSHOT,
+        "Game Screenshot",
+        "Captured at level " + str(current_level),
+        WavedashConstants.UGC_VISIBILITY_PUBLIC,
+        path
+    )
+```
+
+```csharp Unity
+public async void ShareScreenshot()
+{
+    string path = $"{Application.persistentDataPath}/screenshots/capture.png";
+    Directory.CreateDirectory(Path.GetDirectoryName(path));
+    ScreenCapture.CaptureScreenshot(path);
+
+    await Task.Yield();
+
+    var result = await SDK.CreateUGCItem(
+        ugcType: 0,
+        title: "Game Screenshot",
+        description: $"Captured at level {currentLevel}",
+        visibility: 0,
+        localPath: path
+    );
+}
+```
+
+```javascript JavaScript
 async function shareScreenshot(imageData) {
-  // Create UGC item
   const response = await WavedashJS.createUGCItem({
     ugcType: "screenshot",
     visibility: "public",
-    metadata: {
-      width: 1920,
-      height: 1080,
-      level: currentLevel
-    }
+    metadata: { width: 1920, height: 1080, level: currentLevel }
   });
 
-  if (!response.success) {
-    console.error("Failed to create UGC item");
-    return null;
-  }
-
-  // Upload the image
-  await fetch(response.data.uploadUrl, {
-    method: "PUT",
-    body: imageData,
-    headers: {
-      "Content-Type": "image/png"
-    }
-  });
-
-  return response.data.id;
-}
-```
-
-## Example: Replay system
-
-```javascript
-class ReplaySystem {
-  constructor() {
-    this.frames = [];
-  }
-
-  recordFrame(state) {
-    this.frames.push(state);
-  }
-
-  async saveReplay() {
-    const replayData = this.encodeReplay();
-
-    const response = await WavedashJS.createUGCItem({
-      ugcType: "replay",
-      visibility: "public",
-      metadata: {
-        frameCount: this.frames.length,
-        duration: this.frames.length / 60,
-        version: "1.0"
-      }
+  if (response.success) {
+    await fetch(response.data.uploadUrl, {
+      method: "PUT",
+      body: imageData,
+      headers: { "Content-Type": "image/png" }
     });
-
-    if (response.success) {
-      await fetch(response.data.uploadUrl, {
-        method: "PUT",
-        body: replayData
-      });
-      return response.data.id;
-    }
-    return null;
+    return response.data.id;
   }
-
-  encodeReplay() {
-    // Encode frames to binary format
-    return new Uint8Array(/* encoded data */);
-  }
+  return null;
 }
 ```
+</CodeGroup>

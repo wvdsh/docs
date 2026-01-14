@@ -30,24 +30,9 @@ Push using a custom config:
 wvdsh build push --config ./deploy/wavedash.toml
 ```
 
-## Prerequisites
-
-Before pushing a build:
-
-<Steps>
-  <Step title="Authenticate">
-    Log in with `wvdsh auth login` if you haven't already.
-  </Step>
-  <Step title="Export your game">
-    Export your game for web:
-    - **Godot**: Export as HTML5
-    - **Unity**: Build for WebGL
-    - **Custom**: Bundle your HTML/JS files
-  </Step>
-  <Step title="Configure wavedash.toml">
-    Create a `wavedash.toml` with your org, game, and branch slugs. See the [Configuration](/cli/configuration) page.
-  </Step>
-</Steps>
+<Note>
+Before pushing, make sure you've [authenticated](/cli/auth) and [configured your wavedash.toml](/cli/configuration).
+</Note>
 
 ## How it works
 

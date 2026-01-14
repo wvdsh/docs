@@ -7,9 +7,43 @@ The Presence API lets you share player status and activity with friends and othe
 
 ## Updating presence
 
-Set the current player's presence status:
+<CodeGroup>
+```gdscript Godot
+func set_presence(status: String, details: String, game_data: Dictionary = {}):
+    WavedashSDK.update_user_presence(status, details, game_data)
 
-```javascript
+# Example usage
+func on_game_start():
+    set_presence("In Game", "Playing Level 5", {
+        "level": 5,
+        "score": 12500,
+        "lobbyId": current_lobby_id
+    })
+```
+
+```csharp Unity
+using Wavedash;
+
+public class PresenceExample : MonoBehaviour
+{
+    public void SetPresence(string status, string details, Dictionary<string, object> gameData = null)
+    {
+        SDK.UpdateUserPresence(status, details, gameData ?? new Dictionary<string, object>());
+    }
+
+    public void OnGameStart()
+    {
+        SetPresence("In Game", "Playing Level 5", new Dictionary<string, object>
+        {
+            { "level", 5 },
+            { "score", 12500 },
+            { "lobbyId", currentLobbyId }
+        });
+    }
+}
+```
+
+```javascript JavaScript
 const response = await WavedashJS.updateUserPresence({
   status: "In Game",
   details: "Playing Level 5",
@@ -20,6 +54,7 @@ const response = await WavedashJS.updateUserPresence({
   }
 });
 ```
+</CodeGroup>
 
 ### Parameters
 
@@ -33,39 +68,97 @@ const response = await WavedashJS.updateUserPresence({
 
 ### Menu vs in-game status
 
-```javascript
-// Player is in menu
-WavedashJS.updateUserPresence({
-  status: "In Menu",
-  details: "Main Menu"
-});
+<CodeGroup>
+```gdscript Godot
+func on_enter_menu():
+    WavedashSDK.update_user_presence("In Menu", "Main Menu", {})
 
-// Player starts a game
+func on_start_game(mode: String, map: String):
+    WavedashSDK.update_user_presence("In Game", mode + " on " + map, {
+        "mode": mode,
+        "map": map
+    })
+
+func on_join_lobby(lobby_id: String, player_count: int, max_players: int):
+    WavedashSDK.update_user_presence(
+        "In Lobby",
+        "Waiting (" + str(player_count) + "/" + str(max_players) + ")",
+        { "lobbyId": lobby_id, "canJoin": player_count < max_players }
+    )
+```
+
+```csharp Unity
+public void OnEnterMenu()
+{
+    SDK.UpdateUserPresence("In Menu", "Main Menu", new Dictionary<string, object>());
+}
+
+public void OnStartGame(string mode, string map)
+{
+    SDK.UpdateUserPresence("In Game", $"{mode} on {map}", new Dictionary<string, object>
+    {
+        { "mode", mode },
+        { "map", map }
+    });
+}
+
+public void OnJoinLobby(string lobbyId, int playerCount, int maxPlayers)
+{
+    SDK.UpdateUserPresence("In Lobby", $"Waiting ({playerCount}/{maxPlayers})",
+        new Dictionary<string, object>
+        {
+            { "lobbyId", lobbyId },
+            { "canJoin", playerCount < maxPlayers }
+        });
+}
+```
+
+```javascript JavaScript
+// In menu
+WavedashJS.updateUserPresence({ status: "In Menu", details: "Main Menu" });
+
+// In game
 WavedashJS.updateUserPresence({
   status: "In Game",
   details: "Deathmatch on Arena",
-  gameData: {
-    mode: "deathmatch",
-    map: "arena"
-  }
+  gameData: { mode: "deathmatch", map: "arena" }
 });
 
-// Player joins a lobby
+// In lobby
 WavedashJS.updateUserPresence({
   status: "In Lobby",
-  details: "Waiting for players (2/4)",
-  gameData: {
-    lobbyId: currentLobbyId,
-    canJoin: true
-  }
+  details: "Waiting (2/4)",
+  gameData: { lobbyId: currentLobbyId, canJoin: true }
 });
 ```
+</CodeGroup>
 
 ### Joinable games
 
 Include a `lobbyId` in `gameData` to enable "Join Game" functionality:
 
-```javascript
+<CodeGroup>
+```gdscript Godot
+func update_lobby_presence(lobby_id: String, current_players: int, max_players: int):
+    WavedashSDK.update_user_presence(
+        "In Lobby",
+        "Arena - Waiting",
+        { "lobbyId": lobby_id, "canJoin": current_players < max_players }
+    )
+```
+
+```csharp Unity
+public void UpdateLobbyPresence(string lobbyId, int currentPlayers, int maxPlayers)
+{
+    SDK.UpdateUserPresence("In Lobby", "Arena - Waiting", new Dictionary<string, object>
+    {
+        { "lobbyId", lobbyId },
+        { "canJoin", currentPlayers < maxPlayers }
+    });
+}
+```
+
+```javascript JavaScript
 WavedashJS.updateUserPresence({
   status: "In Lobby",
   details: "Arena - Waiting",
@@ -75,14 +168,43 @@ WavedashJS.updateUserPresence({
   }
 });
 ```
+</CodeGroup>
 
-Friends can see this status and join the lobby directly.
+## Connection signals
 
-## Heartbeat
+<CodeGroup>
+```gdscript Godot
+func _ready():
+    WavedashSDK.backend_connected.connect(_on_connected)
+    WavedashSDK.backend_disconnected.connect(_on_disconnected)
+    WavedashSDK.backend_reconnecting.connect(_on_reconnecting)
 
-The SDK automatically sends heartbeat signals to keep the connection alive and presence updated. You don't need to manage this manually.
+func _on_connected(payload):
+    hide_connection_indicators()
 
-### Connection signals
+func _on_disconnected(payload):
+    show_offline_indicator()
+
+func _on_reconnecting(payload):
+    show_reconnecting_indicator()
+```
+
+```csharp Unity
+void Awake()
+{
+    SDK.OnBackendConnected += data => HideConnectionIndicators();
+    SDK.OnBackendDisconnected += data => ShowOfflineIndicator();
+    SDK.OnBackendReconnecting += data => ShowReconnectingIndicator();
+}
+```
+
+```javascript JavaScript
+// Connection signals:
+// BACKEND_CONNECTED - Connected to Wavedash backend
+// BACKEND_DISCONNECTED - Lost connection
+// BACKEND_RECONNECTING - Attempting to reconnect
+```
+</CodeGroup>
 
 | Signal | Description |
 |--------|-------------|
@@ -90,99 +212,22 @@ The SDK automatically sends heartbeat signals to keep the connection alive and p
 | `BACKEND_DISCONNECTED` | Lost connection |
 | `BACKEND_RECONNECTING` | Attempting to reconnect |
 
-```gdscript
-# Godot example
-func _ready():
-    Wavedash.backend_disconnected.connect(_on_disconnected)
-    Wavedash.backend_reconnecting.connect(_on_reconnecting)
-    Wavedash.backend_connected.connect(_on_connected)
-
-func _on_disconnected():
-    show_offline_indicator()
-
-func _on_reconnecting():
-    show_reconnecting_indicator()
-
-func _on_connected():
-    hide_connection_indicators()
-```
-
 ## Clearing presence
 
-When leaving the game or going offline, presence is automatically cleared. You can also clear it manually:
-
-```javascript
-WavedashJS.updateUserPresence({
-  status: "",
-  details: ""
-});
+<CodeGroup>
+```gdscript Godot
+func clear_presence():
+    WavedashSDK.update_user_presence("", "", {})
 ```
 
-## Best practices
-
-<AccordionGroup>
-  <Accordion title="Keep status text short">
-    Use brief, clear status text like "In Menu", "In Game", "In Lobby".
-  </Accordion>
-  <Accordion title="Update on state changes">
-    Update presence when the player's activity changes significantly (entering/leaving games, joining lobbies).
-  </Accordion>
-  <Accordion title="Include joinable data">
-    If the player is in a joinable lobby, include the `lobbyId` so friends can join.
-  </Accordion>
-  <Accordion title="Don't update too frequently">
-    Avoid updating presence on every frame. Update on meaningful state changes.
-  </Accordion>
-</AccordionGroup>
-
-## Example: Complete presence management
-
-```javascript
-class PresenceManager {
-  constructor() {
-    this.currentState = "menu";
-  }
-
-  setMenuPresence() {
-    this.currentState = "menu";
-    WavedashJS.updateUserPresence({
-      status: "In Menu",
-      details: "Main Menu"
-    });
-  }
-
-  setLobbyPresence(lobbyId, playerCount, maxPlayers, settings) {
-    this.currentState = "lobby";
-    WavedashJS.updateUserPresence({
-      status: "In Lobby",
-      details: `${settings.mapName} (${playerCount}/${maxPlayers})`,
-      gameData: {
-        lobbyId: lobbyId,
-        canJoin: playerCount < maxPlayers,
-        mode: settings.gameMode,
-        map: settings.mapName
-      }
-    });
-  }
-
-  setGamePresence(mode, map, score) {
-    this.currentState = "game";
-    WavedashJS.updateUserPresence({
-      status: "In Game",
-      details: `${mode} on ${map}`,
-      gameData: {
-        mode: mode,
-        map: map,
-        score: score
-      }
-    });
-  }
-
-  updateScore(score) {
-    if (this.currentState === "game") {
-      // Don't update presence just for score changes
-      // Too frequent updates are not recommended
-    }
-  }
+```csharp Unity
+public void ClearPresence()
+{
+    SDK.UpdateUserPresence("", "", new Dictionary<string, object>());
 }
 ```
+
+```javascript JavaScript
+WavedashJS.updateUserPresence({ status: "", details: "" });
+```
+</CodeGroup>
