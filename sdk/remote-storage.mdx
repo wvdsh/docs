@@ -29,13 +29,11 @@ func _on_file_uploaded(response):
 ```
 
 ```csharp Unity
-using Wavedash;
-
 public class CloudSaveExample : MonoBehaviour
 {
     public async void SaveToCloud(string localPath)
     {
-        var result = await SDK.UploadRemoteFile(localPath);
+        var result = await Wavedash.SDK.UploadRemoteFile(localPath);
 
         if (!string.IsNullOrEmpty(result))
         {
@@ -81,7 +79,7 @@ public async void SaveGame(int slot, Dictionary<string, object> gameState)
     var json = JsonConvert.SerializeObject(gameState);
     File.WriteAllText(path, json);
 
-    await SDK.UploadRemoteFile(path);
+    await Wavedash.SDK.UploadRemoteFile(path);
 }
 ```
 
@@ -118,7 +116,7 @@ func _on_file_downloaded(response):
 ```csharp Unity
 public async void LoadFromCloud(string localPath)
 {
-    var result = await SDK.DownloadRemoteFile(localPath);
+    var result = await Wavedash.SDK.DownloadRemoteFile(localPath);
 
     if (!string.IsNullOrEmpty(result))
     {
@@ -164,7 +162,7 @@ public async Task<Dictionary<string, object>> LoadGame(int slot)
 {
     var path = $"{Application.persistentDataPath}/saves/slot{slot}.json";
 
-    var result = await SDK.DownloadRemoteFile(path);
+    var result = await Wavedash.SDK.DownloadRemoteFile(path);
 
     if (!string.IsNullOrEmpty(result) && File.Exists(path))
     {
@@ -214,7 +212,7 @@ func _on_directory_downloaded(response):
 public async void ListSaves()
 {
     var path = $"{Application.persistentDataPath}/saves/";
-    var files = await SDK.ListRemoteDirectory(path);
+    var files = await Wavedash.SDK.ListRemoteDirectory(path);
 
     foreach (var file in files)
     {
@@ -304,7 +302,7 @@ public async Task<bool> Save(int slot, Dictionary<string, object> gameState)
     var json = JsonConvert.SerializeObject(saveData);
     File.WriteAllText(path, json);
 
-    var result = await SDK.UploadRemoteFile(path);
+    var result = await Wavedash.SDK.UploadRemoteFile(path);
     return !string.IsNullOrEmpty(result);
 }
 ```

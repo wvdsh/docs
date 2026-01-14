@@ -33,21 +33,20 @@ func _on_connected(payload):
 ```
 
 ```csharp Unity
-using Wavedash;
 using System.Collections.Generic;
 
 public class GameManager : MonoBehaviour
 {
     void Start()
     {
-        SDK.Init(new Dictionary<string, object>
+        Wavedash.SDK.Init(new Dictionary<string, object>
         {
             { "debug", true }
         });
 
-        if (SDK.IsReady())
+        if (Wavedash.SDK.IsReady())
         {
-            var user = SDK.GetUser();
+            var user = Wavedash.SDK.GetUser();
             if (user != null)
             {
                 Debug.Log($"Playing as: {user["username"]}");
@@ -88,7 +87,7 @@ func _ready():
 ```csharp Unity
 void Start()
 {
-    SDK.Init(new Dictionary<string, object>
+    Wavedash.SDK.Init(new Dictionary<string, object>
     {
         { "debug", true }
     });
@@ -123,14 +122,14 @@ func _ready():
 ```csharp Unity
 void Awake()
 {
-    SDK.OnLobbyJoined += HandleLobbyJoined;
-    SDK.OnLobbyMessage += HandleLobbyMessage;
-    SDK.OnP2PConnectionEstablished += HandleP2PConnected;
+    Wavedash.SDK.OnLobbyJoined += HandleLobbyJoined;
+    Wavedash.SDK.OnLobbyMessage += HandleLobbyMessage;
+    Wavedash.SDK.OnP2PConnectionEstablished += HandleP2PConnected;
 }
 
 void Start()
 {
-    SDK.Init(new Dictionary<string, object> { { "debug", true } });
+    Wavedash.SDK.Init(new Dictionary<string, object> { { "debug", true } });
     // Unity SDK events fire immediately after Init
 }
 ```
@@ -154,7 +153,7 @@ func get_current_user():
 ```csharp Unity
 public void GetCurrentUser()
 {
-    var user = SDK.GetUser();
+    var user = Wavedash.SDK.GetUser();
     if (user != null)
     {
         Debug.Log($"User ID: {user["id"]}");
@@ -192,7 +191,7 @@ func _on_backend_reconnecting(payload):
 ```csharp Unity
 // Backend connection events are not yet available in the Unity SDK.
 // The SDK automatically manages connection state.
-// Use SDK.IsReady() to check if the SDK is initialized.
+// Use Wavedash.SDK.IsReady() to check if the SDK is initialized.
 ```
 
 ```javascript JavaScript
@@ -232,27 +231,26 @@ func _on_disconnected(payload):
 ```
 
 ```csharp Unity
-using Wavedash;
 using System.Collections.Generic;
 
 public class WavedashManager : MonoBehaviour
 {
     void Awake()
     {
-        SDK.OnLobbyJoined += HandleLobbyJoined;
-        SDK.OnP2PConnectionEstablished += HandleP2PConnected;
+        Wavedash.SDK.OnLobbyJoined += HandleLobbyJoined;
+        Wavedash.SDK.OnP2PConnectionEstablished += HandleP2PConnected;
     }
 
     void Start()
     {
-        SDK.Init(new Dictionary<string, object>
+        Wavedash.SDK.Init(new Dictionary<string, object>
         {
             { "debug", true }
         });
 
-        if (SDK.IsReady())
+        if (Wavedash.SDK.IsReady())
         {
-            var user = SDK.GetUser();
+            var user = Wavedash.SDK.GetUser();
             if (user != null)
             {
                 Debug.Log($"Playing as: {user["username"]}");

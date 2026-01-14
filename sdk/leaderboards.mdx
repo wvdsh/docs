@@ -30,13 +30,11 @@ func _on_got_leaderboard(response):
 ```
 
 ```csharp Unity
-using Wavedash;
-
 public class LeaderboardExample : MonoBehaviour
 {
     async void Start()
     {
-        var leaderboard = await SDK.GetLeaderboard("high-scores");
+        var leaderboard = await Wavedash.SDK.GetLeaderboard("high-scores");
         if (leaderboard != null)
         {
             Debug.Log($"Leaderboard: {leaderboard["name"]}");
@@ -85,7 +83,7 @@ public async void CreateLeaderboard()
 {
     // Sort: 0 = ascending, 1 = descending
     // Display: 0 = numeric, 1 = time
-    var leaderboard = await SDK.GetOrCreateLeaderboard(
+    var leaderboard = await Wavedash.SDK.GetOrCreateLeaderboard(
         "speedrun-times",
         sortOrder: 0,
         displayType: 1
@@ -150,7 +148,7 @@ func _on_score_posted(response):
 ```csharp Unity
 public async void SubmitScore(string leaderboardId, int score)
 {
-    var result = await SDK.UploadLeaderboardScore(
+    var result = await Wavedash.SDK.UploadLeaderboardScore(
         leaderboardId,
         score,
         keepBest: true  // Only update if better than existing
@@ -216,7 +214,7 @@ func _on_got_entries(response):
 ```csharp Unity
 public async void GetTopScores(string leaderboardId)
 {
-    var entries = await SDK.ListLeaderboardEntries(
+    var entries = await Wavedash.SDK.ListLeaderboardEntries(
         leaderboardId,
         offset: 0,
         limit: 10
@@ -266,13 +264,13 @@ func _on_got_entries(response):
 ```csharp Unity
 public async void GetScoresAroundMe(string leaderboardId)
 {
-    var entries = await SDK.ListLeaderboardEntriesAroundUser(
+    var entries = await Wavedash.SDK.ListLeaderboardEntriesAroundUser(
         leaderboardId,
         countAhead: 5,
         countBehind: 5
     );
 
-    var myId = SDK.GetUserId();
+    var myId = Wavedash.SDK.GetUserId();
     foreach (var entry in entries)
     {
         var isMe = entry["userId"].ToString() == myId;
@@ -318,7 +316,7 @@ func _on_got_my_entries(response):
 ```csharp Unity
 public async void GetMyEntry(string leaderboardId)
 {
-    var entries = await SDK.GetMyLeaderboardEntries(leaderboardId);
+    var entries = await Wavedash.SDK.GetMyLeaderboardEntries(leaderboardId);
 
     if (entries != null && entries.Count > 0)
     {
@@ -351,7 +349,7 @@ print("Total players: ", count)
 ```
 
 ```csharp Unity
-var count = SDK.GetLeaderboardEntryCount(leaderboardId);
+var count = Wavedash.SDK.GetLeaderboardEntryCount(leaderboardId);
 Debug.Log($"Total players: {count}");
 ```
 
@@ -393,7 +391,7 @@ func submit_score_with_replay(leaderboard_id: String, score: int, ugc_id: String
 ```csharp Unity
 public async void SubmitScoreWithReplay(string leaderboardId, int score, string ugcId)
 {
-    var result = await SDK.UploadLeaderboardScore(
+    var result = await Wavedash.SDK.UploadLeaderboardScore(
         leaderboardId,
         score,
         keepBest: true,
