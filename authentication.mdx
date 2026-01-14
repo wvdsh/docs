@@ -179,28 +179,3 @@ For automated deployments, use API keys in your CI/CD pipeline:
     - Review access logs regularly
   </Accordion>
 </AccordionGroup>
-
-## Troubleshooting
-
-<AccordionGroup>
-  <Accordion title="Authentication failed">
-    1. Check your internet connection
-    2. Verify the API key is valid
-    3. Try logging out and back in:
-    ```bash
-    wvdsh auth logout
-    wvdsh auth login
-    ```
-  </Accordion>
-  <Accordion title="Permission denied">
-    - Verify you're a member of the organization
-    - Check your role has the required permissions
-    - Ensure the API key hasn't been revoked
-  </Accordion>
-  <Accordion title="Token expired">
-    The SDK automatically refreshes tokens. If you see token errors:
-    - Refresh the game page
-    - Check your internet connection
-    - Contact support if the issue persists
-  </Accordion>
-</AccordionGroup>

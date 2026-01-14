@@ -278,17 +278,3 @@ function waitForWavedash() {
 waitForWavedash();
 ```
 </CodeGroup>
-
-## Troubleshooting
-
-<AccordionGroup>
-  <Accordion title="WavedashJS is undefined">
-    Ensure you're running your game through Wavedash (either `wvdsh dev` or on wavedash.com). The SDK is not available when running standalone.
-  </Accordion>
-  <Accordion title="SDK not ready">
-    The SDK may take a moment to initialize. Use `WavedashJS.isReady()` or listen for the `BACKEND_CONNECTED` signal.
-  </Accordion>
-  <Accordion title="Authentication errors">
-    The SDK handles authentication automatically. If you see auth errors, ensure your game is properly configured in the Wavedash dashboard.
-  </Accordion>
-</AccordionGroup>

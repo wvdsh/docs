@@ -22,11 +22,15 @@ The Wavedash CLI (`wvdsh`) is a cross-platform command-line tool for uploading g
     ```bash
     curl --proto '=https' --tlsv1.2 -LsSf https://github.com/wvdsh/cli/releases/latest/download/wvdsh-installer.sh | sh
     ```
+
+    Update to the latest version by running the same command.
   </Tab>
   <Tab title="Windows">
     ```powershell
     irm https://github.com/wvdsh/cli/releases/latest/download/wvdsh-installer.ps1 | iex
     ```
+
+    Update to the latest version by running the same command.
   </Tab>
 </Tabs>
 
@@ -82,23 +86,3 @@ The CLI stores your API key locally in a secure credentials file:
 | Windows | `%APPDATA%\gg\wavedash\cli\credentials.json` |
 
 The credentials file is created with restricted permissions (readable only by the owner).
-
-## Updating
-
-<Tabs>
-  <Tab title="macOS">
-    ```bash
-    brew upgrade wvdsh/tap/wvdsh
-    ```
-  </Tab>
-  <Tab title="Linux">
-    ```bash
-    curl --proto '=https' --tlsv1.2 -LsSf https://github.com/wvdsh/cli/releases/latest/download/wvdsh-installer.sh | sh
-    ```
-  </Tab>
-  <Tab title="Windows">
-    ```powershell
-    irm https://github.com/wvdsh/cli/releases/latest/download/wvdsh-installer.ps1 | iex
-    ```
-  </Tab>
-</Tabs>

@@ -39,8 +39,7 @@
               "cli/auth",
               "cli/dev",
               "cli/build",
-              "cli/configuration",
-              "cli/troubleshooting"
+              "cli/configuration"
             ]
           }
         ]

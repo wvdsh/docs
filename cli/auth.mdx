@@ -68,24 +68,3 @@ Your API key is stored in a JSON file with restricted permissions:
 <Warning>
 Never share your credentials file or commit it to version control.
 </Warning>
-
-## Troubleshooting
-
-<AccordionGroup>
-  <Accordion title="Browser doesn't open automatically">
-    If the browser doesn't open, copy the URL from the terminal and paste it into your browser manually.
-  </Accordion>
-  <Accordion title="Port already in use">
-    The CLI automatically finds an available port starting at 7777. If all ports are in use, close other applications or wait a moment and try again.
-  </Accordion>
-  <Accordion title="Connection issues">
-    Ensure your firewall allows outbound connections to wavedash.com.
-  </Accordion>
-  <Accordion title="API key not working">
-    Try logging out and logging in again:
-    ```bash
-    wvdsh auth logout
-    wvdsh auth login
-    ```
-  </Accordion>
-</AccordionGroup>

@@ -502,33 +502,6 @@ This:
 wvdsh build push
 ```
 
-## Troubleshooting
-
-<AccordionGroup>
-  <Accordion title="SDK not connecting">
-    - Ensure you're running through `wvdsh dev` or on wavedash.com
-    - Check the browser console for errors
-    - Verify WavedashSDK is added as an autoload
-    - Make sure you call `WavedashSDK.init()` and `WavedashSDK.ready_for_events()`
-  </Accordion>
-  <Accordion title="Export fails">
-    - Ensure web export templates are installed
-    - Check for export errors in the Godot console
-    - Verify your export settings match the requirements
-  </Accordion>
-  <Accordion title="Signals not firing">
-    - Connect signals in `_ready()` before calling SDK methods
-    - Check that you're using the correct signal names (e.g., `got_leaderboard` not `leaderboard_received`)
-    - Verify the SDK initialized successfully
-  </Accordion>
-  <Accordion title="P2P not working">
-    - Enable Threads Support in export settings
-    - Ensure SharedArrayBuffer is available (requires HTTPS)
-    - Check browser console for WebRTC errors
-    - Remember to poll `receive_p2p_messages_on_channel()` in `_process()`
-  </Accordion>
-</AccordionGroup>
-
 ## Example project structure
 
 ```

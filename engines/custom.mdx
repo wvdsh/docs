@@ -367,29 +367,6 @@ Ensure your `upload_dir` contains:
 wvdsh build push
 ```
 
-## Troubleshooting
-
-<AccordionGroup>
-  <Accordion title="WavedashJS is undefined">
-    - Ensure you're running through `wvdsh dev` or on wavedash.com
-    - The SDK is only available in the Wavedash environment
-    - Check that your entrypoint is correct in `wavedash.toml`
-  </Accordion>
-  <Accordion title="SDK not ready">
-    - Wait for `WavedashJS.isReady()` to return true
-    - The SDK needs time to initialize and authenticate
-  </Accordion>
-  <Accordion title="Signals not working">
-    - Call `WavedashJS.setEngineInstance()` with your signal handler
-    - Ensure you're parsing the JSON value correctly
-  </Accordion>
-  <Accordion title="Files not found">
-    - Verify `upload_dir` points to your built game
-    - Check that all assets use relative paths
-    - Ensure the entrypoint file exists
-  </Accordion>
-</AccordionGroup>
-
 ## Example project structure
 
 ```

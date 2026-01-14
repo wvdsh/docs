@@ -380,27 +380,6 @@ wvdsh dev
 wvdsh build push
 ```
 
-## Troubleshooting
-
-<AccordionGroup>
-  <Accordion title="SDK not available">
-    - Ensure you're running through `wvdsh dev` or on wavedash.com
-    - Check browser console for JavaScript errors
-    - Verify the SDK package is installed correctly
-  </Accordion>
-  <Accordion title="Build too large">
-    - Enable compression (Gzip or Brotli)
-    - Strip unused engine code
-    - Reduce texture sizes
-    - Consider using Addressables for on-demand loading
-  </Accordion>
-  <Accordion title="Memory issues">
-    - Increase WebGL memory size in Player Settings
-    - Profile memory usage with browser dev tools
-    - Optimize asset loading patterns
-  </Accordion>
-</AccordionGroup>
-
 ## Example project structure
 
 ```
