@@ -122,6 +122,62 @@ if (response.success) {
 ```
 </CodeGroup>
 
+## Updating a UGC item
+
+Update an existing UGC item's metadata or file:
+
+<CodeGroup>
+```gdscript Godot
+func _ready():
+    WavedashSDK.ugc_item_updated.connect(_on_ugc_updated)
+
+func update_ugc_item(ugc_id: String, new_title: String):
+    WavedashSDK.update_ugc_item(
+        ugc_id,
+        new_title,
+        "Updated description",
+        WavedashConstants.UGC_VISIBILITY_PUBLIC,
+        null  # Pass file path to update the file, or null to keep existing
+    )
+
+func _on_ugc_updated(response):
+    if response.get("success", false):
+        print("UGC updated successfully")
+```
+
+```csharp Unity
+public async void UpdateUGCItem(string ugcId, string newTitle)
+{
+    var result = await Wavedash.SDK.UpdateUGCItem(
+        ugcId,
+        title: newTitle,
+        description: "Updated description",
+        visibility: 0,  // 0 = public
+        filePath: null  // Pass file path to update the file, or null to keep existing
+    );
+
+    if (result != null)
+    {
+        Debug.Log("UGC updated successfully");
+    }
+}
+```
+
+```javascript JavaScript
+const response = await WavedashJS.updateUGCItem(
+  ugcId,              // ugcId to update
+  "New Title",        // title (optional)
+  "New description",  // description (optional)
+  "public",           // visibility (optional)
+  null                // filePath - pass path to update file, or null to keep existing
+);
+
+if (response.success) {
+  console.log("UGC updated successfully");
+}
+```
+</CodeGroup>
+
 ## Downloading content
 
 <CodeGroup>
@@ -167,7 +223,8 @@ if (response.success) {
 <CodeGroup>
 ```gdscript Godot
 func submit_score_with_replay(leaderboard_id: String, score: int, ugc_id: String):
-    WavedashSDK.post_leaderboard_score_with_ugc(leaderboard_id, score, true, ugc_id)
+    # Pass ugc_id as the 4th parameter
+    WavedashSDK.post_leaderboard_score(leaderboard_id, score, true, ugc_id)
 ```
 
 ```csharp Unity

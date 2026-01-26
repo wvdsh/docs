@@ -21,6 +21,7 @@ Signals are events that the SDK emits to notify your game of real-time updates. 
 | `BACKEND_CONNECTED` | Backend | Connected to Wavedash |
 | `BACKEND_DISCONNECTED` | Backend | Disconnected from Wavedash |
 | `BACKEND_RECONNECTING` | Backend | Attempting to reconnect |
+| `CURRENT_STATS_RECEIVED` | Stats | Stats loaded from server |
 
 ## Lobby signals
 
@@ -130,6 +131,22 @@ Emitted when a P2P message is received (depending on configuration).
 P2P messages can also be read from message queues using `readP2PMessageFromChannel()` instead of relying on signals.
 </Note>
 
+## Stats signals
+
+### CURRENT_STATS_RECEIVED
+
+Emitted when stats and achievements are loaded from the server.
+
+```typescript
+{
+  success: boolean;
+}
+```
+
+<Note>
+Call `requestStats()` to trigger this signal. Stats will be available via `getStat()` and `getAchievement()` after this signal fires.
+</Note>
+
 ## Backend signals
 
 ### BACKEND_CONNECTED
@@ -167,18 +184,18 @@ Emitted when attempting to reconnect after a disconnect.
 
     func _ready():
         # Connect to lobby signals
-        Wavedash.lobby_joined.connect(_on_lobby_joined)
-        Wavedash.lobby_message.connect(_on_lobby_message)
-        Wavedash.lobby_users_updated.connect(_on_users_updated)
-        Wavedash.lobby_kicked.connect(_on_lobby_kicked)
+        WavedashSDK.lobby_joined.connect(_on_lobby_joined)
+        WavedashSDK.lobby_message.connect(_on_lobby_message)
+        WavedashSDK.lobby_users_updated.connect(_on_users_updated)
+        WavedashSDK.lobby_kicked.connect(_on_lobby_kicked)
 
         # Connect to P2P signals
-        Wavedash.p2p_connection_established.connect(_on_peer_connected)
-        Wavedash.p2p_peer_disconnected.connect(_on_peer_disconnected)
+        WavedashSDK.p2p_connection_established.connect(_on_peer_connected)
+        WavedashSDK.p2p_peer_disconnected.connect(_on_peer_disconnected)
 
         # Connect to backend signals
-        Wavedash.backend_connected.connect(_on_backend_connected)
-        Wavedash.backend_disconnected.connect(_on_backend_disconnected)
+        WavedashSDK.backend_connected.connect(_on_backend_connected)
+        WavedashSDK.backend_disconnected.connect(_on_backend_disconnected)
 
     func _on_lobby_joined(data: Dictionary):
         if data.success:
@@ -209,31 +226,96 @@ Emitted when attempting to reconnect after a disconnect.
     ```
   </Tab>
   <Tab title="Unity">
-    Handle signals through JavaScript interop:
+    The Unity SDK exposes signals as C# events:
 
     ```csharp
     using UnityEngine;
-    using System.Runtime.InteropServices;
+    using System.Collections.Generic;
 
     public class WavedashSignalHandler : MonoBehaviour
     {
-        // Called from JavaScript
-        public void OnLobbyJoined(string jsonData)
+        void Awake()
         {
-            var data = JsonUtility.FromJson<LobbyJoinedData>(jsonData);
-            Debug.Log($"Joined lobby: {data.lobbyId}");
+            // Connect to lobby events
+            Wavedash.SDK.OnLobbyJoined += OnLobbyJoined;
+            Wavedash.SDK.OnLobbyMessage += OnLobbyMessage;
+            Wavedash.SDK.OnLobbyUsersUpdated += OnUsersUpdated;
+            Wavedash.SDK.OnLobbyKicked += OnLobbyKicked;
+
+            // Connect to P2P events
+            Wavedash.SDK.OnP2PConnectionEstablished += OnPeerConnected;
+            Wavedash.SDK.OnP2PConnectionFailed += OnPeerFailed;
+            Wavedash.SDK.OnP2PPeerDisconnected += OnPeerDisconnected;
+
+            // Connect to backend events
+            Wavedash.SDK.OnBackendConnected += OnBackendConnected;
+            Wavedash.SDK.OnBackendDisconnected += OnBackendDisconnected;
+            Wavedash.SDK.OnBackendReconnecting += OnBackendReconnecting;
         }
 
-        public void OnLobbyMessage(string jsonData)
+        void OnLobbyJoined(Dictionary<string, object> data)
         {
-            var message = JsonUtility.FromJson<LobbyMessageData>(jsonData);
-            Debug.Log($"{message.username}: {message.content}");
+            Debug.Log($"Joined lobby: {data["lobbyId"]}");
         }
 
-        public void OnP2PConnectionEstablished(string jsonData)
+        void OnLobbyMessage(Dictionary<string, object> data)
         {
-            var data = JsonUtility.FromJson<P2PConnectionData>(jsonData);
-            Debug.Log($"Connected to: {data.username}");
+            Debug.Log($"{data["username"]}: {data["content"]}");
+        }
+
+        void OnUsersUpdated(Dictionary<string, object> data)
+        {
+            Debug.Log($"User update: {data["changeType"]}");
+        }
+
+        void OnLobbyKicked(Dictionary<string, object> data)
+        {
+            Debug.Log("Kicked from lobby");
+        }
+
+        void OnPeerConnected(Dictionary<string, object> data)
+        {
+            Debug.Log($"Connected to: {data["username"]}");
+        }
+
+        void OnPeerFailed(Dictionary<string, object> data)
+        {
+            Debug.Log($"Connection failed to: {data["userId"]}");
+        }
+
+        void OnPeerDisconnected(Dictionary<string, object> data)
+        {
+            Debug.Log($"Peer disconnected: {data["userId"]}");
+        }
+
+        void OnBackendConnected(Dictionary<string, object> data)
+        {
+            Debug.Log("Connected to Wavedash!");
+        }
+
+        void OnBackendDisconnected(Dictionary<string, object> data)
+        {
+            Debug.Log("Lost connection to Wavedash");
+        }
+
+        void OnBackendReconnecting(Dictionary<string, object> data)
+        {
+            Debug.Log("Reconnecting to Wavedash...");
+        }
+
+        void OnDestroy()
+        {
+            // Unsubscribe from events
+            Wavedash.SDK.OnLobbyJoined -= OnLobbyJoined;
+            Wavedash.SDK.OnLobbyMessage -= OnLobbyMessage;
+            Wavedash.SDK.OnLobbyUsersUpdated -= OnUsersUpdated;
+            Wavedash.SDK.OnLobbyKicked -= OnLobbyKicked;
+            Wavedash.SDK.OnP2PConnectionEstablished -= OnPeerConnected;
+            Wavedash.SDK.OnP2PConnectionFailed -= OnPeerFailed;
+            Wavedash.SDK.OnP2PPeerDisconnected -= OnPeerDisconnected;
+            Wavedash.SDK.OnBackendConnected -= OnBackendConnected;
+            Wavedash.SDK.OnBackendDisconnected -= OnBackendDisconnected;
+            Wavedash.SDK.OnBackendReconnecting -= OnBackendReconnecting;
         }
     }
     ```

@@ -384,8 +384,8 @@ You can attach user-generated content (like replays or screenshots) to leaderboa
 <CodeGroup>
 ```gdscript Godot
 func submit_score_with_replay(leaderboard_id: String, score: int, ugc_id: String):
-    # Submit score with UGC attachment
-    WavedashSDK.post_leaderboard_score_with_ugc(leaderboard_id, score, true, ugc_id)
+    # Submit score with UGC attachment (pass ugc_id as 4th parameter)
+    WavedashSDK.post_leaderboard_score(leaderboard_id, score, true, ugc_id)
 ```
 
 ```csharp Unity

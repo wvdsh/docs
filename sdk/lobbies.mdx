@@ -183,8 +183,14 @@ func get_lobby_users_list(lobby_id: String) -> Array:
 ```
 
 ```csharp Unity
-// GetLobbyUsers is not yet available in the Unity SDK.
-// Track users via OnLobbyJoined and lobby update events.
+public void GetLobbyUsersList(string lobbyId)
+{
+    var users = Wavedash.SDK.GetLobbyUsers(lobbyId);
+    foreach (var user in users)
+    {
+        Debug.Log($"- {user["username"]} ({user["id"]})");
+    }
+}
 ```
 
 ```javascript JavaScript
@@ -241,8 +247,8 @@ print(count, " players in lobby")
 ```
 
 ```csharp Unity
-// GetNumLobbyUsers is not yet available in the Unity SDK.
-// Track user count via lobby update events.
+int count = Wavedash.SDK.GetNumLobbyUsers(lobbyId);
+Debug.Log($"{count} players in lobby");
 ```
 
 ```javascript JavaScript
@@ -262,8 +268,10 @@ func send_chat_message(lobby_id: String, message: String):
 ```
 
 ```csharp Unity
-// SendLobbyChatMessage is not yet available in the Unity SDK.
-// Use P2P messaging for in-lobby communication.
+public void SendChatMessage(string lobbyId, string message)
+{
+    Wavedash.SDK.SendLobbyChatMessage(lobbyId, message);
+}
 ```
 
 ```javascript JavaScript
@@ -326,8 +334,12 @@ func set_game_settings(lobby_id: String):
 ```
 
 ```csharp Unity
-// SetLobbyData is not yet available in the Unity SDK.
-// Use P2P messaging to share game settings with other players.
+public void SetGameSettings(string lobbyId)
+{
+    // Only the host can set lobby data
+    Wavedash.SDK.SetLobbyData(lobbyId, "gameMode", "deathmatch");
+    Wavedash.SDK.SetLobbyData(lobbyId, "mapName", "arena_01");
+}
 ```
 
 ```javascript JavaScript
@@ -345,8 +357,8 @@ var map_name = WavedashSDK.get_lobby_data(lobby_id, "mapName")
 ```
 
 ```csharp Unity
-// GetLobbyData is not yet available in the Unity SDK.
-// Receive shared data via P2P messaging.
+string gameMode = Wavedash.SDK.GetLobbyData(lobbyId, "gameMode");
+string mapName = Wavedash.SDK.GetLobbyData(lobbyId, "mapName");
 ```
 
 ```javascript JavaScript

@@ -13,6 +13,51 @@ Achievements are currently created by the Wavedash team. Contact us at [develope
 
 Stats are numeric values that track player progress, like total kills, distance traveled, or games played.
 
+### Loading stats from server
+
+Before reading stat values, you should request them from the server to ensure you have the latest data:
+
+<CodeGroup>
+```gdscript Godot
+func _ready():
+    WavedashSDK.current_stats_received.connect(_on_stats_received)
+    WavedashSDK.request_stats()
+
+func _on_stats_received(response):
+    if response.get("success", false):
+        print("Stats loaded from server")
+        # Now you can safely read stat values
+        var kills = WavedashSDK.get_stat_int("total_kills")
+```
+
+```csharp Unity
+public class StatsExample : MonoBehaviour
+{
+    async void Start()
+    {
+        // Request stats from server
+        bool success = await Wavedash.SDK.RequestStats();
+        if (success)
+        {
+            Debug.Log("Stats loaded from server");
+            // Now you can safely read stat values
+            int kills = Wavedash.SDK.GetStatInt("total_kills");
+        }
+    }
+}
+```
+
+```javascript JavaScript
+const response = await WavedashJS.requestStats();
+
+if (response.success) {
+  console.log("Stats loaded from server");
+  // Now you can safely read stat values
+  const kills = WavedashJS.getStat("total_kills");
+}
+```
+</CodeGroup>
+
 ### Setting a stat
 
 <CodeGroup>
@@ -25,8 +70,11 @@ WavedashSDK.set_stat_int("games_played", 42, true)
 ```
 
 ```csharp Unity
-// Stats are not yet available in the Unity SDK.
-// This feature is currently only available in Godot and JavaScript SDKs.
+// Set a stat value
+// storeNow = true will immediately sync to server
+Wavedash.SDK.SetStatInt("total_kills", 150, storeNow: true);
+Wavedash.SDK.SetStatInt("distance_traveled", 5280, storeNow: true);
+Wavedash.SDK.SetStatInt("games_played", 42, storeNow: true);
 ```
 
 ```javascript JavaScript
@@ -49,7 +97,8 @@ print("Total kills: ", kills)
 ```
 
 ```csharp Unity
-// Stats are not yet available in the Unity SDK.
+int kills = Wavedash.SDK.GetStatInt("total_kills");
+Debug.Log($"Total kills: {kills}");
 ```
 
 ```javascript JavaScript
@@ -68,7 +117,11 @@ func add_coins(amount: int):
 ```
 
 ```csharp Unity
-// Stats are not yet available in the Unity SDK.
+public void AddCoins(int amount)
+{
+    int current = Wavedash.SDK.GetStatInt("coins_collected");
+    Wavedash.SDK.SetStatInt("coins_collected", current + amount, storeNow: true);
+}
 ```
 
 ```javascript JavaScript
@@ -91,8 +144,11 @@ func unlock_first_win():
 ```
 
 ```csharp Unity
-// Achievements are not yet available in the Unity SDK.
-// This feature is currently only available in Godot and JavaScript SDKs.
+public void UnlockFirstWin()
+{
+    Wavedash.SDK.SetAchievement("first_win");
+    Debug.Log("Achievement unlocked!");
+}
 ```
 
 ```javascript JavaScript
@@ -113,7 +169,15 @@ func check_achievement(achievement_name: String) -> bool:
 ```
 
 ```csharp Unity
-// Achievements are not yet available in the Unity SDK.
+public bool CheckAchievement(string achievementName)
+{
+    bool isUnlocked = Wavedash.SDK.GetAchievement(achievementName);
+    if (isUnlocked)
+    {
+        Debug.Log("Player has already earned this achievement");
+    }
+    return isUnlocked;
+}
 ```
 
 ```javascript JavaScript
@@ -138,7 +202,12 @@ func on_enemy_defeated():
 ```
 
 ```csharp Unity
-// Stats are not yet available in the Unity SDK.
+public void OnEnemyDefeated()
+{
+    int enemies = Wavedash.SDK.GetStatInt("enemies_defeated") + 1;
+    Wavedash.SDK.SetStatInt("enemies_defeated", enemies, storeNow: true);
+    // Achievement unlocks automatically if threshold is met
+}
 ```
 
 ```javascript JavaScript
@@ -173,7 +242,19 @@ func on_enemy_killed():
 ```
 
 ```csharp Unity
-// Stats and achievements are not yet available in the Unity SDK.
+private int sessionKills = 0;
+
+public void OnEnemyKilled()
+{
+    int kills = Wavedash.SDK.GetStatInt("total_kills") + 1;
+    Wavedash.SDK.SetStatInt("total_kills", kills, storeNow: true);
+    sessionKills++;
+
+    if (kills == 1)
+    {
+        Wavedash.SDK.SetAchievement("first_blood");
+    }
+}
 ```
 
 ```javascript JavaScript
@@ -205,7 +286,19 @@ func on_game_over(score: int):
 ```
 
 ```csharp Unity
-// Stats are not yet available in the Unity SDK.
+public void OnGameOver(int score)
+{
+    int highScore = Wavedash.SDK.GetStatInt("high_score");
+
+    if (score > highScore)
+    {
+        Wavedash.SDK.SetStatInt("high_score", score, storeNow: true);
+        Debug.Log("New high score!");
+    }
+
+    int gamesPlayed = Wavedash.SDK.GetStatInt("games_played") + 1;
+    Wavedash.SDK.SetStatInt("games_played", gamesPlayed, storeNow: true);
+}
 ```
 
 ```javascript JavaScript
