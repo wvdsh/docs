@@ -118,8 +118,34 @@ func _on_reconnecting(payload):
 ```
 
 ```csharp Unity
-// Backend connection events are not yet available in the Unity SDK.
-// Use Wavedash.SDK.IsReady() to check connection status.
+void Awake()
+{
+    Wavedash.SDK.OnBackendConnected += OnConnected;
+    Wavedash.SDK.OnBackendDisconnected += OnDisconnected;
+    Wavedash.SDK.OnBackendReconnecting += OnReconnecting;
+}
+
+void OnConnected(Dictionary<string, object> data)
+{
+    HideConnectionIndicators();
+}
+
+void OnDisconnected(Dictionary<string, object> data)
+{
+    ShowOfflineIndicator();
+}
+
+void OnReconnecting(Dictionary<string, object> data)
+{
+    ShowReconnectingIndicator();
+}
+
+void OnDestroy()
+{
+    Wavedash.SDK.OnBackendConnected -= OnConnected;
+    Wavedash.SDK.OnBackendDisconnected -= OnDisconnected;
+    Wavedash.SDK.OnBackendReconnecting -= OnReconnecting;
+}
 ```
 
 ```javascript JavaScript
