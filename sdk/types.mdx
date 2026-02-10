@@ -41,14 +41,13 @@ SDK configuration options:
 
 ```typescript
 interface WavedashConfig {
-  gameId: string;              // Your game's ID
-  debug?: boolean;             // Enable debug logging
-  remoteStorageOrigin?: string; // Custom storage origin
-  p2p?: Partial<P2PConfig>;    // P2P options
-  disableAchievementsAndStats?: boolean; // Disable stats
-  deferEvents?: boolean;       // Defer events until ready
+  debug?: boolean;                       // Useful for logging and testing — enables verbose output in the browser console
+  deferEvents?: boolean;                 // Lets your game finish setup before handling lobby/multiplayer signals
+  disableAchievementsAndStats?: boolean; // Turns off achievement tracking in sandbox or demo builds
 }
 ```
+
+All config options are optional.
 
 ### P2PConfig
 
@@ -71,7 +70,7 @@ interface Leaderboard {
   id: string;           // Leaderboard ID
   name: string;         // Display name
   sortOrder: LeaderboardSortOrder;   // "ascending" | "descending"
-  displayType: LeaderboardDisplayType; // "numeric" | "time"
+  displayType: LeaderboardDisplayType; // See LeaderboardDisplayType below
   totalEntries: number; // Total number of entries
 }
 ```
@@ -85,7 +84,11 @@ type LeaderboardSortOrder = "ascending" | "descending";
 ### LeaderboardDisplayType
 
 ```typescript
-type LeaderboardDisplayType = "numeric" | "time";
+type LeaderboardDisplayType =
+  | "numeric"           // Display as a number (e.g., "1,000")
+  | "time_seconds"      // Display as time in seconds (e.g., "1:23")
+  | "time_milliseconds" // Display as time with milliseconds (e.g., "1:23.456")
+  | "time_game_ticks";  // Display as game ticks (assumes 60fps)
 ```
 
 ### LeaderboardEntry
@@ -144,6 +147,29 @@ interface LobbyMessage {
 }
 ```
 
+### LobbyInvite
+
+```typescript
+interface LobbyInvite {
+  lobbyId: string;        // ID of the lobby you're invited to
+  inviterId: string;      // User ID of who sent the invite
+  inviterUsername: string; // Username of who sent the invite
+}
+```
+
+## Friend types
+
+### Friend
+
+```typescript
+interface Friend {
+  userId: string;      // Friend's user ID
+  username: string;    // Friend's display name
+  avatarUrl?: string;  // Avatar URL (if set)
+  isOnline: boolean;   // Whether the friend is currently online
+}
+```
+
 ## P2P types
 
 ### P2PConnection
@@ -190,13 +216,27 @@ interface P2PMessage {
 ### UGCType
 
 ```typescript
-type UGCType = string; // e.g., "replay", "screenshot", "level"
+// UGC types are integer values:
+// 0 = screenshot    - Player-captured screenshot
+// 1 = video         - Player-captured video
+// 2 = community     - Community-created content (levels, mods, etc.)
+// 3 = game_managed  - Game-managed content (replays, saves)
+// 4 = other         - Other UGC types
+type UGCType = 0 | 1 | 2 | 3 | 4;
 ```
+
+<Note>
+In Godot, use constants like `WavedashConstants.UGC_TYPE_SCREENSHOT`. In Unity, use `WavedashConstants.UGCItemType.SCREENSHOT`. In JavaScript, use the exported constants like `AVATAR_SIZE_MEDIUM` or integer values directly.
+</Note>
 
 ### UGCVisibility
 
 ```typescript
-type UGCVisibility = "public" | "private" | "friends";
+// UGC visibility is an integer value:
+// 0 = public       - Anyone can view
+// 1 = friends_only - Only friends can view
+// 2 = private      - Only the creator can view
+type UGCVisibility = 0 | 1 | 2;
 ```
 
 ## Storage types

@@ -35,10 +35,10 @@ public class UGCExample : MonoBehaviour
     public async void CreateScreenshotUGC(string localPath)
     {
         var result = await Wavedash.SDK.CreateUGCItem(
-            ugcType: 0,        // 0 = screenshot
+            ugcType: WavedashConstants.UGCItemType.SCREENSHOT,
             title: "My Screenshot",
             description: "A cool moment in the game",
-            visibility: 0,     // 0 = public
+            visibility: WavedashConstants.UGCVisibility.PUBLIC,
             localPath: localPath
         );
 
@@ -52,11 +52,11 @@ public class UGCExample : MonoBehaviour
 
 ```javascript JavaScript
 const response = await WavedashJS.createUGCItem(
-  "replay",           // ugcType
-  "My Replay",        // title
-  "World 1-1 run",    // description
-  "public",           // visibility: "public", "private", or "friends"
-  "/path/to/file"     // filePath (optional)
+  UGC_TYPE_GAME_MANAGED, // ugcType (replays, saves)
+  "My Replay",           // title
+  "World 1-1 run",       // description
+  UGC_VISIBILITY_PUBLIC, // visibility
+  "/path/to/file"        // filePath (optional)
 );
 
 if (response.success) {
@@ -76,17 +76,22 @@ if (response.success) {
 
 ## Uploading content
 
+<Warning>
+**Godot**: File paths must be absolute and start with `OS.get_user_data_dir()`. Do not use `user://` virtual paths.
+</Warning>
+
 <CodeGroup>
 ```gdscript Godot
-# In Godot, pass the local file path when creating the UGC item
+# In Godot, pass an absolute file path starting with OS.get_user_data_dir()
 # The SDK handles the upload automatically
-func upload_screenshot(local_path: String):
+func upload_screenshot(file_name: String):
+    var path = OS.get_user_data_dir() + "/" + file_name
     WavedashSDK.create_ugc_item(
         WavedashConstants.UGC_TYPE_SCREENSHOT,
         "Screenshot",
         "Game screenshot",
         WavedashConstants.UGC_VISIBILITY_PUBLIC,
-        local_path
+        path
     )
 ```
 
@@ -95,10 +100,10 @@ func upload_screenshot(local_path: String):
 public async void UploadScreenshot(string localPath)
 {
     var result = await Wavedash.SDK.CreateUGCItem(
-        ugcType: 0,
+        ugcType: WavedashConstants.UGCItemType.SCREENSHOT,
         title: "Screenshot",
         description: "Game screenshot",
-        visibility: 0,
+        visibility: WavedashConstants.UGCVisibility.PUBLIC,
         localPath: localPath
     );
 }
@@ -109,11 +114,11 @@ public async void UploadScreenshot(string localPath)
 await WavedashJS.writeLocalFile("replays/my-replay.dat", replayData);
 
 const response = await WavedashJS.createUGCItem(
-  "replay",
+  UGC_TYPE_GAME_MANAGED,     // ugcType (replays, saves)
   "My Replay",
   "Description",
-  "public",
-  "replays/my-replay.dat"  // The SDK handles uploading from this path
+  UGC_VISIBILITY_PUBLIC,     // visibility
+  "replays/my-replay.dat"    // The SDK handles uploading from this path
 );
 
 if (response.success) {
@@ -152,7 +157,7 @@ public async void UpdateUGCItem(string ugcId, string newTitle)
         ugcId,
         title: newTitle,
         description: "Updated description",
-        visibility: 0,  // 0 = public
+        visibility: WavedashConstants.UGCVisibility.PUBLIC,
         filePath: null  // Pass file path to update the file, or null to keep existing
     );
 
@@ -168,8 +173,8 @@ const response = await WavedashJS.updateUGCItem(
   ugcId,              // ugcId to update
   "New Title",        // title (optional)
   "New description",  // description (optional)
-  "public",           // visibility (optional)
-  null                // filePath - pass path to update file, or null to keep existing
+  UGC_VISIBILITY_PUBLIC, // visibility (optional)
+  null                   // filePath - pass path to update file, or null to keep existing
 );
 
 if (response.success) {
@@ -185,8 +190,11 @@ if (response.success) {
 func _ready():
     WavedashSDK.ugc_item_downloaded.connect(_on_ugc_downloaded)
 
-func download_ugc(ugc_id: String, local_path: String):
-    WavedashSDK.download_ugc_item(ugc_id, local_path)
+func download_ugc(ugc_id: String, file_name: String):
+    # File paths must be absolute and start with OS.get_user_data_dir()
+    var path = OS.get_user_data_dir() + "/downloads/" + file_name
+    DirAccess.make_dir_recursive_absolute(OS.get_user_data_dir() + "/downloads")
+    WavedashSDK.download_ugc_item(ugc_id, path)
 
 func _on_ugc_downloaded(response):
     if response.get("success", false):
@@ -250,13 +258,17 @@ const scoreResponse = await WavedashJS.uploadLeaderboardScore(
 
 ## UGC types
 
-| Type | Description |
-|------|-------------|
-| `replay` | Game replay data |
-| `screenshot` | Image capture |
-| `level` | Custom level or map |
-| `save` | Save game data |
-| `skin` | Custom character/item skin |
+| Type | Value | Description |
+|------|-------|-------------|
+| `screenshot` | 0 | Player-captured screenshot |
+| `video` | 1 | Player-captured video |
+| `community` | 2 | Community-created content (levels, mods, etc.) |
+| `game_managed` | 3 | Game-managed content (replays, saves) |
+| `other` | 4 | Other UGC types |
+
+<Note>
+In Godot, use constants like `WavedashConstants.UGC_TYPE_SCREENSHOT`. In Unity, use `WavedashConstants.UGCItemType.SCREENSHOT`. In JavaScript, use integer values (0, 1, 2, 3, 4).
+</Note>
 
 ## Example: Screenshot sharing
 
@@ -264,9 +276,11 @@ const scoreResponse = await WavedashJS.uploadLeaderboardScore(
 ```gdscript Godot
 func share_screenshot():
     var image = get_viewport().get_texture().get_image()
-    var path = "user://screenshots/capture.png"
+    # Use OS.get_user_data_dir() for absolute paths
+    var screenshots_dir = OS.get_user_data_dir() + "/screenshots"
+    var path = screenshots_dir + "/capture.png"
 
-    DirAccess.make_dir_recursive_absolute("user://screenshots")
+    DirAccess.make_dir_recursive_absolute(screenshots_dir)
     image.save_png(path)
 
     WavedashSDK.create_ugc_item(
@@ -288,10 +302,10 @@ public async void ShareScreenshot()
     await Task.Yield();
 
     var result = await Wavedash.SDK.CreateUGCItem(
-        ugcType: 0,
+        ugcType: WavedashConstants.UGCItemType.SCREENSHOT,
         title: "Game Screenshot",
         description: $"Captured at level {currentLevel}",
-        visibility: 0,
+        visibility: WavedashConstants.UGCVisibility.PUBLIC,
         localPath: path
     );
 }
@@ -304,10 +318,10 @@ async function shareScreenshot(imageData) {
 
   // Create UGC item with the file path
   const response = await WavedashJS.createUGCItem(
-    "screenshot",
+    UGC_TYPE_SCREENSHOT,       // ugcType
     "Game Screenshot",
     `Captured at level ${currentLevel}`,
-    "public",
+    UGC_VISIBILITY_PUBLIC,     // visibility
     "screenshots/capture.png"
   );
 

@@ -100,8 +100,8 @@ The SDK emits signals to notify your game of real-time events like new lobby mes
 func _ready():
     Wavedash.lobby_message.connect(_on_lobby_message)
 
-func _on_lobby_message(message: Dictionary):
-    print("New message: ", message.content)
+func _on_lobby_message(payload: Dictionary):
+    print(payload.username, ": ", payload.message)
 ```
 
 ## Getting started
@@ -111,7 +111,7 @@ func _on_lobby_message(message: Dictionary):
     Configure your project with `wavedash.toml` and test locally with `wvdsh dev`.
   </Step>
   <Step title="Initialize the SDK">
-    The SDK initializes automatically. Use `WavedashJS.isReady()` to check status.
+    Call `Init` with your preferred config options, then use `isReady()` to check status.
   </Step>
   <Step title="Call SDK methods">
     Access leaderboards, lobbies, and other services through the `WavedashJS` global.

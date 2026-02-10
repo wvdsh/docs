@@ -14,10 +14,10 @@ Signals are events that the SDK emits to notify your game of real-time updates. 
 | `LOBBY_MESSAGE` | Lobby | New message received |
 | `LOBBY_DATA_UPDATED` | Lobby | Lobby metadata changed |
 | `LOBBY_KICKED` | Lobby | Removed from lobby |
+| `LOBBY_INVITE` | Lobby | Received lobby invitation |
 | `P2P_CONNECTION_ESTABLISHED` | P2P | Connected to a peer |
 | `P2P_CONNECTION_FAILED` | P2P | Connection to peer failed |
 | `P2P_PEER_DISCONNECTED` | P2P | Peer disconnected |
-| `P2P_MESSAGE` | P2P | Message received from peer |
 | `BACKEND_CONNECTED` | Backend | Connected to Wavedash |
 | `BACKEND_DISCONNECTED` | Backend | Disconnected from Wavedash |
 | `BACKEND_RECONNECTING` | Backend | Attempting to reconnect |
@@ -77,7 +77,20 @@ Emitted when you are removed from the lobby.
 
 ```typescript
 {
-  reason?: string;
+  lobbyId: string;
+  reason: "KICKED" | "ERROR";
+}
+```
+
+### LOBBY_INVITE
+
+Emitted when you receive an invitation to join a lobby.
+
+```typescript
+{
+  lobbyId: string;
+  inviterId: string;
+  inviterUsername: string;
 }
 ```
 
@@ -114,22 +127,6 @@ Emitted when a peer disconnects.
   userId: string;
 }
 ```
-
-### P2P_MESSAGE
-
-Emitted when a P2P message is received (depending on configuration).
-
-```typescript
-{
-  fromUserId: string;
-  channel: number;
-  payload: Uint8Array;
-}
-```
-
-<Note>
-P2P messages can also be read from message queues using `readP2PMessageFromChannel()` instead of relying on signals.
-</Note>
 
 ## Stats signals
 
@@ -372,9 +369,9 @@ const Signals = {
   LOBBY_JOINED: "LobbyJoined",
   LOBBY_USERS_UPDATED: "LobbyUsersUpdated",
   LOBBY_DATA_UPDATED: "LobbyDataUpdated",
+  LOBBY_INVITE: "LobbyInvite",
 
   // P2P
-  P2P_MESSAGE: "P2PMessage",
   P2P_CONNECTION_ESTABLISHED: "P2PConnectionEstablished",
   P2P_CONNECTION_FAILED: "P2PConnectionFailed",
   P2P_PEER_DISCONNECTED: "P2PPeerDisconnected",
@@ -388,12 +385,78 @@ const Signals = {
 
 ## Deferring events
 
-If your game needs time to set up signal handlers, you can defer events:
+If your game needs time to load assets, set up scenes, or wire up signal handlers before handling events, use `deferEvents: true` when calling `Init`. The SDK queues all signals until your game calls `readyForEvents()`.
 
-```javascript
-// In your game's configuration, set deferEvents: true
-// Then call this when ready:
+<CodeGroup>
+```gdscript Godot
+func _ready():
+    # Initialize with deferEvents so signals are queued during setup
+    WavedashSDK.init({"debug": true, "deferEvents": true})
+
+    # Wire up signal handlers
+    WavedashSDK.lobby_joined.connect(_on_lobby_joined)
+    WavedashSDK.lobby_message.connect(_on_lobby_message)
+    WavedashSDK.p2p_connection_established.connect(_on_p2p_connected)
+
+    # Do any other game setup — load scenes, assets, etc.
+    _load_game_resources()
+
+    # Now tell the SDK you're ready to receive queued signals
+    WavedashSDK.ready_for_events()
+```
+
+```csharp Unity
+void Awake()
+{
+    // Initialize with deferEvents so signals are queued during setup
+    Wavedash.SDK.Init(new Dictionary<string, object>
+    {
+        { "debug", true },
+        { "deferEvents", true }
+    });
+
+    // Wire up event handlers
+    Wavedash.SDK.OnLobbyJoined += HandleLobbyJoined;
+    Wavedash.SDK.OnLobbyMessage += HandleLobbyMessage;
+    Wavedash.SDK.OnP2PConnectionEstablished += HandleP2PConnected;
+}
+
+void Start()
+{
+    // Do any other game setup — load scenes, assets, etc.
+    LoadGameResources();
+
+    // Now tell the SDK you're ready to receive queued signals
+    Wavedash.SDK.ReadyForEvents();
+}
+```
+
+```javascript JavaScript
+// Initialize with deferEvents so signals are queued during setup
+WavedashJS.init({ debug: true, deferEvents: true });
+
+// Set up your signal handler
+WavedashJS.setEngineInstance({
+  type: "custom",
+  SendMessage: (objectName, signalName, value) => {
+    switch (signalName) {
+      case "LobbyJoined":
+        handleLobbyJoined(JSON.parse(value));
+        break;
+      case "LobbyMessage":
+        handleLobbyMessage(JSON.parse(value));
+        break;
+      // ... handle other signals
+    }
+  }
+});
+
+// Do any other game setup — load assets, etc.
+await loadGameResources();
+
+// Now tell the SDK you're ready to receive queued signals
 WavedashJS.readyForEvents();
 ```
+</CodeGroup>
 
 This ensures no signals are missed during initialization.

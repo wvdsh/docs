@@ -3,26 +3,15 @@ title: "Initialization"
 description: "Set up and configure the Wavedash SDK in your game"
 ---
 
-The Wavedash SDK initializes automatically when your game loads on Wavedash. This page explains the initialization process and configuration options.
+When your game runs on Wavedash (either locally with `wvdsh dev` or in production), the SDK is automatically loaded into the page and connected to the Wavedash backend. Your game needs to call `Init` to configure the SDK before using it.
 
-## Automatic initialization
-
-When your game runs on Wavedash (either locally with `wvdsh dev` or in production), the SDK is automatically:
-
-1. Loaded into the page
-2. Configured with your game's credentials
-3. Connected to the Wavedash backend
-4. Made available as `window.WavedashJS`
-
-You don't need to manually initialize the SDK in most cases.
-
-## Checking ready state
+## Calling Init
 
 <CodeGroup>
 ```gdscript Godot
 func _ready():
     WavedashSDK.backend_connected.connect(_on_connected)
-    WavedashSDK.init({"debug": true})
+    WavedashSDK.init({"debug": true, "deferEvents": true})
     WavedashSDK.ready_for_events()
 
 func _on_connected(payload):
@@ -67,14 +56,13 @@ if (WavedashJS.isReady()) {
 
 ```typescript
 interface WavedashConfig {
-  gameId: string;              // Your game's ID (set automatically)
-  debug?: boolean;             // Enable debug logging
-  remoteStorageOrigin?: string; // Custom storage origin
-  p2p?: Partial<P2PConfig>;    // P2P networking options
-  disableAchievementsAndStats?: boolean; // Disable stats tracking
-  deferEvents?: boolean;       // Defer event signals until ready
+  debug?: boolean;                       // Useful for logging and testing — enables verbose output in the browser console
+  deferEvents?: boolean;                 // Lets your game finish setup before handling lobby/multiplayer signals
+  disableAchievementsAndStats?: boolean; // Turns off achievement tracking in sandbox or demo builds
 }
 ```
+
+All config options are optional.
 
 ### Debug mode
 
@@ -102,26 +90,37 @@ void Start()
 
 ## Event deferral
 
-By default, the SDK starts sending signals immediately. If you need to defer events until your game is ready:
+By default, the SDK starts delivering signals like `LobbyJoined` and `P2P_CONNECTION_ESTABLISHED` immediately. If your game needs time to load assets, set up scenes, or wire up signal handlers before it's ready to handle those events, use `deferEvents: true`. The SDK queues all signals until your game calls `readyForEvents()`.
 
 <CodeGroup>
 ```gdscript Godot
 func _ready():
-    # Connect all your signal handlers first
+    # Initialize with deferEvents so signals are queued during setup
+    WavedashSDK.init({"debug": true, "deferEvents": true})
+
+    # Wire up signal handlers
     WavedashSDK.lobby_joined.connect(_on_lobby_joined)
     WavedashSDK.lobby_message.connect(_on_lobby_message)
     WavedashSDK.p2p_connection_established.connect(_on_p2p_connected)
 
-    # Initialize the SDK
-    WavedashSDK.init({"debug": true})
+    # Do any other game setup — load scenes, assets, etc.
+    _load_game_resources()
 
-    # Then signal you're ready to receive events
+    # Now tell the SDK you're ready to receive queued signals
     WavedashSDK.ready_for_events()
 ```
 
 ```csharp Unity
 void Awake()
 {
+    // Initialize with deferEvents so signals are queued during setup
+    Wavedash.SDK.Init(new Dictionary<string, object>
+    {
+        { "debug", true },
+        { "deferEvents", true }
+    });
+
+    // Wire up event handlers
     Wavedash.SDK.OnLobbyJoined += HandleLobbyJoined;
     Wavedash.SDK.OnLobbyMessage += HandleLobbyMessage;
     Wavedash.SDK.OnP2PConnectionEstablished += HandleP2PConnected;
@@ -129,12 +128,30 @@ void Awake()
 
 void Start()
 {
-    Wavedash.SDK.Init(new Dictionary<string, object> { { "debug", true } });
-    // Unity SDK events fire immediately after Init
+    // Do any other game setup — load scenes, assets, etc.
+    LoadGameResources();
+
+    // Now tell the SDK you're ready to receive queued signals
+    Wavedash.SDK.ReadyForEvents();
 }
 ```
 
 ```javascript JavaScript
+// Initialize with deferEvents so signals are queued during setup
+WavedashJS.init({ debug: true, deferEvents: true });
+
+// Set up your signal handler
+WavedashJS.setEngineInstance({
+  type: "custom",
+  SendMessage: (objectName, signalName, value) => {
+    // Handle signals...
+  }
+});
+
+// Do any other game setup — load assets, etc.
+await loadGameResources();
+
+// Now tell the SDK you're ready to receive queued signals
 WavedashJS.readyForEvents();
 ```
 </CodeGroup>
@@ -189,9 +206,34 @@ func _on_backend_reconnecting(payload):
 ```
 
 ```csharp Unity
-// Backend connection events are not yet available in the Unity SDK.
-// The SDK automatically manages connection state.
-// Use Wavedash.SDK.IsReady() to check if the SDK is initialized.
+void Awake()
+{
+    Wavedash.SDK.OnBackendConnected += OnBackendConnected;
+    Wavedash.SDK.OnBackendDisconnected += OnBackendDisconnected;
+    Wavedash.SDK.OnBackendReconnecting += OnBackendReconnecting;
+}
+
+void OnBackendConnected(Dictionary<string, object> data)
+{
+    Debug.Log("Connected to Wavedash!");
+}
+
+void OnBackendDisconnected(Dictionary<string, object> data)
+{
+    Debug.Log("Disconnected from Wavedash");
+}
+
+void OnBackendReconnecting(Dictionary<string, object> data)
+{
+    Debug.Log("Reconnecting...");
+}
+
+void OnDestroy()
+{
+    Wavedash.SDK.OnBackendConnected -= OnBackendConnected;
+    Wavedash.SDK.OnBackendDisconnected -= OnBackendDisconnected;
+    Wavedash.SDK.OnBackendReconnecting -= OnBackendReconnecting;
+}
 ```
 
 ```javascript JavaScript
@@ -218,7 +260,7 @@ extends Node
 func _ready():
     WavedashSDK.backend_connected.connect(_on_connected)
     WavedashSDK.backend_disconnected.connect(_on_disconnected)
-    WavedashSDK.init({"debug": true})
+    WavedashSDK.init({"debug": true, "deferEvents": true})
     WavedashSDK.ready_for_events()
 
 func _on_connected(payload):

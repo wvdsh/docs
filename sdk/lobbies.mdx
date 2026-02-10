@@ -29,9 +29,8 @@ public class LobbyExample : MonoBehaviour
 {
     public async void CreateLobby()
     {
-        // Lobby types: 0 = public, 1 = friends only, 2 = private
         var lobbyId = await Wavedash.SDK.CreateLobby(
-            lobbyType: 0,
+            lobbyType: WavedashConstants.LobbyVisibility.PUBLIC,
             maxPlayers: 4
         );
 
@@ -84,8 +83,8 @@ func _on_lobby_joined(response):
 ```csharp Unity
 public async void JoinLobby(string lobbyId)
 {
-    var result = await Wavedash.SDK.JoinLobby(lobbyId);
-    if (!string.IsNullOrEmpty(result))
+    var success = await Wavedash.SDK.JoinLobby(lobbyId);
+    if (success)
     {
         Debug.Log("Joined lobby!");
     }
@@ -139,6 +138,8 @@ func _ready():
     WavedashSDK.got_lobbies.connect(_on_got_lobbies)
 
 func list_lobbies():
+    # Note: Godot SDK currently lists all public lobbies
+    # friendsOnly filtering is not yet supported
     WavedashSDK.list_available_lobbies()
 
 func _on_got_lobbies(lobbies: Array):
@@ -149,7 +150,19 @@ func _on_got_lobbies(lobbies: Array):
 ```csharp Unity
 public async void ListLobbies()
 {
+    // List all public lobbies
     var lobbies = await Wavedash.SDK.ListAvailableLobbies();
+
+    foreach (var lobby in lobbies)
+    {
+        Debug.Log($"{lobby["id"]}: {lobby["numUsers"]}/{lobby["maxPlayers"]} players");
+    }
+}
+
+public async void ListFriendsLobbies()
+{
+    // List only lobbies with friends
+    var lobbies = await Wavedash.SDK.ListAvailableLobbies(friendsOnly: true);
 
     foreach (var lobby in lobbies)
     {
@@ -159,6 +172,7 @@ public async void ListLobbies()
 ```
 
 ```javascript JavaScript
+// List all public lobbies
 const response = await WavedashJS.listAvailableLobbies();
 
 if (response.success) {
@@ -166,6 +180,9 @@ if (response.success) {
     console.log(`${lobby.id}: ${lobby.numUsers}/${lobby.maxPlayers} players`);
   });
 }
+
+// List only lobbies with friends
+const friendsResponse = await WavedashJS.listAvailableLobbies(true);
 ```
 </CodeGroup>
 
@@ -280,7 +297,7 @@ WavedashJS.sendLobbyMessage(lobbyId, "Hello everyone!");
 </CodeGroup>
 
 <Note>
-Messages have a maximum length of 1000 characters.
+Messages have a maximum length of 500 characters.
 </Note>
 
 ### Receiving messages
@@ -318,6 +335,79 @@ function onLobbyMessage(message) {
 }
 ```
 </CodeGroup>
+
+## Inviting users
+
+Invite friends or other users to join your lobby:
+
+<CodeGroup>
+```gdscript Godot
+func _ready():
+    WavedashSDK.sent_lobby_invite.connect(_on_invite_sent)
+    WavedashSDK.lobby_invite.connect(_on_lobby_invite)
+
+func invite_friend(lobby_id: String, user_id: String):
+    WavedashSDK.invite_user_to_lobby(lobby_id, user_id)
+
+func _on_invite_sent(response):
+    if response.get("success", false):
+        print("Invite sent!")
+
+func _on_lobby_invite(data):
+    # Received an invite from another player
+    print("Invited to lobby by: ", data["inviterUsername"])
+    # Optionally auto-join or show UI
+    WavedashSDK.join_lobby(data["lobbyId"])
+```
+
+```csharp Unity
+void Awake()
+{
+    Wavedash.SDK.OnLobbyInvite += HandleLobbyInvite;
+}
+
+public async void InviteFriend(string lobbyId, string userId)
+{
+    var success = await Wavedash.SDK.InviteUserToLobby(lobbyId, userId);
+    if (success)
+    {
+        Debug.Log("Invite sent!");
+    }
+}
+
+void HandleLobbyInvite(Dictionary<string, object> data)
+{
+    // Received an invite from another player
+    Debug.Log($"Invited to lobby by: {data["inviterUsername"]}");
+    // Optionally auto-join or show UI
+}
+
+void OnDestroy()
+{
+    Wavedash.SDK.OnLobbyInvite -= HandleLobbyInvite;
+}
+```
+
+```javascript JavaScript
+// Send an invite
+const response = await WavedashJS.inviteUserToLobby(lobbyId, friendUserId);
+
+if (response.success) {
+  console.log("Invite sent!");
+}
+
+// Receive invites via LOBBY_INVITE signal
+function handleLobbyInvite(data) {
+  console.log(`Invited to lobby by: ${data.inviterUsername}`);
+  // Optionally auto-join or show UI
+  WavedashJS.joinLobby(data.lobbyId);
+}
+```
+</CodeGroup>
+
+<Note>
+The invited user will receive a `LOBBY_INVITE` signal. Your game should handle this signal to show an invitation UI or auto-join the lobby.
+</Note>
 
 ## Lobby metadata
 
@@ -375,7 +465,8 @@ const mapName = WavedashJS.getLobbyData(lobbyId, "mapName");
 | `LOBBY_USERS_UPDATED` | Users joined or left | `{ users }` |
 | `LOBBY_MESSAGE` | New message received | `{ username, content, ... }` |
 | `LOBBY_DATA_UPDATED` | Metadata changed | `{ key, value }` |
-| `LOBBY_KICKED` | Removed from lobby | `{ reason }` |
+| `LOBBY_KICKED` | Removed from lobby | `{ lobbyId, reason }` |
+| `LOBBY_INVITE` | Received lobby invitation | `{ lobbyId, inviterId, inviterUsername }` |
 
 ## P2P integration
 
