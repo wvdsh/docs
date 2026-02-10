@@ -5,10 +5,6 @@ description: "Create competitive leaderboards and submit player scores"
 
 The Leaderboards API lets you create score-based rankings for your game. Players can submit scores, view their rank, and compete with others.
 
-<Note>
-Leaderboards are currently created by the Wavedash team. Contact us at [developer@wavedash.com](mailto:developer@wavedash.com) or via [Discord](https://discord.gg/bBaWUjTJWx) to set up leaderboards for your game. Dashboard creation is coming soon.
-</Note>
-
 ## Getting a leaderboard
 
 Retrieve an existing leaderboard by name:
@@ -64,8 +60,6 @@ Create a leaderboard if it doesn't exist, or get it if it does:
 <CodeGroup>
 ```gdscript Godot
 func create_leaderboard():
-    # Sort: ASCENDING (lower is better) or DESCENDING (higher is better)
-    # Display: NUMERIC, TIME_SECONDS, or TIME_MILLISECONDS
     WavedashSDK.get_or_create_leaderboard(
         "speedrun-times",
         WavedashConstants.LEADERBOARD_SORT_ASCENDING,
@@ -81,12 +75,10 @@ func _on_got_leaderboard(response):
 ```csharp Unity
 public async void CreateLeaderboard()
 {
-    // Sort: 0 = ascending, 1 = descending
-    // Display: 0 = numeric, 1 = time
     var leaderboard = await Wavedash.SDK.GetOrCreateLeaderboard(
         "speedrun-times",
-        sortOrder: 0,
-        displayType: 1
+        sortOrder: WavedashConstants.LeaderboardSortMethod.ASCENDING,
+        displayType: WavedashConstants.LeaderboardDisplayType.TIME_MILLISECONDS
     );
 
     if (leaderboard != null)
@@ -114,8 +106,8 @@ if (response.success) {
 
 | Value | Description | Best for |
 |-------|-------------|----------|
-| `ascending` | Lower scores rank higher | Time trials, golf scores |
-| `descending` | Higher scores rank higher | Points, high scores |
+| `LEADERBOARD_SORT_ASCENDING` | Lower scores rank higher | Time trials, golf scores |
+| `LEADERBOARD_SORT_DESCENDING` | Higher scores rank higher | Points, high scores |
 
 ### Display type
 
@@ -123,7 +115,8 @@ if (response.success) {
 |-------|-------------|
 | `numeric` | Display as a number (e.g., "1,000") |
 | `time_seconds` | Display as time in seconds (e.g., "1:23") |
-| `time_milliseconds` | Display as time with milliseconds (e.g., "1:23.45") |
+| `time_milliseconds` | Display as time with milliseconds (e.g., "1:23.456") |
+| `time_game_ticks` | Display as game ticks (assumes 60fps) |
 
 ## Submitting scores
 
@@ -202,8 +195,12 @@ func _ready():
     WavedashSDK.got_leaderboard_entries.connect(_on_got_entries)
 
 func get_top_scores(leaderboard_id: String):
-    # offset, limit, include_ugc
+    # offset, limit, friends_only
     WavedashSDK.get_leaderboard_entries(leaderboard_id, 0, 10, false)
+
+func get_friends_scores(leaderboard_id: String):
+    # Get only friends' scores
+    WavedashSDK.get_leaderboard_entries(leaderboard_id, 0, 10, true)
 
 func _on_got_entries(response):
     if response.get("success", false):
@@ -214,6 +211,7 @@ func _on_got_entries(response):
 ```csharp Unity
 public async void GetTopScores(string leaderboardId)
 {
+    // Note: Unity SDK does not support friendsOnly filter
     var entries = await Wavedash.SDK.ListLeaderboardEntries(
         leaderboardId,
         offset: 0,
@@ -231,7 +229,8 @@ public async void GetTopScores(string leaderboardId)
 const response = await WavedashJS.listLeaderboardEntries(
   "j57abc123...",  // Leaderboard ID
   0,               // offset: Start from rank 1
-  10               // limit: Get top 10
+  10,              // limit: Get top 10
+  false            // friendsOnly: false for all players, true for friends only
 );
 
 if (response.success) {
@@ -239,6 +238,14 @@ if (response.success) {
     console.log(`#${entry.rank} ${entry.username}: ${entry.score}`);
   });
 }
+
+// Get only friends' scores
+const friendsResponse = await WavedashJS.listLeaderboardEntries(
+  "j57abc123...",
+  0,
+  10,
+  true  // friendsOnly
+);
 ```
 </CodeGroup>
 
@@ -249,8 +256,12 @@ Get entries around the current player's rank:
 <CodeGroup>
 ```gdscript Godot
 func get_scores_around_me(leaderboard_id: String):
-    # count_ahead, count_behind, include_ugc
+    # count_ahead, count_behind, friends_only
     WavedashSDK.get_leaderboard_entries_around_player(leaderboard_id, 5, 5, false)
+
+func get_friend_scores_around_me(leaderboard_id: String):
+    # Get friends' scores around your position
+    WavedashSDK.get_leaderboard_entries_around_player(leaderboard_id, 5, 5, true)
 
 func _on_got_entries(response):
     if response.get("success", false):
@@ -264,6 +275,7 @@ func _on_got_entries(response):
 ```csharp Unity
 public async void GetScoresAroundMe(string leaderboardId)
 {
+    // Note: Unity SDK does not support friendsOnly filter
     var entries = await Wavedash.SDK.ListLeaderboardEntriesAroundUser(
         leaderboardId,
         countAhead: 5,
@@ -284,7 +296,8 @@ public async void GetScoresAroundMe(string leaderboardId)
 const response = await WavedashJS.listLeaderboardEntriesAroundUser(
   "j57abc123...",  // Leaderboard ID
   5,               // countAhead: 5 entries with better scores
-  5                // countBehind: 5 entries with worse scores
+  5,               // countBehind: 5 entries with worse scores
+  false            // friendsOnly: false for all players, true for friends only
 );
 
 if (response.success) {
@@ -294,6 +307,14 @@ if (response.success) {
     console.log(`${isMe ? ">" : " "} #${entry.rank} ${entry.username}: ${entry.score}`);
   });
 }
+
+// Get friends' scores around your position
+const friendsResponse = await WavedashJS.listLeaderboardEntriesAroundUser(
+  "j57abc123...",
+  5,
+  5,
+  true  // friendsOnly
+);
 ```
 </CodeGroup>
 
@@ -403,10 +424,10 @@ public async void SubmitScoreWithReplay(string leaderboardId, int score, string 
 ```javascript JavaScript
 // First, create the UGC item with file path
 const ugcResponse = await WavedashJS.createUGCItem(
-  "replay",     // ugcType
-  "My Replay",  // title
-  "",           // description
-  "public",     // visibility
+  UGC_TYPE_GAME_MANAGED, // replays
+  "My Replay",           // title
+  "",                    // description
+  UGC_VISIBILITY_PUBLIC, // visibility
   "/path/to/replay.dat"  // filePath (optional)
 );
 

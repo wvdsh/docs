@@ -20,8 +20,10 @@ Remote storage provides:
 func _ready():
     WavedashSDK.remote_file_uploaded.connect(_on_file_uploaded)
 
-func save_to_cloud(local_path: String):
-    WavedashSDK.upload_remote_file(local_path)
+func save_to_cloud(file_name: String):
+    # File paths must be absolute and start with OS.get_user_data_dir()
+    var path = OS.get_user_data_dir() + "/" + file_name
+    WavedashSDK.upload_remote_file(path)
 
 func _on_file_uploaded(response):
     if response.get("success", false):
@@ -59,9 +61,11 @@ if (response.success) {
 <CodeGroup>
 ```gdscript Godot
 func save_game(slot: int, game_state: Dictionary):
-    var path = "user://saves/slot" + str(slot) + ".json"
+    # Use OS.get_user_data_dir() for absolute paths
+    var saves_dir = OS.get_user_data_dir() + "/saves"
+    var path = saves_dir + "/slot" + str(slot) + ".json"
 
-    DirAccess.make_dir_recursive_absolute("user://saves")
+    DirAccess.make_dir_recursive_absolute(saves_dir)
 
     var file = FileAccess.open(path, FileAccess.WRITE)
     file.store_string(JSON.stringify(game_state))
@@ -105,8 +109,10 @@ async function saveGame(slot, gameState) {
 func _ready():
     WavedashSDK.remote_file_downloaded.connect(_on_file_downloaded)
 
-func load_from_cloud(local_path: String):
-    WavedashSDK.download_remote_file(local_path)
+func load_from_cloud(file_name: String):
+    # File paths must be absolute and start with OS.get_user_data_dir()
+    var path = OS.get_user_data_dir() + "/" + file_name
+    WavedashSDK.download_remote_file(path)
 
 func _on_file_downloaded(response):
     if response.get("success", false):
@@ -144,7 +150,8 @@ if (response.success) {
 <CodeGroup>
 ```gdscript Godot
 func load_game(slot: int):
-    var path = "user://saves/slot" + str(slot) + ".json"
+    # Use OS.get_user_data_dir() for absolute paths
+    var path = OS.get_user_data_dir() + "/saves/slot" + str(slot) + ".json"
     WavedashSDK.download_remote_file(path)
 
 func _on_file_downloaded(response):
@@ -200,7 +207,9 @@ func _ready():
     WavedashSDK.remote_directory_downloaded.connect(_on_directory_downloaded)
 
 func list_saves():
-    WavedashSDK.download_remote_directory("user://saves/")
+    # Directory paths must be absolute and start with OS.get_user_data_dir()
+    var path = OS.get_user_data_dir() + "/saves/"
+    WavedashSDK.download_remote_directory(path)
 
 func _on_directory_downloaded(response):
     if response.get("success", false):
@@ -260,12 +269,29 @@ replays/             # Directory for replays
 Paths should use forward slashes (`/`) as separators, regardless of platform.
 </Note>
 
+<Warning>
+**Godot**: File paths must be absolute and start with `OS.get_user_data_dir()`. Do not use `user://` virtual paths—they are not supported by the Remote Storage API.
+
+```gdscript
+# Correct
+var path = OS.get_user_data_dir() + "/saves/slot1.json"
+
+# Incorrect - will fail validation
+var path = "user://saves/slot1.json"
+```
+</Warning>
+
 ## Example: Cloud save system
 
 <CodeGroup>
 ```gdscript Godot
 const SAVE_VERSION = 2
-const SAVE_PATH = "user://saves/"
+
+# Use OS.get_user_data_dir() for absolute paths required by Remote Storage API
+var save_path: String
+
+func _ready():
+    save_path = OS.get_user_data_dir() + "/saves/"
 
 func save(slot: int, game_state: Dictionary) -> void:
     var save_data = {
@@ -274,8 +300,8 @@ func save(slot: int, game_state: Dictionary) -> void:
         "state": game_state
     }
 
-    var path = SAVE_PATH + "slot" + str(slot) + ".json"
-    DirAccess.make_dir_recursive_absolute(SAVE_PATH)
+    var path = save_path + "slot" + str(slot) + ".json"
+    DirAccess.make_dir_recursive_absolute(save_path)
 
     var file = FileAccess.open(path, FileAccess.WRITE)
     file.store_string(JSON.stringify(save_data))

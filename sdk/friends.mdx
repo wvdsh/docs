@@ -1,0 +1,216 @@
+---
+title: "Friends"
+description: "Access the player's friends list and display avatars"
+---
+
+The Friends API lets you retrieve the current player's friends list and display user avatars in your game. This enables social features like showing friends in leaderboards, lobby invitations, and in-game friend lists.
+
+## Listing friends
+
+Retrieve the current player's friends list:
+
+<CodeGroup>
+```gdscript Godot
+func _ready():
+    WavedashSDK.got_friends.connect(_on_got_friends)
+
+func load_friends():
+    WavedashSDK.list_friends()
+
+func _on_got_friends(response):
+    if response.get("success", false):
+        var friends = response.get("data", [])
+        for friend in friends:
+            print(friend["username"], " - Online: ", friend["isOnline"])
+```
+
+```csharp Unity
+public class FriendsExample : MonoBehaviour
+{
+    async void Start()
+    {
+        var friends = await Wavedash.SDK.ListFriends();
+
+        if (friends != null)
+        {
+            foreach (var friend in friends)
+            {
+                Debug.Log($"{friend["username"]} - Online: {friend["isOnline"]}");
+            }
+        }
+    }
+}
+```
+
+```javascript JavaScript
+const response = await WavedashJS.listFriends();
+
+if (response.success) {
+  response.data.forEach(friend => {
+    console.log(`${friend.username} - Online: ${friend.isOnline}`);
+  });
+}
+```
+</CodeGroup>
+
+### Friend data structure
+
+Each friend object contains:
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `userId` | string | Friend's user ID |
+| `username` | string | Friend's display name |
+| `avatarUrl` | string? | URL to friend's avatar (if set) |
+| `isOnline` | boolean | Whether the friend is currently online |
+
+## User avatars
+
+Display user avatars in your game with size-optimized URLs.
+
+### Avatar sizes
+
+| Constant | Size | Use case |
+|----------|------|----------|
+| `AVATAR_SIZE_SMALL` (0) | 64px | Lists, compact UI |
+| `AVATAR_SIZE_MEDIUM` (1) | 128px | Profile cards, chat |
+| `AVATAR_SIZE_LARGE` (2) | 256px | Full profile view |
+
+### Getting avatar URLs
+
+Get a CDN URL for a user's avatar. Users must be cached (seen via friends list or lobby membership) for this to work.
+
+<CodeGroup>
+```gdscript Godot
+func get_friend_avatar(user_id: String):
+    # Get avatar URL for a cached user
+    var url = WavedashSDK.get_user_avatar_url(user_id, WavedashConstants.AVATAR_SIZE_MEDIUM)
+    if url:
+        print("Avatar URL: ", url)
+    else:
+        print("User not cached or has no avatar")
+```
+
+```csharp Unity
+public void GetFriendAvatar(string userId)
+{
+    // Get avatar URL for a cached user
+    var url = Wavedash.SDK.GetUserAvatarUrl(userId, WavedashConstants.AvatarSize.MEDIUM);
+    if (!string.IsNullOrEmpty(url))
+    {
+        Debug.Log($"Avatar URL: {url}");
+    }
+    else
+    {
+        Debug.Log("User not cached or has no avatar");
+    }
+}
+```
+
+```javascript JavaScript
+// Get avatar URL for a cached user
+const url = WavedashJS.getUserAvatarUrl(userId, AVATAR_SIZE_MEDIUM);
+
+if (url) {
+  console.log(`Avatar URL: ${url}`);
+} else {
+  console.log("User not cached or has no avatar");
+}
+```
+</CodeGroup>
+
+### Loading avatars as textures
+
+For game engines, you can load avatars directly as textures:
+
+<CodeGroup>
+```gdscript Godot
+func _ready():
+    WavedashSDK.user_avatar_loaded.connect(_on_avatar_loaded)
+
+func load_friend_avatar(user_id: String):
+    # Async fetch avatar as texture
+    WavedashSDK.get_user_avatar(user_id, WavedashConstants.AVATAR_SIZE_MEDIUM)
+
+func _on_avatar_loaded(texture: Texture2D, user_id: String):
+    if texture:
+        # Apply texture to a sprite or UI element
+        $AvatarSprite.texture = texture
+        print("Loaded avatar for: ", user_id)
+    else:
+        print("Failed to load avatar for: ", user_id)
+```
+
+```csharp Unity
+public class AvatarLoader : MonoBehaviour
+{
+    public RawImage avatarImage;
+
+    public async void LoadFriendAvatar(string userId)
+    {
+        // Async fetch avatar as Texture2D
+        var texture = await Wavedash.SDK.GetUserAvatar(userId, WavedashConstants.AvatarSize.MEDIUM);
+
+        if (texture != null)
+        {
+            avatarImage.texture = texture;
+            Debug.Log($"Loaded avatar for: {userId}");
+        }
+        else
+        {
+            Debug.Log($"Failed to load avatar for: {userId}");
+        }
+    }
+}
+```
+
+```javascript JavaScript
+// For JavaScript games, use the URL directly with an Image element
+const url = WavedashJS.getUserAvatarUrl(userId, 1);
+
+if (url) {
+  const img = new Image();
+  img.src = url;
+  img.onload = () => {
+    console.log("Avatar loaded");
+    // Use img in your game
+  };
+}
+```
+</CodeGroup>
+
+## User caching
+
+Avatar lookups require users to be cached. Users are automatically cached when:
+
+- **Friends list is fetched**: All friends are cached after calling `listFriends()`
+- **Lobby membership**: Users in the same lobby are cached
+- **Current user**: Your own user is always cached
+
+<Note>
+If `getUserAvatarUrl()` returns null/empty, it means either the user hasn't been cached yet, or they don't have an avatar set.
+</Note>
+
+## Signals
+
+| Signal | Description | Data |
+|--------|-------------|------|
+| `got_friends` | Friends list loaded | `{ success, data: Friend[] }` |
+| `user_avatar_loaded` | Avatar texture loaded (Godot) | `(texture, user_id)` |
+
+## Best practices
+
+<AccordionGroup>
+  <Accordion title="Cache friends list on startup">
+    Call `listFriends()` early in your game initialization to cache friend data for avatar lookups.
+  </Accordion>
+  <Accordion title="Use appropriate avatar sizes">
+    Choose the smallest size that looks good in your UI to reduce bandwidth and loading time.
+  </Accordion>
+  <Accordion title="Handle missing avatars gracefully">
+    Not all users have avatars set. Display a default placeholder when `getUserAvatarUrl()` returns null.
+  </Accordion>
+  <Accordion title="Refresh friends list periodically">
+    Friends' online status changes over time. Consider refreshing the list when returning to a friends menu.
+  </Accordion>
+</AccordionGroup>
