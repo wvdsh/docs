@@ -26,6 +26,10 @@ This guide covers adding the Wavedash SDK to your Unity project.
 - **Memory Size**: 256 MB (adjust based on your game)
 - **Publishing Settings > Decompression Fallback**: Enabled
 
+<Warning>
+  Under **Resolution and Presentation > WebGL Template**, you must use the **Default** template. The **Minimal** template generates an `index.html` that is missing the `buildUrl` variable, which the Wavedash CLI requires during upload.
+</Warning>
+
 ## Next steps
 
 <CardGroup cols={2}>
