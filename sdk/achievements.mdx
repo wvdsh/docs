@@ -85,8 +85,31 @@ WavedashJS.setStat("games_played", 42);
 </CodeGroup>
 
 <Note>
-Stat updates are debounced to reduce network calls. Changes sync automatically.
+Stat updates are debounced and sync automatically. Both `setStat` and `setAchievement` trigger a debounced flush behind the scenes. If you need to ensure data is sent to the server immediately, call `storeStats()` explicitly.
 </Note>
+
+### Flushing stats to the server
+
+`setStat` and `setAchievement` automatically schedule a server sync, but you can call `storeStats()` directly to flush all pending stat and achievement changes. This is useful before important transitions such as changing levels or returning to a menu.
+
+Calls to `storeStats()` are debounced (5-second window, fires on both the leading and trailing edge), so rapid calls won't overwhelm the network. Any data that hasn't been flushed when the player closes the tab is sent automatically via the page unload handler.
+
+<CodeGroup>
+```gdscript Godot
+# Flush all pending stat and achievement changes to the server
+WavedashSDK.store_stats()
+```
+
+```csharp Unity
+// Flush all pending stat and achievement changes to the server
+Wavedash.SDK.StoreStats();
+```
+
+```javascript JavaScript
+// Flush all pending stat and achievement changes to the server
+WavedashJS.storeStats();
+```
+</CodeGroup>
 
 ### Getting a stat
 
