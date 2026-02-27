@@ -13,9 +13,8 @@ Create `wavedash.toml` in your project root. The CLI looks for it in the current
 
 <CodeGroup>
 ```toml Godot
-org_slug = "your-organization"
-game_slug = "your-game"
-branch_slug = "production"
+game_id = "your-game-id"
+branch = "production"
 upload_dir = "./exports/web"
 
 [godot]
@@ -23,9 +22,8 @@ version = "4.5-stable"
 ```
 
 ```toml Unity
-org_slug = "your-organization"
-game_slug = "your-game"
-branch_slug = "production"
+game_id = "your-game-id"
+branch = "production"
 upload_dir = "./Builds/WebGL"
 
 [unity]
@@ -33,9 +31,8 @@ version = "6000.0.2f1"
 ```
 
 ```toml Custom
-org_slug = "your-organization"
-game_slug = "your-game"
-branch_slug = "production"
+game_id = "your-game-id"
+branch = "production"
 upload_dir = "./dist"
 
 [custom]
@@ -48,13 +45,12 @@ entrypoint = "game.js"
 
 | Field | Type | Description |
 |-------|------|-------------|
-| `org_slug` | string | Your organization's URL slug |
-| `game_slug` | string | Your game's URL slug |
-| `branch_slug` | string | The branch to push builds to |
+| `game_id` | string | Your game's ID from the Wavedash Developer Dashboard |
+| `branch` | string | The branch to push builds to |
 | `upload_dir` | string | Path to your built game files (relative to config file) |
 
 <Note>
-Find your org and game slugs in the Wavedash Developer Dashboard.
+Find your game ID in the Wavedash Developer Dashboard.
 </Note>
 
 ## Engine configuration
@@ -102,7 +98,7 @@ entrypoint = "game.js"
 | Field | Type | Description |
 |-------|------|-------------|
 | `version` | string | Your game's version number |
-| `entrypoint` | string | JavaScript file that initializes your game |
+| `entrypoint` | string | JavaScript file that initializes your game (must be inside `upload_dir`) |
 
 <Tip>
 Use the custom engine for HTML5 games, js-dos games, or any web-based game with a JavaScript entry point.
