@@ -94,7 +94,7 @@
     "primary": {
       "type": "button",
       "label": "Dashboard",
-      "href": "https://wavedash.com/developers/dashboard"
+      "href": "https://wavedash.com/developers"
     }
   },
   "contextual": {
