@@ -42,7 +42,7 @@ SDK configuration options:
 ```typescript
 interface WavedashConfig {
   debug?: boolean;                       // Useful for logging and testing — enables verbose output in the browser console
-  deferEvents?: boolean;                 // Lets your game finish setup before handling lobby/multiplayer signals
+  deferEvents?: boolean;                 // Lets your game finish setup before handling lobby/multiplayer events
   disableAchievementsAndStats?: boolean; // Turns off achievement tracking in sandbox or demo builds
   remoteStorageOrigin?: string;          // Custom origin for remote file storage
   p2p?: Partial<P2PConfig>;             // P2P networking configuration (see P2PConfig below)

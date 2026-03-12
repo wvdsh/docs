@@ -191,10 +191,10 @@ Avatar lookups require users to be cached. Users are automatically cached when:
 If `getUserAvatarUrl()` returns null/empty, it means either the user hasn't been cached yet, or they don't have an avatar set.
 </Note>
 
-## Signals
+## Events
 
-| Signal | Description | Data |
-|--------|-------------|------|
+| Event | Description | Data |
+|-------|-------------|------|
 | `got_friends` | Friends list loaded | `{ success, data: Friend[] }` |
 | `user_avatar_loaded` | Avatar texture loaded (Godot) | `(texture, user_id)` |
 

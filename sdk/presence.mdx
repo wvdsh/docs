@@ -98,7 +98,7 @@ await WavedashJS.updateUserPresence({
 ```
 </CodeGroup>
 
-## Connection signals
+## Connection events
 
 <CodeGroup>
 ```gdscript Godot
@@ -149,18 +149,25 @@ void OnDestroy()
 ```
 
 ```javascript JavaScript
-// Connection signals:
-// BACKEND_CONNECTED - Connected to Wavedash backend
-// BACKEND_DISCONNECTED - Lost connection
-// BACKEND_RECONNECTING - Attempting to reconnect
+WavedashJS.addEventListener(WavedashJS.Events.BACKEND_CONNECTED, (e) => {
+  console.log("Connected to Wavedash!");
+});
+
+WavedashJS.addEventListener(WavedashJS.Events.BACKEND_DISCONNECTED, (e) => {
+  console.log("Lost connection to Wavedash");
+});
+
+WavedashJS.addEventListener(WavedashJS.Events.BACKEND_RECONNECTING, (e) => {
+  console.log("Reconnecting to Wavedash...");
+});
 ```
 </CodeGroup>
 
-| Signal | Description |
-|--------|-------------|
-| `BACKEND_CONNECTED` | Connected to Wavedash backend |
-| `BACKEND_DISCONNECTED` | Lost connection |
-| `BACKEND_RECONNECTING` | Attempting to reconnect |
+| Event | Description |
+|-------|-------------|
+| `WavedashJS.Events.BACKEND_CONNECTED` | Connected to Wavedash backend |
+| `WavedashJS.Events.BACKEND_DISCONNECTED` | Lost connection |
+| `WavedashJS.Events.BACKEND_RECONNECTING` | Attempting to reconnect |
 
 ## Clearing presence
 

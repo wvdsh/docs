@@ -24,7 +24,7 @@ Your entrypoint **must** do the following:
 
 1. **Render to `wavedash-target`** - Create your game canvas inside the target element
 2. **Report loading progress** - Call `WavedashJS.updateLoadProgressZeroToOne(progress)` with values from 0 to 1
-3. **Signal load complete** - Call `WavedashJS.loadComplete()` when your game is ready
+3. **Notify load complete** - Call `WavedashJS.loadComplete()` when your game is ready
 
 ### Minimal entrypoint example
 
@@ -42,7 +42,7 @@ Your entrypoint **must** do the following:
   // Initialize your game...
   await initializeGame(canvas);
 
-  // Signal that loading is complete
+  // Notify that loading is complete
   WavedashJS.loadComplete();
 })();
 ```

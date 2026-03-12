@@ -199,8 +199,8 @@ Check if peers are ready for messaging:
 # Check if we can broadcast to at least one peer
 func can_broadcast() -> bool:
     # P2P connections are managed automatically when in a lobby
-    # Use signals to track connection state
-    return true  # Check via p2p_connection_established signal
+    # Use events to track connection state
+    return true  # Check via p2p_connection_established event
 ```
 
 ```csharp Unity
@@ -217,7 +217,7 @@ const canBroadcast = WavedashJS.isBroadcastReady();
 ```
 </CodeGroup>
 
-## Signals
+## Events
 
 <CodeGroup>
 ```gdscript Godot
@@ -246,18 +246,25 @@ void Awake()
 ```
 
 ```javascript JavaScript
-// Signals emitted for P2P events:
-// P2P_CONNECTION_ESTABLISHED - { userId, username }
-// P2P_CONNECTION_FAILED - { userId, username, error }
-// P2P_PEER_DISCONNECTED - { userId, username }
+WavedashJS.addEventListener(WavedashJS.Events.P2P_CONNECTION_ESTABLISHED, (e) => {
+  console.log("Connected to peer:", e.detail.username);
+});
+
+WavedashJS.addEventListener(WavedashJS.Events.P2P_CONNECTION_FAILED, (e) => {
+  console.log("Connection failed:", e.detail.error);
+});
+
+WavedashJS.addEventListener(WavedashJS.Events.P2P_PEER_DISCONNECTED, (e) => {
+  console.log("Peer disconnected:", e.detail.userId);
+});
 ```
 </CodeGroup>
 
-| Signal | Description | Data |
-|--------|-------------|------|
-| `P2P_CONNECTION_ESTABLISHED` | Peer connected | `{ userId, username }` |
-| `P2P_CONNECTION_FAILED` | Connection failed | `{ userId, username, error }` |
-| `P2P_PEER_DISCONNECTED` | Peer disconnected | `{ userId, username }` |
+| Event | Description | Data |
+|-------|-------------|------|
+| `WavedashJS.Events.P2P_CONNECTION_ESTABLISHED` | Peer connected | `{ userId, username }` |
+| `WavedashJS.Events.P2P_CONNECTION_FAILED` | Connection failed | `{ userId, username, error }` |
+| `WavedashJS.Events.P2P_PEER_DISCONNECTED` | Peer disconnected | `{ userId, username }` |
 
 ## Advanced methods
 

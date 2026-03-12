@@ -329,10 +329,11 @@ void OnDestroy()
 ```
 
 ```javascript JavaScript
-// Messages are delivered via signals
-function onLobbyMessage(message) {
+// Messages are delivered via events
+WavedashJS.addEventListener(WavedashJS.Events.LOBBY_MESSAGE, (e) => {
+  const message = e.detail;
   console.log(`${message.username}: ${message.content}`);
-}
+});
 ```
 </CodeGroup>
 
@@ -396,17 +397,18 @@ if (response.success) {
   console.log("Invite sent!");
 }
 
-// Receive invites via LOBBY_INVITE signal
-function handleLobbyInvite(data) {
+// Receive invites via Events.LOBBY_INVITE event
+WavedashJS.addEventListener(WavedashJS.Events.LOBBY_INVITE, (e) => {
+  const data = e.detail;
   console.log(`Invited to lobby by: ${data.inviterUsername}`);
   // Optionally auto-join or show UI
   WavedashJS.joinLobby(data.lobbyId);
-}
+});
 ```
 </CodeGroup>
 
 <Note>
-The invited user will receive a `LOBBY_INVITE` signal. Your game should handle this signal to show an invitation UI or auto-join the lobby.
+The invited user will receive a `WavedashJS.Events.LOBBY_INVITE` event. Your game should handle this event to show an invitation UI or auto-join the lobby.
 </Note>
 
 ## Lobby metadata
@@ -457,16 +459,16 @@ const mapName = WavedashJS.getLobbyData(lobbyId, "mapName");
 ```
 </CodeGroup>
 
-## Signals
+## Events
 
-| Signal | Description | Data |
-|--------|-------------|------|
-| `LOBBY_JOINED` | Successfully joined a lobby | `{ success, lobbyId, hostId?, users?, metadata?, message? }` |
-| `LOBBY_USERS_UPDATED` | A user joined or left | `{ id, username, changeType: "JOINED" \| "LEFT" }` |
-| `LOBBY_MESSAGE` | New message received | `{ username, content, ... }` |
-| `LOBBY_DATA_UPDATED` | Metadata changed | `Record<string, unknown>` (full metadata object) |
-| `LOBBY_KICKED` | Removed from lobby | `{ lobbyId, reason }` |
-| `LOBBY_INVITE` | Received lobby invitation | `{ lobbyId, inviterId, inviterUsername }` |
+| Event | Description | Data |
+|-------|-------------|------|
+| `WavedashJS.Events.LOBBY_JOINED` | Successfully joined a lobby | `{ success, lobbyId, hostId?, users?, metadata?, message? }` |
+| `WavedashJS.Events.LOBBY_USERS_UPDATED` | A user joined or left | `{ id, username, changeType: "JOINED" \| "LEFT" }` |
+| `WavedashJS.Events.LOBBY_MESSAGE` | New message received | `{ username, content, ... }` |
+| `WavedashJS.Events.LOBBY_DATA_UPDATED` | Metadata changed | `Record<string, unknown>` (full metadata object) |
+| `WavedashJS.Events.LOBBY_KICKED` | Removed from lobby | `{ lobbyId, reason }` |
+| `WavedashJS.Events.LOBBY_INVITE` | Received lobby invitation | `{ lobbyId, inviterId, inviterUsername }` |
 
 ## P2P integration
 

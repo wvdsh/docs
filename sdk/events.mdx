@@ -1,30 +1,30 @@
 ---
-title: "Signals Reference"
+title: "Events Reference"
 description: "Events emitted by the Wavedash SDK to your game"
 ---
 
-Signals are events that the SDK emits to notify your game of real-time updates. Your game engine receives these signals to react to lobby changes, P2P connections, and backend status.
+Events are notifications that the SDK emits to your game in real time. Your game engine receives these events to react to lobby changes, P2P connections, and backend status.
 
-## Signal overview
+## Event overview
 
-| Signal | Category | Description |
-|--------|----------|-------------|
-| `LOBBY_JOINED` | Lobby | Successfully joined a lobby |
-| `LOBBY_USERS_UPDATED` | Lobby | Users joined or left the lobby |
-| `LOBBY_MESSAGE` | Lobby | New message received |
-| `LOBBY_DATA_UPDATED` | Lobby | Lobby metadata changed |
-| `LOBBY_KICKED` | Lobby | Removed from lobby |
-| `LOBBY_INVITE` | Lobby | Received lobby invitation |
-| `P2P_CONNECTION_ESTABLISHED` | P2P | Connected to a peer |
-| `P2P_CONNECTION_FAILED` | P2P | Connection to peer failed |
-| `P2P_PEER_DISCONNECTED` | P2P | Peer disconnected |
-| `BACKEND_CONNECTED` | Backend | Connected to Wavedash |
-| `BACKEND_DISCONNECTED` | Backend | Disconnected from Wavedash |
-| `BACKEND_RECONNECTING` | Backend | Attempting to reconnect |
+| Event | Category | Description |
+|-------|----------|-------------|
+| `WavedashJS.Events.LOBBY_JOINED` | Lobby | Successfully joined a lobby |
+| `WavedashJS.Events.LOBBY_USERS_UPDATED` | Lobby | Users joined or left the lobby |
+| `WavedashJS.Events.LOBBY_MESSAGE` | Lobby | New message received |
+| `WavedashJS.Events.LOBBY_DATA_UPDATED` | Lobby | Lobby metadata changed |
+| `WavedashJS.Events.LOBBY_KICKED` | Lobby | Removed from lobby |
+| `WavedashJS.Events.LOBBY_INVITE` | Lobby | Received lobby invitation |
+| `WavedashJS.Events.P2P_CONNECTION_ESTABLISHED` | P2P | Connected to a peer |
+| `WavedashJS.Events.P2P_CONNECTION_FAILED` | P2P | Connection to peer failed |
+| `WavedashJS.Events.P2P_PEER_DISCONNECTED` | P2P | Peer disconnected |
+| `WavedashJS.Events.BACKEND_CONNECTED` | Backend | Connected to Wavedash |
+| `WavedashJS.Events.BACKEND_DISCONNECTED` | Backend | Disconnected from Wavedash |
+| `WavedashJS.Events.BACKEND_RECONNECTING` | Backend | Attempting to reconnect |
 
-## Lobby signals
+## Lobby events
 
-### LOBBY_JOINED
+### `WavedashJS.Events.LOBBY_JOINED`
 
 Emitted when you successfully join or create a lobby.
 
@@ -39,7 +39,7 @@ Emitted when you successfully join or create a lobby.
 }
 ```
 
-### LOBBY_USERS_UPDATED
+### `WavedashJS.Events.LOBBY_USERS_UPDATED`
 
 Emitted when a user joins or leaves the lobby. Fires once per user change.
 
@@ -51,7 +51,7 @@ Emitted when a user joins or leaves the lobby. Fires once per user change.
 }
 ```
 
-### LOBBY_MESSAGE
+### `WavedashJS.Events.LOBBY_MESSAGE`
 
 Emitted when a new message is received in the lobby.
 
@@ -65,7 +65,7 @@ Emitted when a new message is received in the lobby.
 }
 ```
 
-### LOBBY_DATA_UPDATED
+### `WavedashJS.Events.LOBBY_DATA_UPDATED`
 
 Emitted when the lobby metadata changes. Contains the full metadata object.
 
@@ -73,7 +73,7 @@ Emitted when the lobby metadata changes. Contains the full metadata object.
 Record<string, unknown> // The full lobby metadata object
 ```
 
-### LOBBY_KICKED
+### `WavedashJS.Events.LOBBY_KICKED`
 
 Emitted when you are removed from the lobby.
 
@@ -84,7 +84,7 @@ Emitted when you are removed from the lobby.
 }
 ```
 
-### LOBBY_INVITE
+### `WavedashJS.Events.LOBBY_INVITE`
 
 Emitted when you receive an invitation to join a lobby.
 
@@ -96,9 +96,9 @@ Emitted when you receive an invitation to join a lobby.
 }
 ```
 
-## P2P signals
+## P2P events
 
-### P2P_CONNECTION_ESTABLISHED
+### `WavedashJS.Events.P2P_CONNECTION_ESTABLISHED`
 
 Emitted when a peer-to-peer connection is ready.
 
@@ -109,7 +109,7 @@ Emitted when a peer-to-peer connection is ready.
 }
 ```
 
-### P2P_CONNECTION_FAILED
+### `WavedashJS.Events.P2P_CONNECTION_FAILED`
 
 Emitted when a peer connection fails.
 
@@ -121,7 +121,7 @@ Emitted when a peer connection fails.
 }
 ```
 
-### P2P_PEER_DISCONNECTED
+### `WavedashJS.Events.P2P_PEER_DISCONNECTED`
 
 Emitted when a peer disconnects.
 
@@ -132,9 +132,9 @@ Emitted when a peer disconnects.
 }
 ```
 
-## Backend signals
+## Backend events
 
-### BACKEND_CONNECTED
+### `WavedashJS.Events.BACKEND_CONNECTED`
 
 Emitted when connected to the Wavedash backend.
 
@@ -147,7 +147,7 @@ Emitted when connected to the Wavedash backend.
 }
 ```
 
-### BACKEND_DISCONNECTED
+### `WavedashJS.Events.BACKEND_DISCONNECTED`
 
 Emitted when disconnected from the backend.
 
@@ -160,7 +160,7 @@ Emitted when disconnected from the backend.
 }
 ```
 
-### BACKEND_RECONNECTING
+### `WavedashJS.Events.BACKEND_RECONNECTING`
 
 Emitted when attempting to reconnect after a disconnect.
 
@@ -173,27 +173,27 @@ Emitted when attempting to reconnect after a disconnect.
 }
 ```
 
-## Handling signals
+## Handling events
 
 <Tabs>
   <Tab title="Godot">
-    The Wavedash Godot SDK exposes signals as Godot signals:
+    The Wavedash Godot SDK exposes events natively:
 
     ```gdscript
     extends Node
 
     func _ready():
-        # Connect to lobby signals
+        # Connect to lobby events
         WavedashSDK.lobby_joined.connect(_on_lobby_joined)
         WavedashSDK.lobby_message.connect(_on_lobby_message)
         WavedashSDK.lobby_users_updated.connect(_on_users_updated)
         WavedashSDK.lobby_kicked.connect(_on_lobby_kicked)
 
-        # Connect to P2P signals
+        # Connect to P2P events
         WavedashSDK.p2p_connection_established.connect(_on_peer_connected)
         WavedashSDK.p2p_peer_disconnected.connect(_on_peer_disconnected)
 
-        # Connect to backend signals
+        # Connect to backend events
         WavedashSDK.backend_connected.connect(_on_backend_connected)
         WavedashSDK.backend_disconnected.connect(_on_backend_disconnected)
 
@@ -226,13 +226,13 @@ Emitted when attempting to reconnect after a disconnect.
     ```
   </Tab>
   <Tab title="Unity">
-    The Unity SDK exposes signals as C# events:
+    The Unity SDK exposes events as C# events:
 
     ```csharp
     using UnityEngine;
     using System.Collections.Generic;
 
-    public class WavedashSignalHandler : MonoBehaviour
+    public class WavedashEventHandler : MonoBehaviour
     {
         void Awake()
         {
@@ -320,52 +320,59 @@ Emitted when attempting to reconnect after a disconnect.
     }
     ```
   </Tab>
-  <Tab title="Custom">
-    For custom engines, the SDK calls your registered callback:
+  <Tab title="JavaScript">
+    The SDK extends `EventTarget`, so you can use standard `addEventListener`:
 
     ```javascript
-    // Set up your engine instance with signal handler
-    WavedashJS.setEngineInstance({
-      type: "CUSTOM",
-      SendMessage: (objectName, signalName, value) => {
-        switch (signalName) {
-          case "LobbyJoined":
-            handleLobbyJoined(JSON.parse(value));
-            break;
-          case "LobbyMessage":
-            handleLobbyMessage(JSON.parse(value));
-            break;
-          case "P2PConnectionEstablished":
-            handlePeerConnected(JSON.parse(value));
-            break;
-          // ... handle other signals
-        }
+    // Listen for lobby events
+    WavedashJS.addEventListener(WavedashJS.Events.LOBBY_JOINED, (e) => {
+      const data = e.detail;
+      if (data.success) {
+        console.log("Joined lobby:", data.lobbyId);
       }
     });
 
-    function handleLobbyJoined(data) {
-      if (data.success) {
-        console.log("Joined lobby:", data.data);
-      }
-    }
-
-    function handleLobbyMessage(message) {
+    WavedashJS.addEventListener(WavedashJS.Events.LOBBY_MESSAGE, (e) => {
+      const message = e.detail;
       console.log(`${message.username}: ${message.content}`);
-    }
+    });
 
-    function handlePeerConnected(data) {
-      console.log("Connected to peer:", data.username);
-    }
+    WavedashJS.addEventListener(WavedashJS.Events.LOBBY_USERS_UPDATED, (e) => {
+      const data = e.detail;
+      console.log(`User ${data.changeType}: ${data.username}`);
+    });
+
+    WavedashJS.addEventListener(WavedashJS.Events.LOBBY_KICKED, (e) => {
+      console.log("Kicked from lobby:", e.detail.reason);
+    });
+
+    // Listen for P2P events
+    WavedashJS.addEventListener(WavedashJS.Events.P2P_CONNECTION_ESTABLISHED, (e) => {
+      console.log("Connected to peer:", e.detail.username);
+    });
+
+    WavedashJS.addEventListener(WavedashJS.Events.P2P_PEER_DISCONNECTED, (e) => {
+      console.log("Peer disconnected:", e.detail.userId);
+    });
+
+    // Listen for backend events
+    WavedashJS.addEventListener(WavedashJS.Events.BACKEND_CONNECTED, (e) => {
+      console.log("Connected to Wavedash!");
+    });
+
+    WavedashJS.addEventListener(WavedashJS.Events.BACKEND_DISCONNECTED, (e) => {
+      console.log("Lost connection to Wavedash");
+    });
     ```
   </Tab>
 </Tabs>
 
-## Signal constants
+## Event constants
 
-The signal names are defined as constants:
+The event names are available as `WavedashJS.Events`:
 
 ```javascript
-const Signals = {
+WavedashJS.Events = {
   // Lobby
   LOBBY_MESSAGE: "LobbyMessage",
   LOBBY_KICKED: "LobbyKicked",
@@ -388,15 +395,15 @@ const Signals = {
 
 ## Deferring events
 
-If your game needs time to load assets, set up scenes, or wire up signal handlers before handling events, use `deferEvents: true` when calling `Init`. The SDK queues all signals until your game calls `readyForEvents()`.
+If your game needs time to load assets, set up scenes, or wire up event handlers before handling events, use `deferEvents: true` when calling `Init`. The SDK queues all events until your game calls `readyForEvents()`.
 
 <CodeGroup>
 ```gdscript Godot
 func _ready():
-    # Initialize with deferEvents so signals are queued during setup
+    # Initialize with deferEvents so events are queued during setup
     WavedashSDK.init({"debug": true, "deferEvents": true})
 
-    # Wire up signal handlers
+    # Wire up event handlers
     WavedashSDK.lobby_joined.connect(_on_lobby_joined)
     WavedashSDK.lobby_message.connect(_on_lobby_message)
     WavedashSDK.p2p_connection_established.connect(_on_p2p_connected)
@@ -404,14 +411,14 @@ func _ready():
     # Do any other game setup — load scenes, assets, etc.
     _load_game_resources()
 
-    # Now tell the SDK you're ready to receive queued signals
+    # Now tell the SDK you're ready to receive queued events
     WavedashSDK.ready_for_events()
 ```
 
 ```csharp Unity
 void Awake()
 {
-    // Initialize with deferEvents so signals are queued during setup
+    // Initialize with deferEvents so events are queued during setup
     Wavedash.SDK.Init(new Dictionary<string, object>
     {
         { "debug", true },
@@ -429,37 +436,29 @@ void Start()
     // Do any other game setup — load scenes, assets, etc.
     LoadGameResources();
 
-    // Now tell the SDK you're ready to receive queued signals
+    // Now tell the SDK you're ready to receive queued events
     Wavedash.SDK.ReadyForEvents();
 }
 ```
 
 ```javascript JavaScript
-// Initialize with deferEvents so signals are queued during setup
+// Initialize with deferEvents so events are queued during setup
 WavedashJS.init({ debug: true, deferEvents: true });
 
-// Set up your signal handler
-WavedashJS.setEngineInstance({
-  type: "custom",
-  SendMessage: (objectName, signalName, value) => {
-    switch (signalName) {
-      case "LobbyJoined":
-        handleLobbyJoined(JSON.parse(value));
-        break;
-      case "LobbyMessage":
-        handleLobbyMessage(JSON.parse(value));
-        break;
-      // ... handle other signals
-    }
-  }
+// Set up your event listeners
+WavedashJS.addEventListener(WavedashJS.Events.LOBBY_JOINED, (e) => {
+  handleLobbyJoined(e.detail);
+});
+WavedashJS.addEventListener(WavedashJS.Events.LOBBY_MESSAGE, (e) => {
+  handleLobbyMessage(e.detail);
 });
 
 // Do any other game setup — load assets, etc.
 await loadGameResources();
 
-// Now tell the SDK you're ready to receive queued signals
+// Now tell the SDK you're ready to receive queued events
 WavedashJS.readyForEvents();
 ```
 </CodeGroup>
 
-This ensures no signals are missed during initialization.
+This ensures no events are missed during initialization.

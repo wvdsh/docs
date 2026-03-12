@@ -57,7 +57,7 @@ if (WavedashJS.isReady()) {
 ```typescript
 interface WavedashConfig {
   debug?: boolean;                       // Useful for logging and testing — enables verbose output in the browser console
-  deferEvents?: boolean;                 // Lets your game finish setup before handling lobby/multiplayer signals
+  deferEvents?: boolean;                 // Lets your game finish setup before handling lobby/multiplayer events
   disableAchievementsAndStats?: boolean; // Turns off achievement tracking in sandbox or demo builds
   remoteStorageOrigin?: string;          // Custom origin for remote file storage
   p2p?: Partial<P2PConfig>;             // P2P networking configuration (see P2PConfig type)
@@ -92,15 +92,15 @@ void Start()
 
 ## Event deferral
 
-By default, the SDK starts delivering signals like `LobbyJoined` and `P2P_CONNECTION_ESTABLISHED` immediately. If your game needs time to load assets, set up scenes, or wire up signal handlers before it's ready to handle those events, use `deferEvents: true`. The SDK queues all signals until your game calls `readyForEvents()`.
+By default, the SDK starts delivering events like `LobbyJoined` and `P2P_CONNECTION_ESTABLISHED` immediately. If your game needs time to load assets, set up scenes, or wire up event handlers before it's ready to handle those events, use `deferEvents: true`. The SDK queues all events until your game calls `readyForEvents()`.
 
 <CodeGroup>
 ```gdscript Godot
 func _ready():
-    # Initialize with deferEvents so signals are queued during setup
+    # Initialize with deferEvents so events are queued during setup
     WavedashSDK.init({"debug": true, "deferEvents": true})
 
-    # Wire up signal handlers
+    # Wire up event handlers
     WavedashSDK.lobby_joined.connect(_on_lobby_joined)
     WavedashSDK.lobby_message.connect(_on_lobby_message)
     WavedashSDK.p2p_connection_established.connect(_on_p2p_connected)
@@ -108,14 +108,14 @@ func _ready():
     # Do any other game setup — load scenes, assets, etc.
     _load_game_resources()
 
-    # Now tell the SDK you're ready to receive queued signals
+    # Now tell the SDK you're ready to receive queued events
     WavedashSDK.ready_for_events()
 ```
 
 ```csharp Unity
 void Awake()
 {
-    // Initialize with deferEvents so signals are queued during setup
+    // Initialize with deferEvents so events are queued during setup
     Wavedash.SDK.Init(new Dictionary<string, object>
     {
         { "debug", true },
@@ -133,27 +133,24 @@ void Start()
     // Do any other game setup — load scenes, assets, etc.
     LoadGameResources();
 
-    // Now tell the SDK you're ready to receive queued signals
+    // Now tell the SDK you're ready to receive queued events
     Wavedash.SDK.ReadyForEvents();
 }
 ```
 
 ```javascript JavaScript
-// Initialize with deferEvents so signals are queued during setup
+// Initialize with deferEvents so events are queued during setup
 WavedashJS.init({ debug: true, deferEvents: true });
 
-// Set up your signal handler
-WavedashJS.setEngineInstance({
-  type: "CUSTOM",
-  SendMessage: (objectName, signalName, value) => {
-    // Handle signals...
-  }
+// Set up your event listeners
+WavedashJS.addEventListener(WavedashJS.Events.LOBBY_JOINED, (e) => {
+  handleLobbyJoined(e.detail);
 });
 
 // Do any other game setup — load assets, etc.
 await loadGameResources();
 
-// Now tell the SDK you're ready to receive queued signals
+// Now tell the SDK you're ready to receive queued events
 WavedashJS.readyForEvents();
 ```
 </CodeGroup>
@@ -239,18 +236,23 @@ void OnDestroy()
 ```
 
 ```javascript JavaScript
-// Connection signals are emitted automatically:
-// BACKEND_CONNECTED - Successfully connected to backend
-// BACKEND_DISCONNECTED - Disconnected from backend
-// BACKEND_RECONNECTING - Attempting to reconnect
+WavedashJS.addEventListener(WavedashJS.Events.BACKEND_CONNECTED, (e) => {
+  console.log("Connected to Wavedash!");
+});
+WavedashJS.addEventListener(WavedashJS.Events.BACKEND_DISCONNECTED, (e) => {
+  console.log("Disconnected from Wavedash");
+});
+WavedashJS.addEventListener(WavedashJS.Events.BACKEND_RECONNECTING, (e) => {
+  console.log("Reconnecting to Wavedash...");
+});
 ```
 </CodeGroup>
 
-| Signal | Description |
-|--------|-------------|
-| `BACKEND_CONNECTED` | Successfully connected to backend |
-| `BACKEND_DISCONNECTED` | Disconnected from backend |
-| `BACKEND_RECONNECTING` | Attempting to reconnect |
+| Event | Description |
+|-------|-------------|
+| `WavedashJS.Events.BACKEND_CONNECTED` | Successfully connected to backend |
+| `WavedashJS.Events.BACKEND_DISCONNECTED` | Disconnected from backend |
+| `WavedashJS.Events.BACKEND_RECONNECTING` | Attempting to reconnect |
 
 ## Engine-specific initialization
 

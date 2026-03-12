@@ -65,7 +65,7 @@
           },
           {
             "group": "Reference",
-            "pages": ["sdk/types", "sdk/signals"]
+            "pages": ["sdk/types", "sdk/events"]
           }
         ]
       },
