@@ -20,7 +20,6 @@ Before reading stat values, you should request them from the server to ensure yo
 <CodeGroup>
 ```gdscript Godot
 func _ready():
-    WavedashSDK.current_stats_received.connect(_on_stats_received)
     WavedashSDK.request_stats()
 
 func _on_stats_received(response):
@@ -85,8 +84,41 @@ WavedashJS.setStat("games_played", 42);
 </CodeGroup>
 
 <Note>
-Stat updates are debounced to reduce network calls. Changes sync automatically.
+`setStat()` and `setAchievement()` only update values locally. You must call `storeStats()` to upload changes to the server. Calls to `storeStats()` are debounced (5 second delay) to reduce network calls. Any unsaved changes are also flushed on session end.
 </Note>
+
+### Storing stats
+
+Call `storeStats()` to upload locally-set stat and achievement changes to the server:
+
+<CodeGroup>
+```gdscript Godot
+# Set values locally
+WavedashSDK.set_stat_int("total_kills", 150, true)
+WavedashSDK.set_achievement("first_blood")
+
+# Upload changes to server
+WavedashSDK.store_stats()
+```
+
+```csharp Unity
+// Set values locally
+Wavedash.SDK.SetStatInt("total_kills", 150, storeNow: true);
+Wavedash.SDK.SetAchievement("first_blood");
+
+// Upload changes to server
+Wavedash.SDK.StoreStats();
+```
+
+```javascript JavaScript
+// Set values locally
+WavedashJS.setStat("total_kills", 150);
+WavedashJS.setAchievement("first_blood");
+
+// Upload changes to server
+WavedashJS.storeStats();
+```
+</CodeGroup>
 
 ### Getting a stat
 

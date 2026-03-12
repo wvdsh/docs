@@ -15,7 +15,7 @@ All SDK methods return a `WavedashResponse` wrapper:
 interface WavedashResponse<T> {
   success: boolean;     // Whether the operation succeeded
   data: T | null;       // Result data (null on failure)
-  args: Record<string, any>;  // Original arguments passed
+  args: Record<string, unknown>;  // Original arguments passed
   message?: string;     // Error message if success is false
 }
 ```
@@ -44,6 +44,8 @@ interface WavedashConfig {
   debug?: boolean;                       // Useful for logging and testing — enables verbose output in the browser console
   deferEvents?: boolean;                 // Lets your game finish setup before handling lobby/multiplayer signals
   disableAchievementsAndStats?: boolean; // Turns off achievement tracking in sandbox or demo builds
+  remoteStorageOrigin?: string;          // Custom origin for remote file storage
+  p2p?: Partial<P2PConfig>;             // P2P networking configuration (see P2PConfig below)
 }
 ```
 
@@ -78,17 +80,19 @@ interface Leaderboard {
 ### LeaderboardSortOrder
 
 ```typescript
-type LeaderboardSortOrder = "ascending" | "descending";
+// 0 = ascending  — Lower scores rank higher (time trials, golf)
+// 1 = descending — Higher scores rank higher (points, high scores)
+type LeaderboardSortOrder = 0 | 1;
 ```
 
 ### LeaderboardDisplayType
 
 ```typescript
-type LeaderboardDisplayType =
-  | "numeric"           // Display as a number (e.g., "1,000")
-  | "time_seconds"      // Display as time in seconds (e.g., "1:23")
-  | "time_milliseconds" // Display as time with milliseconds (e.g., "1:23.456")
-  | "time_game_ticks";  // Display as game ticks (assumes 60fps)
+// 0 = numeric           — Display as a number (e.g., "1,000")
+// 1 = time_seconds      — Display as time in seconds (e.g., "1:23")
+// 2 = time_milliseconds — Display as time with milliseconds (e.g., "1:23.456")
+// 3 = time_game_ticks   — Display as game ticks (assumes 60fps)
+type LeaderboardDisplayType = 0 | 1 | 2 | 3;
 ```
 
 ### LeaderboardEntry
@@ -116,14 +120,17 @@ interface Lobby {
   visibility: LobbyVisibility;   // Access level
   maxPlayers: number;            // Player limit
   numUsers: number;              // Current count
-  metadata: Record<string, any>; // Custom data
+  metadata: Record<string, unknown>; // Custom data
 }
 ```
 
 ### LobbyVisibility
 
 ```typescript
-type LobbyVisibility = "public" | "private" | "friends";
+// 0 = public       — Anyone can find and join
+// 1 = friends_only — Only friends can see and join
+// 2 = private      — Only joinable with the lobby ID
+type LobbyVisibility = 0 | 1 | 2;
 ```
 
 ### LobbyUser
@@ -226,7 +233,7 @@ type UGCType = 0 | 1 | 2 | 3 | 4;
 ```
 
 <Note>
-In Godot, use constants like `WavedashConstants.UGC_TYPE_SCREENSHOT`. In Unity, use `WavedashConstants.UGCItemType.SCREENSHOT`. In JavaScript, use the exported constants like `AVATAR_SIZE_MEDIUM` or integer values directly.
+In Godot, use constants like `WavedashConstants.UGC_TYPE_SCREENSHOT`. In Unity, use `WavedashConstants.UGCItemType.SCREENSHOT`. In JavaScript, use the integer values directly.
 </Note>
 
 ### UGCVisibility
@@ -262,7 +269,7 @@ Interface for game engine instances:
 
 ```typescript
 interface EngineInstance {
-  type: "godot" | "unity" | "custom";
+  type: "GODOT" | "UNITY" | "UNREAL" | "JSDOS" | "CUSTOM";
 
   // Send message to engine
   SendMessage(
@@ -273,10 +280,10 @@ interface EngineInstance {
 
   // Emscripten filesystem API
   FS: {
-    readFile(path: string, opts?: Record<string, any>): string | Uint8Array;
-    writeFile(path: string, data: string | ArrayBufferView, opts?: Record<string, any>): void;
+    readFile(path: string, opts?: Record<string, unknown>): string | Uint8Array;
+    writeFile(path: string, data: string | ArrayBufferView, opts?: Record<string, unknown>): void;
     mkdirTree(path: string, mode?: number): void;
-    syncfs(populate: boolean, callback?: (err: any) => void): void;
+    syncfs(populate: boolean, callback?: (err: unknown) => void): void;
     analyzePath(path: string): { exists: boolean };
   };
 }

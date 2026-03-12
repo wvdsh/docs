@@ -52,11 +52,11 @@ public class UGCExample : MonoBehaviour
 
 ```javascript JavaScript
 const response = await WavedashJS.createUGCItem(
-  UGC_TYPE_GAME_MANAGED, // ugcType (replays, saves)
-  "My Replay",           // title
-  "World 1-1 run",       // description
-  UGC_VISIBILITY_PUBLIC, // visibility
-  "/path/to/file"        // filePath (optional)
+  3,               // ugcType: 3 = game_managed (replays, saves)
+  "My Replay",     // title
+  "World 1-1 run", // description
+  0,               // visibility: 0 = public
+  "/path/to/file"  // filePath (optional)
 );
 
 if (response.success) {
@@ -68,11 +68,11 @@ if (response.success) {
 
 ### Visibility options
 
-| Value | Description |
-|-------|-------------|
-| `public` | Anyone can view |
-| `private` | Only the creator can view |
-| `friends` | Only friends can view |
+| Value | Constant | Description |
+|-------|----------|-------------|
+| `0` | `UGC_VISIBILITY.PUBLIC` | Anyone can view |
+| `1` | `UGC_VISIBILITY.FRIENDS_ONLY` | Only friends can view |
+| `2` | `UGC_VISIBILITY.PRIVATE` | Only the creator can view |
 
 ## Uploading content
 
@@ -110,14 +110,14 @@ public async void UploadScreenshot(string localPath)
 ```
 
 ```javascript JavaScript
-// For JS games, write to local storage first, then create UGC with the path
+// For JS games, write to IndexedDB first, then create UGC with the path
 await WavedashJS.writeLocalFile("replays/my-replay.dat", replayData);
 
 const response = await WavedashJS.createUGCItem(
-  UGC_TYPE_GAME_MANAGED,     // ugcType (replays, saves)
+  3,                         // ugcType: 3 = game_managed (replays, saves)
   "My Replay",
   "Description",
-  UGC_VISIBILITY_PUBLIC,     // visibility
+  0,                         // visibility: 0 = public
   "replays/my-replay.dat"    // The SDK handles uploading from this path
 );
 
@@ -220,7 +220,7 @@ const response = await WavedashJS.downloadUGCItem(
 );
 
 if (response.success) {
-  // File is now in local storage
+  // File is now in IndexedDB
   const data = await WavedashJS.readLocalFile("downloads/item.dat");
 }
 ```
@@ -267,7 +267,7 @@ const scoreResponse = await WavedashJS.uploadLeaderboardScore(
 | `other` | 4 | Other UGC types |
 
 <Note>
-In Godot, use constants like `WavedashConstants.UGC_TYPE_SCREENSHOT`. In Unity, use `WavedashConstants.UGCItemType.SCREENSHOT`. In JavaScript, use integer values (0, 1, 2, 3, 4).
+In Godot, use constants like `WavedashConstants.UGC_TYPE_SCREENSHOT`. In Unity, use `WavedashConstants.UGCItemType.SCREENSHOT`. In JavaScript, use the integer values directly (0, 1, 2, 3, 4).
 </Note>
 
 ## Example: Screenshot sharing
@@ -313,15 +313,15 @@ public async void ShareScreenshot()
 
 ```javascript JavaScript
 async function shareScreenshot(imageData) {
-  // Save screenshot to local storage first
+  // Save screenshot to IndexedDB first
   await WavedashJS.writeLocalFile("screenshots/capture.png", imageData);
 
   // Create UGC item with the file path
   const response = await WavedashJS.createUGCItem(
-    UGC_TYPE_SCREENSHOT,       // ugcType
+    0,                         // ugcType: 0 = screenshot
     "Game Screenshot",
     `Captured at level ${currentLevel}`,
-    UGC_VISIBILITY_PUBLIC,     // visibility
+    0,                         // visibility: 0 = public
     "screenshots/capture.png"
   );
 

@@ -46,7 +46,7 @@ public class CloudSaveExample : MonoBehaviour
 ```
 
 ```javascript JavaScript
-// For JS games, first write to local storage, then upload
+// For JS games, first write to IndexedDB, then upload
 await WavedashJS.writeLocalFile("saves/slot1.json", new Uint8Array(/* file data */));
 const response = await WavedashJS.uploadRemoteFile("saves/slot1.json");
 
@@ -92,7 +92,7 @@ async function saveGame(slot, gameState) {
   const data = new TextEncoder().encode(JSON.stringify(gameState));
   const path = `saves/slot${slot}.json`;
 
-  // Write to local storage first
+  // Write to IndexedDB first
   await WavedashJS.writeLocalFile(path, data);
 
   // Then upload to remote
@@ -135,7 +135,7 @@ public async void LoadFromCloud(string localPath)
 const response = await WavedashJS.downloadRemoteFile("saves/slot1.json");
 
 if (response.success) {
-  // File is now in local storage, read it
+  // File is now in IndexedDB, read it
   const data = await WavedashJS.readLocalFile("saves/slot1.json");
   if (data) {
     const text = new TextDecoder().decode(data);
@@ -195,6 +195,41 @@ async function loadGame(slot) {
   }
 
   return null;
+}
+```
+</CodeGroup>
+
+## Downloading directories
+
+Download all files in a remote directory at once:
+
+<CodeGroup>
+```gdscript Godot
+func _ready():
+    WavedashSDK.remote_directory_downloaded.connect(_on_directory_downloaded)
+
+func download_all_saves():
+    var path = OS.get_user_data_dir() + "/saves/"
+    WavedashSDK.download_remote_directory(path)
+
+func _on_directory_downloaded(response):
+    if response.get("success", false):
+        print("All save files downloaded")
+```
+
+```csharp Unity
+public async void DownloadAllSaves()
+{
+    var path = $"{Application.persistentDataPath}/saves/";
+    var result = await Wavedash.SDK.DownloadRemoteDirectory(path);
+}
+```
+
+```javascript JavaScript
+const response = await WavedashJS.downloadRemoteDirectory("saves/");
+
+if (response.success) {
+  console.log("All save files downloaded");
 }
 ```
 </CodeGroup>
@@ -349,7 +384,7 @@ class CloudSaveSystem {
     const path = `saves/slot${slot}.json`;
     const data = new TextEncoder().encode(JSON.stringify(saveData));
 
-    // Write locally first
+    // Write to IndexedDB first
     await WavedashJS.writeLocalFile(path, data);
 
     // Then sync to cloud

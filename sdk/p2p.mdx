@@ -248,16 +248,57 @@ void Awake()
 ```javascript JavaScript
 // Signals emitted for P2P events:
 // P2P_CONNECTION_ESTABLISHED - { userId, username }
-// P2P_CONNECTION_FAILED - { userId, error }
-// P2P_PEER_DISCONNECTED - { userId }
+// P2P_CONNECTION_FAILED - { userId, username, error }
+// P2P_PEER_DISCONNECTED - { userId, username }
 ```
 </CodeGroup>
 
 | Signal | Description | Data |
 |--------|-------------|------|
 | `P2P_CONNECTION_ESTABLISHED` | Peer connected | `{ userId, username }` |
-| `P2P_CONNECTION_FAILED` | Connection failed | `{ userId, error }` |
-| `P2P_PEER_DISCONNECTED` | Peer disconnected | `{ userId }` |
+| `P2P_CONNECTION_FAILED` | Connection failed | `{ userId, username, error }` |
+| `P2P_PEER_DISCONNECTED` | Peer disconnected | `{ userId, username }` |
+
+## Advanced methods
+
+### Pre-allocated message buffer
+
+For performance-sensitive games (especially engine-based), you can use a pre-allocated scratch buffer for outgoing messages to avoid allocations:
+
+```javascript JavaScript
+const buffer = WavedashJS.getP2POutgoingMessageBuffer();
+
+// Write your payload into the buffer
+buffer[0] = 0x01;
+buffer[1] = 0x02;
+
+// Send only the bytes you wrote
+WavedashJS.broadcastP2PMessage(0, true, buffer, 2);
+```
+
+### Batch-reading messages
+
+For game engines, `drainP2PChannelToBuffer` reads all queued messages from a channel into a tightly packed binary buffer. This is more efficient than reading one message at a time.
+
+```javascript JavaScript
+// Drain all messages from channel 0
+const packed = WavedashJS.drainP2PChannelToBuffer(0);
+
+// Format: [size:4 bytes LE][payload:N bytes][size:4 bytes LE][payload:N bytes]...
+const view = new DataView(packed.buffer);
+let offset = 0;
+while (offset < packed.byteLength) {
+  const size = view.getUint32(offset, true);
+  offset += 4;
+  const message = packed.subarray(offset, offset + size);
+  offset += size;
+  // Process message...
+}
+```
+
+<Note>
+JS games can use `readP2PMessageFromChannel()` to get decoded `P2PMessage` objects one at a time. `drainP2PChannelToBuffer` is primarily useful for game engines that need to process messages in bulk.
+</Note>
 
 ## TURN fallback
 

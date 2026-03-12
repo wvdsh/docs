@@ -90,9 +90,9 @@ public async void CreateLeaderboard()
 
 ```javascript JavaScript
 const response = await WavedashJS.getOrCreateLeaderboard(
-  "speedrun-times",      // Leaderboard name
-  "ascending",           // Sort order: "ascending" or "descending"
-  "time_milliseconds"    // Display type: "numeric", "time_seconds", or "time_milliseconds"
+  "speedrun-times",  // Leaderboard name
+  0,                 // Sort order: 0 = ascending, 1 = descending
+  2                  // Display type: 0 = numeric, 1 = time_seconds, 2 = time_milliseconds, 3 = time_game_ticks
 );
 
 if (response.success) {
@@ -104,19 +104,19 @@ if (response.success) {
 
 ### Sort order
 
-| Value | Description | Best for |
-|-------|-------------|----------|
-| `LEADERBOARD_SORT_ASCENDING` | Lower scores rank higher | Time trials, golf scores |
-| `LEADERBOARD_SORT_DESCENDING` | Higher scores rank higher | Points, high scores |
+| Value | Constant | Description | Best for |
+|-------|----------|-------------|----------|
+| `0` | `LEADERBOARD_SORT_ORDER.ASC` | Lower scores rank higher | Time trials, golf scores |
+| `1` | `LEADERBOARD_SORT_ORDER.DESC` | Higher scores rank higher | Points, high scores |
 
 ### Display type
 
-| Value | Description |
-|-------|-------------|
-| `numeric` | Display as a number (e.g., "1,000") |
-| `time_seconds` | Display as time in seconds (e.g., "1:23") |
-| `time_milliseconds` | Display as time with milliseconds (e.g., "1:23.456") |
-| `time_game_ticks` | Display as game ticks (assumes 60fps) |
+| Value | Constant | Description |
+|-------|----------|-------------|
+| `0` | `LEADERBOARD_DISPLAY_TYPE.NUMERIC` | Display as a number (e.g., "1,000") |
+| `1` | `LEADERBOARD_DISPLAY_TYPE.TIME_SECONDS` | Display as time in seconds (e.g., "1:23") |
+| `2` | `LEADERBOARD_DISPLAY_TYPE.TIME_MILLISECONDS` | Display as time with milliseconds (e.g., "1:23.456") |
+| `3` | `LEADERBOARD_DISPLAY_TYPE.TIME_GAME_TICKS` | Display as game ticks (assumes 60fps) |
 
 ## Submitting scores
 
@@ -234,7 +234,7 @@ const response = await WavedashJS.listLeaderboardEntries(
 );
 
 if (response.success) {
-  response.data.entries.forEach(entry => {
+  response.data.forEach(entry => {
     console.log(`#${entry.rank} ${entry.username}: ${entry.score}`);
   });
 }
@@ -302,7 +302,7 @@ const response = await WavedashJS.listLeaderboardEntriesAroundUser(
 
 if (response.success) {
   // Returns up to 11 entries centered on the player
-  response.data.entries.forEach(entry => {
+  response.data.forEach(entry => {
     const isMe = entry.userId === WavedashJS.getUserId();
     console.log(`${isMe ? ">" : " "} #${entry.rank} ${entry.username}: ${entry.score}`);
   });
@@ -351,8 +351,8 @@ public async void GetMyEntry(string leaderboardId)
 ```javascript JavaScript
 const response = await WavedashJS.getMyLeaderboardEntries("j57abc123...");
 
-if (response.success && response.data.entries.length > 0) {
-  const myEntry = response.data.entries[0];
+if (response.success && response.data.length > 0) {
+  const myEntry = response.data[0];
   console.log(`Your rank: #${myEntry.rank}`);
   console.log(`Your score: ${myEntry.score}`);
 }
@@ -424,10 +424,10 @@ public async void SubmitScoreWithReplay(string leaderboardId, int score, string 
 ```javascript JavaScript
 // First, create the UGC item with file path
 const ugcResponse = await WavedashJS.createUGCItem(
-  UGC_TYPE_GAME_MANAGED, // replays
+  3,                     // ugcType: 3 = game_managed (replays)
   "My Replay",           // title
   "",                    // description
-  UGC_VISIBILITY_PUBLIC, // visibility
+  0,                     // visibility: 0 = public
   "/path/to/replay.dat"  // filePath (optional)
 );
 

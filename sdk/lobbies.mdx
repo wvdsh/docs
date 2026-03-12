@@ -44,8 +44,8 @@ public class LobbyExample : MonoBehaviour
 
 ```javascript JavaScript
 const response = await WavedashJS.createLobby(
-  "public",  // visibility: "public", "private", or "friends"
-  4          // maxPlayers (optional)
+  0,  // visibility: 0 = public, 1 = friends_only, 2 = private
+  4   // maxPlayers (optional)
 );
 
 if (response.success) {
@@ -57,11 +57,11 @@ if (response.success) {
 
 ### Visibility options
 
-| Value | Description |
-|-------|-------------|
-| `public` | Anyone can find and join |
-| `private` | Only joinable with the lobby ID |
-| `friends` | Only friends can see and join |
+| Value | Constant | Description |
+|-------|----------|-------------|
+| `0` | `LOBBY_VISIBILITY.PUBLIC` | Anyone can find and join |
+| `1` | `LOBBY_VISIBILITY.FRIENDS_ONLY` | Only friends can see and join |
+| `2` | `LOBBY_VISIBILITY.PRIVATE` | Only joinable with the lobby ID |
 
 ## Joining a lobby
 
@@ -461,10 +461,10 @@ const mapName = WavedashJS.getLobbyData(lobbyId, "mapName");
 
 | Signal | Description | Data |
 |--------|-------------|------|
-| `LOBBY_JOINED` | Successfully joined a lobby | `{ lobbyId }` |
-| `LOBBY_USERS_UPDATED` | Users joined or left | `{ users }` |
+| `LOBBY_JOINED` | Successfully joined a lobby | `{ success, lobbyId, hostId?, users?, metadata?, message? }` |
+| `LOBBY_USERS_UPDATED` | A user joined or left | `{ id, username, changeType: "JOINED" \| "LEFT" }` |
 | `LOBBY_MESSAGE` | New message received | `{ username, content, ... }` |
-| `LOBBY_DATA_UPDATED` | Metadata changed | `{ key, value }` |
+| `LOBBY_DATA_UPDATED` | Metadata changed | `Record<string, unknown>` (full metadata object) |
 | `LOBBY_KICKED` | Removed from lobby | `{ lobbyId, reason }` |
 | `LOBBY_INVITE` | Received lobby invitation | `{ lobbyId, inviterId, inviterUsername }` |
 

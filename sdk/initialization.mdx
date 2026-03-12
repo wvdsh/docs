@@ -59,6 +59,8 @@ interface WavedashConfig {
   debug?: boolean;                       // Useful for logging and testing — enables verbose output in the browser console
   deferEvents?: boolean;                 // Lets your game finish setup before handling lobby/multiplayer signals
   disableAchievementsAndStats?: boolean; // Turns off achievement tracking in sandbox or demo builds
+  remoteStorageOrigin?: string;          // Custom origin for remote file storage
+  p2p?: Partial<P2PConfig>;             // P2P networking configuration (see P2PConfig type)
 }
 ```
 
@@ -142,7 +144,7 @@ WavedashJS.init({ debug: true, deferEvents: true });
 
 // Set up your signal handler
 WavedashJS.setEngineInstance({
-  type: "custom",
+  type: "CUSTOM",
   SendMessage: (objectName, signalName, value) => {
     // Handle signals...
   }

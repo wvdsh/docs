@@ -44,11 +44,11 @@ console.log(`Playing as: ${user.username}`);
 // Get a leaderboard and submit a score
 const leaderboard = await WavedashJS.getLeaderboard("high-scores");
 if (leaderboard.success) {
-  await WavedashJS.uploadLeaderboardScore({
-    leaderboardId: leaderboard.data.id,
-    score: 1000,
-    keepBest: true
-  });
+  await WavedashJS.uploadLeaderboardScore(
+    leaderboard.data.id, // leaderboardId
+    1000,                // score
+    true                 // keepBest
+  );
 }
 ```
 

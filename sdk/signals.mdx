@@ -21,7 +21,6 @@ Signals are events that the SDK emits to notify your game of real-time updates. 
 | `BACKEND_CONNECTED` | Backend | Connected to Wavedash |
 | `BACKEND_DISCONNECTED` | Backend | Disconnected from Wavedash |
 | `BACKEND_RECONNECTING` | Backend | Attempting to reconnect |
-| `CURRENT_STATS_RECEIVED` | Stats | Stats loaded from server |
 
 ## Lobby signals
 
@@ -32,17 +31,23 @@ Emitted when you successfully join or create a lobby.
 ```typescript
 {
   success: boolean;
-  data: string; // Lobby ID
+  lobbyId: string;           // Lobby ID
+  hostId?: string;           // Host's user ID (present on success)
+  users?: LobbyUser[];       // Current lobby members (present on success)
+  metadata?: Record<string, unknown>; // Lobby metadata (present on success)
+  message?: string;          // Error message (present on failure)
 }
 ```
 
 ### LOBBY_USERS_UPDATED
 
-Emitted when users join or leave the lobby.
+Emitted when a user joins or leaves the lobby. Fires once per user change.
 
 ```typescript
 {
-  users: LobbyUser[];
+  id: string;                       // User ID
+  username: string;                 // Display name
+  changeType: "JOINED" | "LEFT";   // Whether the user joined or left
 }
 ```
 
@@ -62,13 +67,10 @@ Emitted when a new message is received in the lobby.
 
 ### LOBBY_DATA_UPDATED
 
-Emitted when the lobby metadata changes.
+Emitted when the lobby metadata changes. Contains the full metadata object.
 
 ```typescript
-{
-  key: string;
-  value: any;
-}
+Record<string, unknown> // The full lobby metadata object
 ```
 
 ### LOBBY_KICKED
@@ -114,7 +116,8 @@ Emitted when a peer connection fails.
 ```typescript
 {
   userId: string;
-  error?: string;
+  username: string;
+  error: string;
 }
 ```
 
@@ -125,24 +128,9 @@ Emitted when a peer disconnects.
 ```typescript
 {
   userId: string;
+  username: string;
 }
 ```
-
-## Stats signals
-
-### CURRENT_STATS_RECEIVED
-
-Emitted when stats and achievements are loaded from the server.
-
-```typescript
-{
-  success: boolean;
-}
-```
-
-<Note>
-Call `requestStats()` to trigger this signal. Stats will be available via `getStat()` and `getAchievement()` after this signal fires.
-</Note>
 
 ## Backend signals
 
@@ -151,7 +139,12 @@ Call `requestStats()` to trigger this signal. Stats will be available via `getSt
 Emitted when connected to the Wavedash backend.
 
 ```typescript
-{} // No data
+{
+  isConnected: boolean;
+  hasEverConnected: boolean;
+  connectionCount: number;
+  connectionRetries: number;
+}
 ```
 
 ### BACKEND_DISCONNECTED
@@ -159,7 +152,12 @@ Emitted when connected to the Wavedash backend.
 Emitted when disconnected from the backend.
 
 ```typescript
-{} // No data
+{
+  isConnected: boolean;
+  hasEverConnected: boolean;
+  connectionCount: number;
+  connectionRetries: number;
+}
 ```
 
 ### BACKEND_RECONNECTING
@@ -167,7 +165,12 @@ Emitted when disconnected from the backend.
 Emitted when attempting to reconnect after a disconnect.
 
 ```typescript
-{} // No data
+{
+  isConnected: boolean;
+  hasEverConnected: boolean;
+  connectionCount: number;
+  connectionRetries: number;
+}
 ```
 
 ## Handling signals
@@ -323,7 +326,7 @@ Emitted when attempting to reconnect after a disconnect.
     ```javascript
     // Set up your engine instance with signal handler
     WavedashJS.setEngineInstance({
-      type: "custom",
+      type: "CUSTOM",
       SendMessage: (objectName, signalName, value) => {
         switch (signalName) {
           case "LobbyJoined":
