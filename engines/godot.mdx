@@ -32,6 +32,25 @@ This guide covers adding the Wavedash SDK to your Godot project.
 - **Emscripten Pool Size**: 8
 - **Godot Pool Size**: 4
 
+## Entrypoint configuration
+
+When you push a build with `wvdsh build push`, Wavedash automatically parses your exported HTML file and extracts an `entrypointParams` object. This object is stored alongside your build and passed to the engine's default entrypoint script at runtime to initialize your game.
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `loaderUrl` | `string` | URL to the Godot loader script (derived from `executable` name) |
+| `config.executable` | `string` | Base filename of the Godot executable (extracted from export) |
+| `config.arguments` | `string[]` | Command-line arguments passed to the engine |
+| `config.canvasResizePolicy` | `number` | Canvas resize behavior (`2` = adaptive) |
+| `config.emscriptenPoolSize` | `number` | Thread pool size for Emscripten runtime — matches the **Emscripten Pool Size** export setting |
+| `config.godotPoolSize` | `number` | Thread pool size for Godot — matches the **Godot Pool Size** export setting |
+| `config.ensureCrossOriginIsolationHeaders` | `true` | Enforces COOP/COEP headers for SharedArrayBuffer |
+| `config.experimentalVK` | `false` | Experimental Vulkan support (disabled) |
+| `config.fileSizes` | `Record<string, number>` | Map of build filenames to byte sizes, used for loading progress |
+| `config.focusCanvas` | `true` | Auto-focuses the game canvas on load |
+| `config.gdextensionLibs` | `string[]` | GDExtension native library paths (if any) |
+| `config.serviceWorker` | `null` | Service worker (unused by Wavedash) |
+
 ## Next steps
 
 <CardGroup cols={2}>

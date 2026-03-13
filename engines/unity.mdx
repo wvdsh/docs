@@ -30,6 +30,23 @@ This guide covers adding the Wavedash SDK to your Unity project.
   Under **Resolution and Presentation > WebGL Template**, you must use the **Default** template. The **Minimal** template generates an `index.html` that is missing the `buildUrl` variable, which the Wavedash CLI requires during upload.
 </Warning>
 
+## Entrypoint configuration
+
+When you push a build with `wvdsh build push`, Wavedash automatically parses your exported HTML file and extracts an `entrypointParams` object. This object is stored alongside your build and passed to the engine's default entrypoint script at runtime to initialize your game.
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `loaderUrl` | `string` | URL to the Unity WebGL loader script |
+| `config.dataUrl` | `string` | URL to the `.data` file (game assets) |
+| `config.frameworkUrl` | `string` | URL to the Unity framework JS |
+| `config.codeUrl` | `string` | URL to the `.wasm` file (compiled game code) |
+| `config.workerUrl` | `string` (optional) | URL to the web worker script, if multithreading is enabled |
+| `config.streamingAssetsUrl` | `string` | URL to the StreamingAssets directory |
+| `config.companyName` | `string` | Company name from Unity project settings |
+| `config.productName` | `string` | Product name from Unity project settings |
+| `config.productVersion` | `string` | Version string from Unity project settings |
+| `config.arguments` | `string[]` | Command-line arguments passed to the engine |
+
 ## Next steps
 
 <CardGroup cols={2}>
