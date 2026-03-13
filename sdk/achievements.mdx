@@ -11,7 +11,7 @@ Achievements are currently created by the Wavedash team. Contact us at [develope
 
 ## Stats
 
-Stats are numeric values that track player progress, like total kills, distance traveled, or games played.
+Stats are numeric values that track player progress, like total kills, distance traveled, or games played. Stats can be either integers or floats.
 
 ### Loading stats from server
 
@@ -41,6 +41,7 @@ public class StatsExample : MonoBehaviour
             Debug.Log("Stats loaded from server");
             // Now you can safely read stat values
             int kills = Wavedash.SDK.GetStatInt("total_kills");
+            float distanceTraveled = Wavedash.SDK.GetStatFloat("distance_traveled");
         }
     }
 }
@@ -69,11 +70,14 @@ WavedashSDK.set_stat_int("games_played", 42, true)
 ```
 
 ```csharp Unity
-// Set a stat value
+// Set an integer stat value
 // storeNow = true will immediately sync to server
 Wavedash.SDK.SetStatInt("total_kills", 150, storeNow: true);
-Wavedash.SDK.SetStatInt("distance_traveled", 5280, storeNow: true);
 Wavedash.SDK.SetStatInt("games_played", 42, storeNow: true);
+
+// Set a float stat value
+Wavedash.SDK.SetStatFloat("distance_traveled", 5280.5f, storeNow: true);
+Wavedash.SDK.SetStatFloat("accuracy", 0.75f, storeNow: true);
 ```
 
 ```javascript JavaScript
@@ -84,7 +88,7 @@ WavedashJS.setStat("games_played", 42);
 </CodeGroup>
 
 <Note>
-`setStat()` and `setAchievement()` only update values locally. You must call `storeStats()` to upload changes to the server. Calls to `storeStats()` are debounced (5 second delay) to reduce network calls. Any unsaved changes are also flushed on session end.
+In Godot and Unity, passing `store_now: true` / `storeNow: true` will immediately persist the stat to the server. In JavaScript, `setStat()` and `setAchievement()` only update values locally — you must call `storeStats()` to upload changes to the server. Calls to `storeStats()` are debounced (5 second delay) to reduce network calls. Any unsaved changes are also flushed on session end.
 </Note>
 
 ### Storing stats
@@ -131,6 +135,9 @@ print("Total kills: ", kills)
 ```csharp Unity
 int kills = Wavedash.SDK.GetStatInt("total_kills");
 Debug.Log($"Total kills: {kills}");
+
+float distance = Wavedash.SDK.GetStatFloat("distance_traveled");
+Debug.Log($"Distance traveled: {distance}");
 ```
 
 ```javascript JavaScript
@@ -153,6 +160,12 @@ public void AddCoins(int amount)
 {
     int current = Wavedash.SDK.GetStatInt("coins_collected");
     Wavedash.SDK.SetStatInt("coins_collected", current + amount, storeNow: true);
+}
+
+public void AddDistance(float amount)
+{
+    float current = Wavedash.SDK.GetStatFloat("distance_traveled");
+    Wavedash.SDK.SetStatFloat("distance_traveled", current + amount, storeNow: true);
 }
 ```
 
@@ -188,6 +201,10 @@ WavedashJS.setAchievement("first_win");
 console.log("Achievement unlocked!");
 ```
 </CodeGroup>
+
+<Note>
+In Godot and Unity, `set_achievement()` / `SetAchievement()` accepts an optional `store_now` / `storeNow` parameter to immediately persist to the server. In JavaScript, you must call `storeStats()` after `setAchievement()` to upload the change.
+</Note>
 
 ### Checking achievement status
 
