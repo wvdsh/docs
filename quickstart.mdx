@@ -22,7 +22,7 @@ Before you begin, make sure you have:
 Follow the [installation instructions](/cli#installation) for your platform, then verify:
 
 ```bash
-wvdsh --version
+wavedash --version
 ```
 
 ## Authenticate
@@ -30,13 +30,13 @@ wvdsh --version
 Log in to your Wavedash account:
 
 ```bash
-wvdsh auth login
+wavedash auth login
 ```
 
 This opens your browser to complete authentication. Once logged in, your credentials are stored locally.
 
 <Check>
-Run `wvdsh auth status` to confirm you're authenticated.
+Run `wavedash auth status` to confirm you're authenticated.
 </Check>
 
 ## Create your game on Wavedash
@@ -59,7 +59,7 @@ Create a `wavedash.toml` file in your project root. See [Configuration](/cli/con
 Start the local development server to test your game:
 
 ```bash
-wvdsh dev
+wavedash dev
 ```
 
 This:
@@ -68,7 +68,7 @@ This:
 3. Allows you to test SDK features before publishing
 
 <Warning>
-The first time you run `wvdsh dev`, you may need to trust the self-signed certificate. Follow the prompts in your terminal.
+The first time you run `wavedash dev`, you may need to trust the self-signed certificate. Follow the prompts in your terminal.
 </Warning>
 
 ## Publish your build
@@ -76,7 +76,7 @@ The first time you run `wvdsh dev`, you may need to trust the self-signed certif
 When you're ready to publish:
 
 ```bash
-wvdsh build push
+wavedash build push
 ```
 
 This uploads your game to Wavedash and creates a new build on the specified branch.

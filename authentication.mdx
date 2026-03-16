@@ -12,7 +12,7 @@ Developers authenticate using the Wavedash CLI to push builds and manage games.
 ### Logging in
 
 ```bash
-wvdsh auth login
+wavedash auth login
 ```
 
 This opens your browser for OAuth authentication. After authorizing, your API key is stored locally.
@@ -22,7 +22,7 @@ This opens your browser for OAuth authentication. After authorizing, your API ke
 For CI/CD or headless environments:
 
 ```bash
-wvdsh auth login --token YOUR_API_KEY
+wavedash auth login --token YOUR_API_KEY
 ```
 
 Generate API keys in the [Developer Dashboard](https://wavedash.com/developers/dashboard).
@@ -30,7 +30,7 @@ Generate API keys in the [Developer Dashboard](https://wavedash.com/developers/d
 ### Checking status
 
 ```bash
-wvdsh auth status
+wavedash auth status
 ```
 
 Shows your current authentication state and a masked preview of your API key.
@@ -38,7 +38,7 @@ Shows your current authentication state and a masked preview of your API key.
 ### Logging out
 
 ```bash
-wvdsh auth logout
+wavedash auth logout
 ```
 
 Removes stored credentials from your machine.
@@ -122,10 +122,10 @@ For automated workflows, generate API keys in the Developer Dashboard:
 ```bash
 # Set via environment variable
 export WAVEDASH_API_KEY=your_key_here
-wvdsh build push
+wavedash build push
 
 # Or pass directly
-wvdsh auth login --token your_key_here
+wavedash auth login --token your_key_here
 ```
 
 ### Key permissions
@@ -146,16 +146,16 @@ For automated deployments, use API keys in your CI/CD pipeline:
       env:
         WAVEDASH_API_KEY: ${{ secrets.WAVEDASH_API_KEY }}
       run: |
-        wvdsh auth login --token $WAVEDASH_API_KEY
-        wvdsh build push
+        wavedash auth login --token $WAVEDASH_API_KEY
+        wavedash build push
     ```
   </Tab>
   <Tab title="GitLab CI">
     ```yaml
     deploy:
       script:
-        - wvdsh auth login --token $WAVEDASH_API_KEY
-        - wvdsh build push
+        - wavedash auth login --token $WAVEDASH_API_KEY
+        - wavedash build push
     ```
   </Tab>
 </Tabs>

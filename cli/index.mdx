@@ -3,7 +3,7 @@ title: "Install"
 description: "Install and use the Wavedash CLI to manage your game builds"
 ---
 
-The Wavedash CLI (`wvdsh`) is a cross-platform command-line tool for uploading game projects to Wavedash. Use it to authenticate, test locally, and publish builds.
+The Wavedash CLI (`wavedash`) is a cross-platform command-line tool for uploading game projects to Wavedash. Use it to authenticate, test locally, and publish builds.
 
 <Card title="GitHub" icon="github" href="https://github.com/wvdsh/cli">
   View source, report issues, and contribute.
@@ -14,17 +14,17 @@ The Wavedash CLI (`wvdsh`) is a cross-platform command-line tool for uploading g
 <Tabs>
   <Tab title="macOS">
     ```bash
-    brew install wvdsh/tap/wvdsh
+    brew install wvdsh/tap/wavedash
     ```
   </Tab>
   <Tab title="Linux">
     ```bash
-    curl --proto '=https' --tlsv1.2 -LsSf https://github.com/wvdsh/cli/releases/latest/download/wvdsh-installer.sh | sh
+    curl --proto '=https' --tlsv1.2 -LsSf https://github.com/wvdsh/cli/releases/latest/download/wavedash-installer.sh | sh
     ```
   </Tab>
   <Tab title="Windows">
     ```powershell
-    irm https://github.com/wvdsh/cli/releases/latest/download/wvdsh-installer.ps1 | iex
+    irm https://github.com/wvdsh/cli/releases/latest/download/wavedash-installer.ps1 | iex
     ```
   </Tab>
 </Tabs>
@@ -32,7 +32,7 @@ The Wavedash CLI (`wvdsh`) is a cross-platform command-line tool for uploading g
 Verify your installation:
 
 ```bash
-wvdsh --version
+wavedash --version
 ```
 
 ## Updating
@@ -40,12 +40,12 @@ wvdsh --version
 <Tabs>
   <Tab title="macOS (Homebrew)">
     ```bash
-    brew upgrade wvdsh
+    brew upgrade wavedash
     ```
   </Tab>
   <Tab title="Linux / Windows">
     ```bash
-    wvdsh update
+    wavedash update
     ```
   </Tab>
 </Tabs>
@@ -54,11 +54,11 @@ wvdsh --version
 
 | Command | Description |
 |---------|-------------|
-| `wvdsh auth login` | Authenticate with Wavedash |
-| `wvdsh auth logout` | Clear stored credentials |
-| `wvdsh auth status` | Check authentication status |
-| `wvdsh dev` | Start local development server |
-| `wvdsh build push` | Upload a build to Wavedash |
+| `wavedash auth login` | Authenticate with Wavedash |
+| `wavedash auth logout` | Clear stored credentials |
+| `wavedash auth status` | Check authentication status |
+| `wavedash dev` | Start local development server |
+| `wavedash build push` | Upload a build to Wavedash |
 
 ## Global options
 

@@ -3,12 +3,12 @@ title: "Authentication"
 description: "Authenticate the Wavedash CLI with your account"
 ---
 
-The `wvdsh auth` commands manage your authentication with Wavedash.
+The `wavedash auth` commands manage your authentication with Wavedash.
 
 ## Login
 
 ```bash
-wvdsh auth login
+wavedash auth login
 ```
 
 This opens your default browser to complete OAuth authentication. Once you authorize the CLI, your API key is stored locally.
@@ -18,7 +18,7 @@ This opens your default browser to complete OAuth authentication. Once you autho
 If browser-based login isn't available, you can provide an API key directly:
 
 ```bash
-wvdsh auth login --token YOUR_API_KEY
+wavedash auth login --token YOUR_API_KEY
 ```
 
 <Note>
@@ -35,7 +35,7 @@ You can generate API keys in the Developer Dashboard at [wavedash.com](https://w
 ## Logout
 
 ```bash
-wvdsh auth logout
+wavedash auth logout
 ```
 
 This removes your stored API key from the local credentials file.
@@ -43,7 +43,7 @@ This removes your stored API key from the local credentials file.
 ## Status
 
 ```bash
-wvdsh auth status
+wavedash auth status
 ```
 
 Check your current authentication status. If logged in, this displays a masked preview of your API key (first 6 and last 3 characters).

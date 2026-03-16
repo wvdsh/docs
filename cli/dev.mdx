@@ -3,7 +3,7 @@ title: "Local Development"
 description: "Test your game locally with the Wavedash development server"
 ---
 
-The `wvdsh dev` command starts a local HTTPS development server that lets you test your game in the Wavedash sandbox environment before publishing.
+The `wavedash dev` command starts a local HTTPS development server that lets you test your game in the Wavedash sandbox environment before publishing.
 
 <Note>
 Before running, make sure you've [configured your wavedash.toml](/cli/configuration).
@@ -12,7 +12,7 @@ Before running, make sure you've [configured your wavedash.toml](/cli/configurat
 ## Usage
 
 ```bash
-wvdsh dev
+wavedash dev
 ```
 
 This:
@@ -32,12 +32,12 @@ This:
 
 Use a custom config file:
 ```bash
-wvdsh dev --config ./configs/wavedash.toml
+wavedash dev --config ./configs/wavedash.toml
 ```
 
 Start without opening the browser:
 ```bash
-wvdsh dev --no-open
+wavedash dev --no-open
 ```
 
 ## How it works
@@ -58,7 +58,7 @@ The dev server creates a local testing environment that mimics the production Wa
 
 ## Certificate trust
 
-The first time you run `wvdsh dev`, the CLI generates and installs a self-signed certificate:
+The first time you run `wavedash dev`, the CLI generates and installs a self-signed certificate:
 
 | Platform | Certificate location |
 |----------|---------------------|
