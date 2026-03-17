@@ -8,22 +8,22 @@ Wavedash is a game distribution platform that provides everything you need to pu
 ## What you can build
 
 <CardGroup cols={2}>
-  <Card title="Leaderboards" icon="trophy">
+  <Card title="Leaderboards" icon="trophy" href="/sdk/leaderboards">
     Create competitive leaderboards with configurable sorting, pagination, and score metadata.
   </Card>
-  <Card title="Multiplayer Lobbies" icon="users">
+  <Card title="Multiplayer Lobbies" icon="users" href="/sdk/lobbies">
     Build real-time multiplayer experiences with lobby management and messaging.
   </Card>
-  <Card title="P2P Networking" icon="network-wired">
+  <Card title="P2P Networking" icon="network-wired" href="/sdk/p2p">
     Connect players directly with WebRTC-based peer-to-peer networking and TURN fallback.
   </Card>
-  <Card title="Achievements" icon="medal">
+  <Card title="Achievements" icon="medal" href="/sdk/achievements">
     Track player progress with achievements and stats that sync across sessions.
   </Card>
-  <Card title="Cloud Storage" icon="cloud">
+  <Card title="Cloud Storage" icon="cloud" href="/sdk/remote-storage">
     Save player data and files to the cloud with per-user isolated storage.
   </Card>
-  <Card title="User Content" icon="file-upload">
+  <Card title="User Content" icon="file-upload" href="/sdk/ugc">
     Enable players to upload and share user-generated content.
   </Card>
 </CardGroup>
@@ -42,9 +42,8 @@ Wavedash is a game distribution platform that provides everything you need to pu
     Create a `wavedash.toml` file to define your game and build settings.
 
     ```toml
-    org_slug = "your-org"
-    game_slug = "your-game"
-    branch_slug = "production"
+    game_id = "your-game-id"
+    branch = "production"  # Must be: production, sandbox, or demo
     upload_dir = "./build"
 
     [godot]

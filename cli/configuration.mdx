@@ -14,7 +14,7 @@ Create `wavedash.toml` in your project root. The CLI looks for it in the current
 <CodeGroup>
 ```toml Godot
 game_id = "your-game-id"
-branch = "production"
+branch = "production"  # Must be: production, sandbox, or demo
 upload_dir = "./exports/web"
 
 [godot]
@@ -23,7 +23,7 @@ version = "4.5-stable"
 
 ```toml Unity
 game_id = "your-game-id"
-branch = "production"
+branch = "production"  # Must be: production, sandbox, or demo
 upload_dir = "./Builds/WebGL"
 
 [unity]
@@ -32,7 +32,7 @@ version = "6000.0.2f1"
 
 ```toml Custom
 game_id = "your-game-id"
-branch = "production"
+branch = "production"  # Must be: production, sandbox, or demo
 upload_dir = "./dist"
 
 [custom]
@@ -46,7 +46,7 @@ entrypoint = "game.js"
 | Field | Type | Description |
 |-------|------|-------------|
 | `game_id` | string | Your game's ID from the Wavedash Developer Dashboard |
-| `branch` | string | The branch to push builds to |
+| `branch` | string | The branch to push builds to. Must be one of: `production`, `sandbox`, or `demo` |
 | `upload_dir` | string | Path to your built game files (relative to config file) |
 
 <Note>
@@ -140,15 +140,15 @@ For different deployment targets, create separate config files:
 
 ```
 project/
-├── wavedash.toml           # Production config
-├── wavedash.staging.toml   # Staging config
-└── wavedash.dev.toml       # Development config
+├── wavedash.toml              # Production config (branch = "production")
+├── wavedash.sandbox.toml      # Sandbox config (branch = "sandbox")
+└── wavedash.demo.toml         # Demo config (branch = "demo")
 ```
 
 Use them with the `--config` flag:
 
 ```bash
-wavedash build push --config wavedash.staging.toml
+wavedash build push --config wavedash.sandbox.toml
 ```
 
 ## Path resolution

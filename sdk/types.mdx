@@ -115,11 +115,10 @@ interface LeaderboardEntry {
 
 ```typescript
 interface Lobby {
-  id: string;                    // Lobby ID
-  hostId: string;                // Host's user ID
+  lobbyId: string;               // Lobby ID
   visibility: LobbyVisibility;   // Access level
   maxPlayers: number;            // Player limit
-  numUsers: number;              // Current count
+  playerCount: number;           // Current count
   metadata: Record<string, unknown>; // Custom data
 }
 ```
@@ -137,8 +136,11 @@ type LobbyVisibility = 0 | 1 | 2;
 
 ```typescript
 interface LobbyUser {
-  id: string;       // User ID
-  username: string; // Display name
+  lobbyId: string;              // Lobby ID
+  userId: string;               // User ID
+  username: string;             // Display name
+  userAvatarUrl?: string;       // Avatar URL
+  isHost: boolean;              // Whether this user is the host
 }
 ```
 

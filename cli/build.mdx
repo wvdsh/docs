@@ -70,13 +70,17 @@ Builds are pushed to the branch specified in your `wavedash.toml`:
 branch = "production"
 ```
 
-Common branch strategies:
+Valid branch values:
 
 | Branch | Use case |
 |--------|----------|
 | `production` | Live builds for players |
-| `staging` | Pre-release testing |
-| `development` | Internal development builds |
+| `sandbox` | Development and testing builds |
+| `demo` | Demo builds for showcasing your game |
+
+<Warning>
+Only `production`, `sandbox`, and `demo` are valid branch values. Any other value will be rejected by the server.
+</Warning>
 
 <Tip>
 Create different `wavedash.toml` files for each branch, or use environment-specific configs.

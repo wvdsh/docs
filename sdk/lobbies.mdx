@@ -144,7 +144,7 @@ func list_lobbies():
 
 func _on_got_lobbies(lobbies: Array):
     for lobby in lobbies:
-        print(lobby["id"], ": ", lobby["numUsers"], "/", lobby["maxPlayers"], " players")
+        print(lobby["lobbyId"], ": ", lobby["playerCount"], "/", lobby["maxPlayers"], " players")
 ```
 
 ```csharp Unity
@@ -155,7 +155,7 @@ public async void ListLobbies()
 
     foreach (var lobby in lobbies)
     {
-        Debug.Log($"{lobby["id"]}: {lobby["numUsers"]}/{lobby["maxPlayers"]} players");
+        Debug.Log($"{lobby["lobbyId"]}: {lobby["playerCount"]}/{lobby["maxPlayers"]} players");
     }
 }
 
@@ -166,7 +166,7 @@ public async void ListFriendsLobbies()
 
     foreach (var lobby in lobbies)
     {
-        Debug.Log($"{lobby["id"]}: {lobby["numUsers"]}/{lobby["maxPlayers"]} players");
+        Debug.Log($"{lobby["lobbyId"]}: {lobby["playerCount"]}/{lobby["maxPlayers"]} players");
     }
 }
 ```
@@ -177,7 +177,7 @@ const response = await WavedashJS.listAvailableLobbies();
 
 if (response.success) {
   response.data.forEach(lobby => {
-    console.log(`${lobby.id}: ${lobby.numUsers}/${lobby.maxPlayers} players`);
+    console.log(`${lobby.lobbyId}: ${lobby.playerCount}/${lobby.maxPlayers} players`);
   });
 }
 
@@ -195,7 +195,7 @@ const friendsResponse = await WavedashJS.listAvailableLobbies(true);
 func get_lobby_users_list(lobby_id: String) -> Array:
     var users = WavedashSDK.get_lobby_users(lobby_id)
     for user in users:
-        print("- ", user["username"], " (", user["id"], ")")
+        print("- ", user["username"], " (", user["userId"], ")")
     return users
 ```
 
@@ -205,7 +205,7 @@ public void GetLobbyUsersList(string lobbyId)
     var users = Wavedash.SDK.GetLobbyUsers(lobbyId);
     foreach (var user in users)
     {
-        Debug.Log($"- {user["username"]} ({user["id"]})");
+        Debug.Log($"- {user["username"]} ({user["userId"]})");
     }
 }
 ```
@@ -214,7 +214,7 @@ public void GetLobbyUsersList(string lobbyId)
 const users = WavedashJS.getLobbyUsers(lobbyId);
 
 users.forEach(user => {
-  console.log(`- ${user.username} (${user.id})`);
+  console.log(`- ${user.username} (${user.userId})`);
 });
 ```
 </CodeGroup>
@@ -464,7 +464,7 @@ const mapName = WavedashJS.getLobbyData(lobbyId, "mapName");
 | Event | Description | Data |
 |-------|-------------|------|
 | `WavedashJS.Events.LOBBY_JOINED` | Successfully joined a lobby | `{ success, lobbyId, hostId?, users?, metadata?, message? }` |
-| `WavedashJS.Events.LOBBY_USERS_UPDATED` | A user joined or left | `{ id, username, changeType: "JOINED" \| "LEFT" }` |
+| `WavedashJS.Events.LOBBY_USERS_UPDATED` | A user joined or left | `{ userId, username, changeType: "JOINED" \| "LEFT" }` |
 | `WavedashJS.Events.LOBBY_MESSAGE` | New message received | `{ username, content, ... }` |
 | `WavedashJS.Events.LOBBY_DATA_UPDATED` | Metadata changed | `Record<string, unknown>` (full metadata object) |
 | `WavedashJS.Events.LOBBY_KICKED` | Removed from lobby | `{ lobbyId, reason }` |
