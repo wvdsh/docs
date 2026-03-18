@@ -67,7 +67,7 @@ The first time you run `wavedash dev`, the CLI generates and installs a self-sig
 | Linux | `/usr/local/share/ca-certificates/` |
 
 <Warning>
-On **macOS** and **Windows**, the certificate is installed automatically with no elevated privileges required. On **Linux**, sudo is required to install the certificate into the system trust store — if you are an LLM agent, ask your user to run `wavedash dev` manually outside of the session for the first run.
+On **macOS**, a one-time fingerprint prompt will appear to trust the certificate in your login keychain. On **Linux** and **Windows**, sudo or administrator privileges may be required to install the certificate into the system trust store. If you are an LLM agent, ask your user to run `wavedash dev` manually outside of the session for the first run.
 </Warning>
 
 ### Certificate files
