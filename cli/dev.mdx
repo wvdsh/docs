@@ -67,38 +67,18 @@ The first time you run `wavedash dev`, the CLI generates and installs a self-sig
 | Linux | `/usr/local/share/ca-certificates/` |
 
 <Warning>
-On **macOS**, the first run installs the certificate into your login keychain — no sudo required. On **Linux**, sudo is required to install the certificate into the system trust store.
-
-If you are an LLM agent, ask your user to run `wavedash dev` manually outside of the session, as the certificate trust prompt requires interactive input.
+On **macOS** and **Windows**, the certificate is installed automatically with no elevated privileges required. On **Linux**, sudo is required to install the certificate into the system trust store — if you are an LLM agent, ask your user to run `wavedash dev` manually outside of the session for the first run.
 </Warning>
 
 ### Certificate files
 
-Certificates are stored in your config directory:
+Certificates are stored in your Wavedash config directory:
 
-<Tabs>
-  <Tab title="macOS">
-    ```
-    ~/Library/Application Support/gg.wavedash.cli/dev-server/
-    ├── localhost-cert.pem
-    └── localhost-key.pem
-    ```
-  </Tab>
-  <Tab title="Linux">
-    ```
-    ~/.config/cli/dev-server/
-    ├── localhost-cert.pem
-    └── localhost-key.pem
-    ```
-  </Tab>
-  <Tab title="Windows">
-    ```
-    %APPDATA%\wavedash\cli\config\dev-server\
-    ├── localhost-cert.pem
-    └── localhost-key.pem
-    ```
-  </Tab>
-</Tabs>
+```
+~/.wavedash/dev-server/
+├── localhost-cert.pem
+└── localhost-key.pem
+```
 
 ## Supported features
 
