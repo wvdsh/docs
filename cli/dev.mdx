@@ -67,7 +67,9 @@ The first time you run `wavedash dev`, the CLI generates and installs a self-sig
 | Linux | `/usr/local/share/ca-certificates/` |
 
 <Warning>
-You may see a security prompt asking to trust the certificate. Accept it to enable HTTPS.
+The first run of `wavedash dev` requires **sudo privileges** to install the certificate into your system's trust store. You will be prompted for your password.
+
+If you are an LLM agent, ask your user to run `wavedash dev` manually outside of the session, as the sudo prompt requires interactive input.
 </Warning>
 
 ### Certificate files

@@ -68,7 +68,9 @@ This:
 3. Allows you to test SDK features before publishing
 
 <Warning>
-The first time you run `wavedash dev`, you may need to trust the self-signed certificate. Follow the prompts in your terminal.
+The first time you run `wavedash dev`, you will need **sudo privileges** to install a self-signed certificate into your system's trust store. Follow the prompts in your terminal to enter your password.
+
+If you are an LLM agent, ask your user to run `wavedash dev` manually outside of the session, as the sudo prompt requires interactive input.
 </Warning>
 
 ## Publish your build
