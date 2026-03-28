@@ -15,7 +15,7 @@ This:
 1. Reads your `wavedash.toml` configuration
 2. Validates your authentication
 3. Uploads your game files to Wavedash
-4. Creates a new build on the specified branch
+4. Creates a new build
 
 ## Options
 
@@ -47,7 +47,7 @@ Before pushing, make sure you've [authenticated](/cli/auth) and [configured your
     All files from your `upload_dir` are uploaded to our servers with progress tracking.
   </Step>
   <Step title="Build creation">
-    The CLI notifies Wavedash that the upload is complete, and a new build is created on your branch.
+    The CLI notifies Wavedash that the upload is complete, and a new build is created.
   </Step>
 </Steps>
 
@@ -61,30 +61,6 @@ The CLI uploads:
 <Note>
 The directory structure is preserved during upload. Files are uploaded relative to `upload_dir`.
 </Note>
-
-## Branches
-
-Builds are pushed to the branch specified in your `wavedash.toml`:
-
-```toml
-branch = "production"
-```
-
-Valid branch values:
-
-| Branch | Use case |
-|--------|----------|
-| `production` | Live builds for players |
-| `sandbox` | Development and testing builds |
-| `demo` | Demo builds for showcasing your game |
-
-<Warning>
-Only `production`, `sandbox`, and `demo` are valid branch values. Any other value will be rejected by the server.
-</Warning>
-
-<Tip>
-Create different `wavedash.toml` files for each branch, or use environment-specific configs.
-</Tip>
 
 ## Build size limits
 
