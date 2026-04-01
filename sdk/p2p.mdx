@@ -268,6 +268,22 @@ WavedashJS.addEventListener(WavedashJS.Events.P2P_PEER_DISCONNECTED, (e) => {
 
 ## Advanced methods
 
+### Message limits
+
+Query the P2P configuration limits at runtime:
+
+```javascript JavaScript
+// Max bytes you can send in a single P2P message payload
+const maxPayload = WavedashJS.getP2PMaxPayloadSize();
+console.log(`Max payload: ${maxPayload} bytes`);
+
+// Max queued incoming messages per channel before oldest are dropped
+const maxIncoming = WavedashJS.getP2PMaxIncomingMessages();
+console.log(`Max incoming messages per channel: ${maxIncoming}`);
+```
+
+These values are derived from the `p2p` configuration passed to `init()`. Use them to validate payload sizes before sending or to tune your message processing loop.
+
 ### Pre-allocated message buffer
 
 For performance-sensitive games (especially engine-based), you can use a pre-allocated scratch buffer for outgoing messages to avoid allocations:

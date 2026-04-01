@@ -411,6 +411,61 @@ WavedashJS.addEventListener(WavedashJS.Events.LOBBY_INVITE, (e) => {
 The invited user will receive a `WavedashJS.Events.LOBBY_INVITE` event. Your game should handle this event to show an invitation UI or auto-join the lobby.
 </Note>
 
+## Invite links
+
+Generate a shareable invite link for the current lobby:
+
+<CodeGroup>
+```gdscript Godot
+func _ready():
+    WavedashSDK.got_lobby_invite_link.connect(_on_got_invite_link)
+
+func get_invite_link():
+    WavedashSDK.get_lobby_invite_link()
+
+func _on_got_invite_link(response):
+    if response.get("success", false):
+        var link = response["data"]
+        print("Invite link: ", link)
+```
+
+```csharp Unity
+public async void GetInviteLink()
+{
+    var link = await Wavedash.SDK.GetLobbyInviteLink();
+    if (!string.IsNullOrEmpty(link))
+    {
+        Debug.Log($"Invite link: {link}");
+    }
+}
+
+public async void GetInviteLinkAndCopy()
+{
+    // Pass true to also copy the link to the clipboard
+    var link = await Wavedash.SDK.GetLobbyInviteLink(copyToClipboard: true);
+}
+```
+
+```javascript JavaScript
+const response = await WavedashJS.getLobbyInviteLink();
+
+if (response.success) {
+  console.log(`Invite link: ${response.data}`);
+}
+
+// Optionally copy to clipboard
+const copied = await WavedashJS.getLobbyInviteLink(true);
+```
+</CodeGroup>
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `copyToClipboard` | boolean | No | Copy the link to the clipboard (default: false) |
+
+<Note>
+The player must be in a lobby to generate an invite link.
+</Note>
+
 ## Lobby metadata
 
 Store custom key-value data on the lobby. Only the host can set metadata.

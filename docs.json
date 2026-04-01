@@ -60,7 +60,8 @@
               "sdk/achievements",
               "sdk/ugc",
               "sdk/remote-storage",
-              "sdk/presence"
+              "sdk/presence",
+              "sdk/friends"
             ]
           },
           {
