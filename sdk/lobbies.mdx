@@ -30,7 +30,7 @@ public class LobbyExample : MonoBehaviour
     public async void CreateLobby()
     {
         var lobbyId = await Wavedash.SDK.CreateLobby(
-            lobbyType: WavedashConstants.LobbyVisibility.PUBLIC,
+            lobbyVisibility: WavedashConstants.LobbyVisibility.PUBLIC,
             maxPlayers: 4
         );
 

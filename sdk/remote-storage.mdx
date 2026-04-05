@@ -204,18 +204,6 @@ async function loadGame(slot) {
 Delete a remote file from cloud storage:
 
 <CodeGroup>
-```csharp Unity
-public async void DeleteSave(string localPath)
-{
-    var result = await Wavedash.SDK.DeleteRemoteFile(localPath);
-
-    if (!string.IsNullOrEmpty(result))
-    {
-        Debug.Log("File deleted successfully");
-    }
-}
-```
-
 ```javascript JavaScript
 const response = await WavedashJS.deleteRemoteFile("saves/slot1.json");
 

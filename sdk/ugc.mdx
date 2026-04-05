@@ -39,7 +39,7 @@ public class UGCExample : MonoBehaviour
             title: "My Screenshot",
             description: "A cool moment in the game",
             visibility: WavedashConstants.UGCVisibility.PUBLIC,
-            localPath: localPath
+            filePath: localPath
         );
 
         if (result != null)
@@ -104,7 +104,7 @@ public async void UploadScreenshot(string localPath)
         title: "Screenshot",
         description: "Game screenshot",
         visibility: WavedashConstants.UGCVisibility.PUBLIC,
-        localPath: localPath
+        filePath: localPath
     );
 }
 ```
@@ -306,7 +306,7 @@ public async void ShareScreenshot()
         title: "Game Screenshot",
         description: $"Captured at level {currentLevel}",
         visibility: WavedashConstants.UGCVisibility.PUBLIC,
-        localPath: path
+        filePath: path
     );
 }
 ```

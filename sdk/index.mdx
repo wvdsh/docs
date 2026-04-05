@@ -98,7 +98,7 @@ The SDK emits events to notify your game of real-time updates like new lobby mes
 ```gdscript
 # Godot example
 func _ready():
-    Wavedash.lobby_message.connect(_on_lobby_message)
+    WavedashSDK.lobby_message.connect(_on_lobby_message)
 
 func _on_lobby_message(payload: Dictionary):
     print(payload.username, ": ", payload.message)
