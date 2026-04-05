@@ -254,6 +254,80 @@ WavedashJS.addEventListener(WavedashJS.Events.BACKEND_RECONNECTING, (e) => {
 | `WavedashJS.Events.BACKEND_DISCONNECTED` | Disconnected from backend |
 | `WavedashJS.Events.BACKEND_RECONNECTING` | Attempting to reconnect |
 
+## Overlay
+
+Toggle the Wavedash overlay programmatically:
+
+<CodeGroup>
+```gdscript Godot
+func toggle_overlay():
+    WavedashSDK.show_overlay()
+```
+
+```csharp Unity
+public void ToggleOverlay()
+{
+    Wavedash.SDK.ToggleOverlay();
+}
+```
+
+```javascript JavaScript
+WavedashJS.toggleOverlay();
+```
+</CodeGroup>
+
+## Loading helpers
+
+These methods are used in [custom engine entrypoints](/engines/custom) to manage the loading lifecycle. Godot and Unity handle this automatically.
+
+### Load a script
+
+Load an external script into the page. Useful for loading game libraries in custom engine entrypoints.
+
+```javascript JavaScript
+await WavedashJS.loadScript("./lib/library.js");
+```
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `src` | string | URL or relative path to the script file |
+
+### Report loading progress
+
+Report loading progress to the Wavedash shell. The progress bar is displayed to the player while your game loads.
+
+```javascript JavaScript
+WavedashJS.updateLoadProgressZeroToOne(0.5); // 50% loaded
+```
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `progress` | number | Loading progress from `0` (start) to `1` (complete) |
+
+### Signal load complete
+
+Notify the Wavedash shell that your game has finished loading and is ready to play.
+
+```javascript JavaScript
+WavedashJS.loadComplete();
+```
+
+### Set engine instance
+
+Set or update the engine instance for Unity or Godot. This method merges properties additively, so it can be called multiple times in any order.
+
+```javascript JavaScript
+WavedashJS.setEngineInstance(unityInstance);
+```
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `engineInstance` | Partial\<EngineInstance\> | The engine instance or partial attributes to merge |
+
+<Note>
+You typically don't need to call `setEngineInstance` directly. The Godot and Unity integration layers handle this automatically. It's exposed for advanced use cases where you need manual control over the engine lifecycle.
+</Note>
+
 ## Engine-specific initialization
 
 <CodeGroup>

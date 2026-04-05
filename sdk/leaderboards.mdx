@@ -77,7 +77,7 @@ public async void CreateLeaderboard()
 {
     var leaderboard = await Wavedash.SDK.GetOrCreateLeaderboard(
         "speedrun-times",
-        sortOrder: WavedashConstants.LeaderboardSortMethod.ASCENDING,
+        sortMethod: WavedashConstants.LeaderboardSortMethod.ASCENDING,
         displayType: WavedashConstants.LeaderboardDisplayType.TIME_MILLISECONDS
     );
 

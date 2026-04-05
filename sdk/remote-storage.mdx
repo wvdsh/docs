@@ -199,6 +199,24 @@ async function loadGame(slot) {
 ```
 </CodeGroup>
 
+## Deleting files
+
+Delete a remote file from cloud storage:
+
+<CodeGroup>
+```javascript JavaScript
+const response = await WavedashJS.deleteRemoteFile("saves/slot1.json");
+
+if (response.success) {
+  console.log("File deleted successfully");
+}
+```
+</CodeGroup>
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `filePath` | string | Path of the remote file to delete |
+
 ## Downloading directories
 
 Download all files in a remote directory at once:

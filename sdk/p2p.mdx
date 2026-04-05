@@ -85,8 +85,8 @@ WavedashJS.sendP2PMessage(
 |-----------|------|----------|-------------|
 | `userId` | string | For unicast | Target peer's user ID |
 | `channel` | number | Yes | Channel number (0-7) |
-| `data` | Uint8Array | Yes | Binary data to send |
 | `reliable` | boolean | No | Use reliable channel (default: true) |
+| `payload` | Uint8Array | Yes | Binary data to send |
 
 ## Receiving messages
 
@@ -267,6 +267,22 @@ WavedashJS.addEventListener(WavedashJS.Events.P2P_PEER_DISCONNECTED, (e) => {
 | `WavedashJS.Events.P2P_PEER_DISCONNECTED` | Peer disconnected | `{ userId, username }` |
 
 ## Advanced methods
+
+### Message limits
+
+Query the P2P configuration limits at runtime:
+
+```javascript JavaScript
+// Max bytes you can send in a single P2P message payload
+const maxPayload = WavedashJS.getP2PMaxPayloadSize();
+console.log(`Max payload: ${maxPayload} bytes`);
+
+// Max queued incoming messages per channel before oldest are dropped
+const maxIncoming = WavedashJS.getP2PMaxIncomingMessages();
+console.log(`Max incoming messages per channel: ${maxIncoming}`);
+```
+
+These values are derived from the `p2p` configuration passed to `init()`. Use them to validate payload sizes before sending or to tune your message processing loop.
 
 ### Pre-allocated message buffer
 

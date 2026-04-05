@@ -45,7 +45,7 @@ Emitted when a user joins or leaves the lobby. Fires once per user change.
 
 ```typescript
 {
-  id: string;                       // User ID
+  userId: string;                    // User ID
   username: string;                 // Display name
   changeType: "JOINED" | "LEFT";   // Whether the user joined or left
 }
@@ -57,7 +57,7 @@ Emitted when a new message is received in the lobby.
 
 ```typescript
 {
-  id: string;
+  messageId: string;
   userId: string;
   username: string;
   content: string;
@@ -218,10 +218,10 @@ Emitted when attempting to reconnect after a disconnect.
     func _on_peer_disconnected(data: Dictionary):
         print("Peer disconnected: ", data.userId)
 
-    func _on_backend_connected():
+    func _on_backend_connected(payload):
         print("Connected to Wavedash!")
 
-    func _on_backend_disconnected():
+    func _on_backend_disconnected(payload):
         print("Lost connection to Wavedash")
     ```
   </Tab>

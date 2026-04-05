@@ -30,7 +30,7 @@ public class LobbyExample : MonoBehaviour
     public async void CreateLobby()
     {
         var lobbyId = await Wavedash.SDK.CreateLobby(
-            lobbyType: WavedashConstants.LobbyVisibility.PUBLIC,
+            lobbyVisibility: WavedashConstants.LobbyVisibility.PUBLIC,
             maxPlayers: 4
         );
 
@@ -409,6 +409,48 @@ WavedashJS.addEventListener(WavedashJS.Events.LOBBY_INVITE, (e) => {
 
 <Note>
 The invited user will receive a `WavedashJS.Events.LOBBY_INVITE` event. Your game should handle this event to show an invitation UI or auto-join the lobby.
+</Note>
+
+## Invite links
+
+Generate a shareable invite link for the current lobby:
+
+<CodeGroup>
+```csharp Unity
+public async void GetInviteLink()
+{
+    var link = await Wavedash.SDK.GetLobbyInviteLink();
+    if (!string.IsNullOrEmpty(link))
+    {
+        Debug.Log($"Invite link: {link}");
+    }
+}
+
+public async void GetInviteLinkAndCopy()
+{
+    // Pass true to also copy the link to the clipboard
+    var link = await Wavedash.SDK.GetLobbyInviteLink(copyToClipboard: true);
+}
+```
+
+```javascript JavaScript
+const response = await WavedashJS.getLobbyInviteLink();
+
+if (response.success) {
+  console.log(`Invite link: ${response.data}`);
+}
+
+// Optionally copy to clipboard
+const copied = await WavedashJS.getLobbyInviteLink(true);
+```
+</CodeGroup>
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `copyToClipboard` | boolean | No | Copy the link to the clipboard (default: false) |
+
+<Note>
+The player must be in a lobby to generate an invite link.
 </Note>
 
 ## Lobby metadata
