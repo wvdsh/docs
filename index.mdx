@@ -58,11 +58,7 @@ Wavedash is a game distribution platform that provides everything you need to pu
     console.log(`Welcome, ${user.username}!`);
 
     // Submit a score
-    await WavedashJS.uploadLeaderboardScore({
-      leaderboardId: leaderboard.id,
-      score: 1000,
-      keepBest: true
-    });
+    await WavedashJS.uploadLeaderboardScore(leaderboard.id, 1000, true);
     ```
   </Step>
   <Step title="Publish your game">
