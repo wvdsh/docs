@@ -204,19 +204,6 @@ async function loadGame(slot) {
 Delete a remote file from cloud storage:
 
 <CodeGroup>
-```gdscript Godot
-func _ready():
-    WavedashSDK.remote_file_deleted.connect(_on_file_deleted)
-
-func delete_save(file_name: String):
-    var path = OS.get_user_data_dir() + "/" + file_name
-    WavedashSDK.delete_remote_file(path)
-
-func _on_file_deleted(response):
-    if response.get("success", false):
-        print("File deleted successfully")
-```
-
 ```csharp Unity
 public async void DeleteSave(string localPath)
 {
