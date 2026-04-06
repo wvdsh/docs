@@ -188,6 +188,7 @@ Emitted when attempting to reconnect after a disconnect.
         WavedashSDK.lobby_message.connect(_on_lobby_message)
         WavedashSDK.lobby_users_updated.connect(_on_users_updated)
         WavedashSDK.lobby_kicked.connect(_on_lobby_kicked)
+        WavedashSDK.lobby_data_updated.connect(_on_lobby_data_updated)
 
         # Connect to P2P events
         WavedashSDK.p2p_connection_established.connect(_on_peer_connected)
@@ -211,6 +212,9 @@ Emitted when attempting to reconnect after a disconnect.
     func _on_lobby_kicked(data: Dictionary):
         print("Kicked from lobby")
         get_tree().change_scene_to_file("res://menu.tscn")
+
+    func _on_lobby_data_updated(data: Dictionary):
+        print("Lobby metadata updated: ", data)
 
     func _on_peer_connected(data: Dictionary):
         print("Connected to peer: ", data.username)
@@ -241,6 +245,7 @@ Emitted when attempting to reconnect after a disconnect.
             Wavedash.SDK.OnLobbyMessage += OnLobbyMessage;
             Wavedash.SDK.OnLobbyUsersUpdated += OnUsersUpdated;
             Wavedash.SDK.OnLobbyKicked += OnLobbyKicked;
+            Wavedash.SDK.OnLobbyDataUpdated += OnLobbyDataUpdated;
 
             // Connect to P2P events
             Wavedash.SDK.OnP2PConnectionEstablished += OnPeerConnected;
@@ -271,6 +276,11 @@ Emitted when attempting to reconnect after a disconnect.
         void OnLobbyKicked(Dictionary<string, object> data)
         {
             Debug.Log("Kicked from lobby");
+        }
+
+        void OnLobbyDataUpdated(Dictionary<string, object> data)
+        {
+            Debug.Log("Lobby metadata updated");
         }
 
         void OnPeerConnected(Dictionary<string, object> data)

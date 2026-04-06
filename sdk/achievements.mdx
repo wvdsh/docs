@@ -33,6 +33,12 @@ func _on_stats_received(response):
 ```csharp Unity
 public class StatsExample : MonoBehaviour
 {
+    void Awake()
+    {
+        // Event-based alternative: listen for stats loaded
+        Wavedash.SDK.OnCurrentStatsReceived += OnStatsReceived;
+    }
+
     async void Start()
     {
         // Request stats from server
@@ -44,6 +50,11 @@ public class StatsExample : MonoBehaviour
             int kills = Wavedash.SDK.GetStatInt("total_kills");
             float distanceTraveled = Wavedash.SDK.GetStatFloat("distance_traveled");
         }
+    }
+
+    void OnStatsReceived(Dictionary<string, object> data)
+    {
+        Debug.Log("Stats received from server");
     }
 }
 ```

@@ -169,12 +169,10 @@ func get_current_user():
 ```csharp Unity
 public void GetCurrentUser()
 {
-    var user = Wavedash.SDK.GetUser();
-    if (user != null)
-    {
-        Debug.Log($"User ID: {user["id"]}");
-        Debug.Log($"Username: {user["username"]}");
-    }
+    var userId = Wavedash.SDK.GetUserId();
+    var username = Wavedash.SDK.GetUsername();
+    Debug.Log($"User ID: {userId}");
+    Debug.Log($"Username: {username}");
 }
 ```
 

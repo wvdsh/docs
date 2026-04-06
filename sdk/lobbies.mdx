@@ -104,6 +104,9 @@ if (response.success) {
 
 <CodeGroup>
 ```gdscript Godot
+func _ready():
+    WavedashSDK.lobby_left.connect(_on_lobby_left)
+
 func leave_lobby(lobby_id: String):
     WavedashSDK.leave_lobby(lobby_id)
 
