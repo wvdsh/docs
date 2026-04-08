@@ -14,6 +14,7 @@ On native platforms, shaders are compiled ahead of time and cached by the GPU dr
 - WebGL compiles GLSL shaders on the GPU when they're first encountered during rendering
 - Engines like Unity and Godot may use dozens of shader variants (one per material/lighting combo)
 - The browser can cache compiled shaders, but that cache is volatile — it gets cleared on browser updates, when the user clears site data, or when the GPU driver changes
+- On macOS, Chrome uses [ANGLE](https://github.com/google/angle) to translate WebGL GLSL shaders to Apple's Metal API. This means there are **two layers of shader caching**: Chrome's own disk cache, and macOS's system-level Metal pipeline cache where [compiled GPU binaries are stored automatically](https://developer.apple.com/videos/play/wwdc2022/10102/)
 
 ### What you can do
 
@@ -53,7 +54,7 @@ There is also a top-level shader cache shared across profiles:
   `Default` refers to your Chrome profile. If you use a non-default profile, look for `Profile 1`, `Profile 2`, etc. instead.
 </Note>
 
-3. **(macOS only) Delete the system-level Metal shader cache.** On macOS, Chrome uses ANGLE to translate WebGL GLSL shaders to Metal. macOS caches the compiled Metal pipeline state objects in a **system-level directory** separate from Chrome's own cache. Clearing Chrome's cache alone may not be enough to reproduce stutter if the Metal cache still has compiled binaries.
+3. **(macOS only) Delete the system-level Metal shader cache.** On macOS, the compiled Metal pipeline state objects are cached by the OS in a system directory — separate from Chrome's own cache. This system cache is the most impactful layer: in [one benchmark of 8,866 shaders](https://github.com/gfx-rs/gfx/issues/3716#issuecomment-816575736), a cold system cache took ~670s to compile vs ~25s with a hot cache (27x difference). Clearing Chrome's app-level cache alone won't reproduce stutter if the Metal system cache still has compiled binaries.
 
 The system cache lives under your user's Darwin cache directory:
 
@@ -80,7 +81,7 @@ rm -rf "${CACHE_DIR}/com.google.Chrome"{,.helper,.helper.plugin}
 ```
 
 <Note>
-  If clearing Chrome's app-level cache alone doesn't reproduce stutter, the system Metal cache is likely why. Note that this cache can also be invalidated by macOS updates or GPU driver changes, so it won't always be the blocker.
+  On macOS, the system Metal cache is the most impactful layer to clear. Chrome's app-level `GPUCache`/`ShaderCache` directories are still worth clearing, but if you only clear one, clear the system cache.
 </Note>
 
 4. **Reopen Chrome** and load your game — you should now see the shader compilation stutter on first play
@@ -91,6 +92,12 @@ This is the fastest way to reproduce shader jank during development. If you're n
 <Warning>
   There is no way to fully eliminate shader compilation stutter in WebGL. Even with warming, complex games will have a noticeable loading phase the first time shaders are compiled.
 </Warning>
+
+### Sources
+
+- [Build GPU binaries with Metal (WWDC22)](https://developer.apple.com/videos/play/wwdc2022/10102/) — Apple's documentation on how Metal automatically caches compiled GPU binaries in a file system cache when pipeline state objects are created
+- [Metal shader compiler cache location](https://gist.github.com/aras-p/5a9ae8f1f7d9998f732aff26dfa62617) — Aras Pranckevičius (Unity) documenting the `$(getconf DARWIN_USER_CACHE_DIR)/com.apple.metal` cache path
+- [gfx-rs pipeline cache benchmarks](https://github.com/gfx-rs/gfx/issues/3716#issuecomment-816575736) — Benchmark data showing the system Metal cache is the dominant factor in shader compilation time (~670s cold vs ~25s hot on 8,866 shaders)
 
 ## The Escape key
 
