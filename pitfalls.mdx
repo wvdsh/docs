@@ -7,7 +7,7 @@ Building games for the web comes with a unique set of challenges that don't exis
 
 ## Shader compilation stutter
 
-On native platforms, shaders are compiled ahead of time and cached by the GPU driver. On the web, **shaders are compiled at runtime** the first time they're used — whether your game uses WebGL or WebGPU. This causes visible frame hitches — sometimes called "shader jank" — that can last hundreds of milliseconds per shader.
+On native platforms, shaders are compiled ahead of time and cached by the GPU driver. On the web, **WebGL and WebGPU shaders are compiled at runtime** the first time they're used. This causes visible frame hitches — sometimes called "shader jank" — that can last hundreds of milliseconds per shader.
 
 ### Why it happens
 
