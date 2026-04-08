@@ -57,9 +57,11 @@ Peer-to-peer networking configuration:
 
 ```typescript
 interface P2PConfig {
-  maxPeers: number;              // Max concurrent connections
+  maxPeers: number;                // Max concurrent connections
   enableReliableChannel: boolean;  // TCP-like channel
   enableUnreliableChannel: boolean; // UDP-like channel
+  messageSize: number;             // Max bytes per P2P message payload (default: 2048)
+  maxIncomingMessages: number;     // Max queued incoming messages per channel (default: 1024)
 }
 ```
 

@@ -20,6 +20,7 @@ Before reading stat values, you should request them from the server to ensure yo
 <CodeGroup>
 ```gdscript Godot
 func _ready():
+    WavedashSDK.current_stats_received.connect(_on_stats_received)
     WavedashSDK.request_stats()
 
 func _on_stats_received(response):
@@ -32,6 +33,12 @@ func _on_stats_received(response):
 ```csharp Unity
 public class StatsExample : MonoBehaviour
 {
+    void Awake()
+    {
+        // Event-based alternative: listen for stats loaded
+        Wavedash.SDK.OnCurrentStatsReceived += OnStatsReceived;
+    }
+
     async void Start()
     {
         // Request stats from server
@@ -43,6 +50,11 @@ public class StatsExample : MonoBehaviour
             int kills = Wavedash.SDK.GetStatInt("total_kills");
             float distanceTraveled = Wavedash.SDK.GetStatFloat("distance_traveled");
         }
+    }
+
+    void OnStatsReceived(Dictionary<string, object> data)
+    {
+        Debug.Log("Stats received from server");
     }
 }
 ```
@@ -96,15 +108,6 @@ In Godot and Unity, passing `store_now: true` / `storeNow: true` will immediatel
 Call `storeStats()` to upload locally-set stat and achievement changes to the server:
 
 <CodeGroup>
-```gdscript Godot
-# Set values locally
-WavedashSDK.set_stat_int("total_kills", 150, true)
-WavedashSDK.set_achievement("first_blood")
-
-# Upload changes to server
-WavedashSDK.store_stats()
-```
-
 ```csharp Unity
 // Set values locally
 Wavedash.SDK.SetStatInt("total_kills", 150, storeNow: true);
@@ -123,6 +126,10 @@ WavedashJS.setAchievement("first_blood");
 WavedashJS.storeStats();
 ```
 </CodeGroup>
+
+<Note>
+In Godot, `set_stat_int()` with `store_now = true` and `set_achievement()` both persist to the server automatically — there is no separate `store_stats()` call.
+</Note>
 
 ### Getting a stat
 
@@ -203,7 +210,7 @@ console.log("Achievement unlocked!");
 </CodeGroup>
 
 <Note>
-In Godot and Unity, `set_achievement()` / `SetAchievement()` accepts an optional `store_now` / `storeNow` parameter to immediately persist to the server. In JavaScript, you must call `storeStats()` after `setAchievement()` to upload the change.
+In Godot and Unity, `set_achievement()` / `SetAchievement()` always persists to the server immediately. In JavaScript, you must call `storeStats()` after `setAchievement()` to upload the change.
 </Note>
 
 ### Checking achievement status
