@@ -7,18 +7,18 @@ Building games for the web comes with a unique set of challenges that don't exis
 
 ## Shader compilation stutter
 
-On native platforms, shaders are compiled ahead of time and cached by the GPU driver. On the web, **WebGL shaders are compiled at runtime** the first time they're used. This causes visible frame hitches — sometimes called "shader jank" — that can last hundreds of milliseconds per shader.
+On native platforms, shaders are compiled ahead of time and cached by the GPU driver. On the web, **shaders are compiled at runtime** the first time they're used — whether your game uses WebGL or WebGPU. This causes visible frame hitches — sometimes called "shader jank" — that can last hundreds of milliseconds per shader.
 
 ### Why it happens
 
-- WebGL compiles GLSL shaders on the GPU when they're first encountered during rendering
+- The browser compiles shaders on the GPU when they're first encountered during rendering
 - Engines like Unity and Godot may use dozens of shader variants (one per material/lighting combo)
-- The browser can cache compiled shaders, but that cache is volatile — it gets cleared on browser updates, when the user clears site data, or when the GPU driver changes
-- On macOS, Chrome translates graphics calls to Apple's Metal API — via [ANGLE](https://github.com/google/angle) for WebGL, or via [Dawn](https://dawn.googlesource.com/dawn) for WebGPU. macOS then [caches the compiled GPU binaries](https://developer.apple.com/videos/play/wwdc2020/10615/) in a system-level directory separate from Chrome's own cache. On macOS, **this system Metal cache is what actually prevents shader recompilation** — Chrome's own shader cache has no effect when the Metal cache is hot (see [testing instructions](#how-to-test-shader-warmup-in-chrome) below)
+- The browser can cache compiled shaders, but that cache is not guaranteed to persist — it may be cleared on browser updates, when the user clears site data, or when the GPU driver changes
+- On macOS, the OS [caches compiled Metal GPU binaries](https://developer.apple.com/videos/play/wwdc2020/10615/) in a system directory outside the browser — **this is the cache that actually prevents recompilation**, not the browser's own shader cache
 
 ### What you can do
 
-- **Warm up shaders early.** Render all your materials/objects off-screen during a loading screen so compilation happens before gameplay starts. In Unity, use `ShaderVariantCollection.WarmUp()`. In Godot, instantiate materials during a preload scene.
+- **Warm up shaders early.** Render all your materials/objects off-screen during a loading screen so compilation happens before gameplay starts. In Unity, use [`ShaderVariantCollection.WarmUp()`](https://docs.unity3d.com/ScriptReference/ShaderVariantCollection.WarmUp.html). In Godot, instantiate materials during a preload scene.
 - **Reduce shader variants.** Fewer unique shaders means less compilation. Consolidate materials where possible and avoid unnecessary keyword permutations.
 - **Expect cold starts.** Unlike native, you can't rely on a persistent shader cache. Design your loading flow assuming the player may need to compile every shader on every visit.
 
@@ -54,59 +54,23 @@ On Windows, clearing Chrome's app-level cache is sufficient.
 
 #### macOS
 
-On macOS, Chrome's own shader cache (`DawnWebGPUCache`, `GPUCache`) is **not what prevents shader recompilation**. When Chrome creates Metal pipeline state objects (via ANGLE for WebGL or Dawn for WebGPU), macOS [caches the compiled GPU binaries in a system-level directory](https://developer.apple.com/videos/play/wwdc2022/10102/). Clearing Chrome's cache while leaving the Metal system cache intact will not reproduce stutter — we tested this directly with a WebGPU Unity build and confirmed it.
-
-In a [gfx-rs benchmark of 8,866 shaders](https://github.com/gfx-rs/gfx/issues/3716#issuecomment-816575736), a cold system cache took ~670s to compile vs ~25s with a hot cache. A [Godot report](https://github.com/godotengine/godot/issues/106757) showed similar results — 10+ minutes on first launch with Metal vs seconds on subsequent runs.
+On macOS, clearing Chrome's own shader cache (`DawnWebGPUCache`, `GPUCache`) is **not enough**. macOS [caches compiled GPU binaries](https://developer.apple.com/videos/play/wwdc2022/10102/) in a separate system directory, and this is what actually prevents shader recompilation. You need to clear that instead.
 
 1. **Quit Chrome completely** (all windows, not just the tab)
-2. **Delete the system Metal cache.** The cache lives under your user's Darwin cache directory:
+2. **Delete the system Metal cache** by running this in Terminal:
 
 ```bash
-# Find your cache path
-getconf DARWIN_USER_CACHE_DIR
-# e.g. /var/folders/xx/xxxxxxxxx/C/
-```
-
-Delete these directories:
-
-| Directory | Contents |
-| --- | --- |
-| `<DARWIN_USER_CACHE_DIR>/com.google.Chrome/com.apple.metal/` | Metal cache for the Chrome main process |
-| `<DARWIN_USER_CACHE_DIR>/com.google.Chrome.helper/com.apple.metal/` | Metal cache for the Chrome GPU process (this is the important one) |
-| `<DARWIN_USER_CACHE_DIR>/com.google.Chrome.helper.plugin/com.apple.metal/` | Metal cache for Chrome plugin processes |
-
-Or nuke them all at once:
-
-```bash
-killall "Google Chrome" 2>/dev/null
-CACHE_DIR=$(getconf DARWIN_USER_CACHE_DIR)
-rm -rf "${CACHE_DIR}/com.google.Chrome"{,.helper,.helper.plugin}
+rm -rf "$(getconf DARWIN_USER_CACHE_DIR)/com.google.Chrome.helper/com.apple.metal"
 ```
 
 3. **Reopen Chrome** and load your game — you should now see shader compilation stutter on first play
 
-<Warning>
-  Don't waste time clearing Chrome's `DawnWebGPUCache` or `GPUCache` on macOS — the system Metal cache is the only layer that matters. We verified this by clearing Chrome's cache while keeping the Metal cache intact: no stutter. Clearing only the Metal cache while keeping Chrome's cache: stutter returned.
-</Warning>
-
-#### Verify your warmup
-
-After reproducing stutter, verify that your warmup phase compiles all shaders before gameplay begins.
-
-This is the fastest way to reproduce shader jank during development. If you're not sure whether you're seeing stutter, look for hitches during the first few seconds of gameplay — in particular, the first time new visual effects or materials appear on screen.
+Once you can reproduce stutter, verify that your warmup phase compiles all shaders before gameplay begins. Look for hitches during the first few seconds of gameplay — in particular, the first time new visual effects or materials appear on screen.
 
 <Warning>
-  There is no way to fully eliminate shader compilation stutter in WebGL or WebGPU. Even with warming, complex games will have a noticeable loading phase the first time shaders are compiled.
+  There is no way to fully eliminate shader compilation stutter on the web. Even with warming, complex games will have a noticeable loading phase the first time shaders are compiled.
 </Warning>
 
-### Sources
-
-- [Build GPU binaries with Metal (WWDC20)](https://developer.apple.com/videos/play/wwdc2020/10615/) — Apple introduces Metal Binary Archives and explains how Metal caches compiled Function variants to accelerate pipeline recreation
-- [Target and optimize GPU binaries with Metal 3 (WWDC22)](https://developer.apple.com/videos/play/wwdc2022/10102/) — Apple documents that "when you instantiate a PSO, Metal stores your GPU binaries in its file system cache"
-- [Metal shader compiler cache location](https://gist.github.com/aras-p/5a9ae8f1f7d9998f732aff26dfa62617) — Aras Pranckevičius (Unity) documenting the `$(getconf DARWIN_USER_CACHE_DIR)/com.apple.metal` cache path
-- [Chromium GPU Program Caching](https://docs.google.com/document/d/1Vceem-nF4TCICoeGSh7OMXxfGuJEJYblGXRgN9V9hcE/) — Chromium design doc explaining Chrome's own shader disk cache (separate from the Metal system cache)
-- [gfx-rs pipeline cache benchmarks](https://github.com/gfx-rs/gfx/issues/3716#issuecomment-816575736) — Cold system cache ~670s vs hot ~25s on 8,866 shaders
-- [Godot Metal compilation report](https://github.com/godotengine/godot/issues/106757) — First-load Metal compilation taking 10+ minutes; confirms `/var/folders` cache path and `rm -r` to force recompile
 
 ## The Escape key
 
