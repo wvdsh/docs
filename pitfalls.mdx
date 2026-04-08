@@ -53,8 +53,38 @@ There is also a top-level shader cache shared across profiles:
   `Default` refers to your Chrome profile. If you use a non-default profile, look for `Profile 1`, `Profile 2`, etc. instead.
 </Note>
 
-3. **Reopen Chrome** and load your game — you should now see the shader compilation stutter on first play
-4. Verify that your warmup phase compiles all shaders before gameplay begins
+3. **(macOS only) Delete the system-level Metal shader cache.** On macOS, Chrome uses ANGLE to translate WebGL GLSL shaders to Metal. macOS caches the compiled Metal pipeline state objects in a **system-level directory** separate from Chrome's own cache. If you only clear Chrome's folders, macOS will serve pre-compiled Metal binaries and you won't see any stutter.
+
+The system cache lives under your user's Darwin cache directory:
+
+```bash
+# Find your cache path
+getconf DARWIN_USER_CACHE_DIR
+# e.g. /var/folders/xx/xxxxxxxxx/C/
+```
+
+Delete these directories:
+
+| Directory | Contents |
+| --- | --- |
+| `<DARWIN_USER_CACHE_DIR>/com.google.Chrome/com.apple.metal/` | Metal shader cache for the Chrome main process |
+| `<DARWIN_USER_CACHE_DIR>/com.google.Chrome.helper/com.apple.metal/` | Metal shader cache for the Chrome GPU process (this is the important one) |
+| `<DARWIN_USER_CACHE_DIR>/com.google.Chrome.helper.plugin/com.apple.metal/` | Metal shader cache for Chrome plugin processes |
+
+Or nuke them all at once:
+
+```bash
+killall "Google Chrome" 2>/dev/null
+CACHE_DIR=$(getconf DARWIN_USER_CACHE_DIR)
+rm -rf "${CACHE_DIR}/com.google.Chrome"{,.helper,.helper.plugin}
+```
+
+<Note>
+  Clearing only Chrome's app-level cache (`GPUCache`, `ShaderCache`) is **not sufficient** on macOS. The system Metal cache is the one that actually prevents shader recompilation.
+</Note>
+
+4. **Reopen Chrome** and load your game — you should now see the shader compilation stutter on first play
+5. Verify that your warmup phase compiles all shaders before gameplay begins
 
 This is the fastest way to reproduce shader jank during development. If you're not sure whether you're seeing stutter, look for hitches during the first few seconds of gameplay — in particular, the first time new visual effects or materials appear on screen.
 
