@@ -1,0 +1,169 @@
+---
+title: "Common Pitfalls in Web Game Development (and How to Avoid Them)"
+description: "Common gotchas in web game development and how to handle them"
+---
+
+Building games for the web comes with a unique set of challenges that don't exist on native platforms. The good news is that every one of them has a straightforward solution once you know what to look for. This page covers the most common pitfalls we've seen — and how to avoid them.
+
+## Shader compilation stutter
+
+On native platforms, shaders are compiled ahead of time and cached by the GPU driver. On the web, **WebGL shaders are compiled at runtime** the first time they're used. This causes visible frame hitches — sometimes called "shader jank" — that can last hundreds of milliseconds per shader.
+
+### Why it happens
+
+- WebGL compiles GLSL shaders on the GPU when they're first encountered during rendering
+- Engines like Unity and Godot may use dozens of shader variants (one per material/lighting combo)
+- The browser can cache compiled shaders, but that cache is volatile — it gets cleared on browser updates, when the user clears site data, or when the GPU driver changes
+
+### What you can do
+
+- **Warm up shaders early.** Render all your materials/objects off-screen during a loading screen so compilation happens before gameplay starts. In Unity, use `ShaderVariantCollection.WarmUp()`. In Godot, instantiate materials during a preload scene.
+- **Reduce shader variants.** Fewer unique shaders means less compilation. Consolidate materials where possible and avoid unnecessary keyword permutations.
+- **Expect cold starts.** Unlike native, you can't rely on a persistent shader cache. Design your loading flow assuming the player may need to compile every shader on every visit.
+
+### How to test shader warmup in Chrome
+
+Chrome caches compiled shaders on disk, so after the first visit you won't see stutter again — which makes it hard to tell if your warmup code is actually working. To simulate a cold start, **delete Chrome's GPU shader cache** and restart the browser.
+
+1. **Quit Chrome completely** (all windows, not just the tab)
+2. **Delete the shader cache folder.** The folder depends on whether your game uses WebGPU or WebGL:
+
+**WebGPU** — delete `DawnWebGPUCache`:
+
+| OS | Path |
+| --- | --- |
+| **Windows** | `%LOCALAPPDATA%\Google\Chrome\User Data\Default\DawnWebGPUCache` |
+| **macOS** | `~/Library/Application Support/Google/Chrome/Default/DawnWebGPUCache` |
+
+**WebGL** — delete `GPUCache` and `ShaderCache`:
+
+| OS | Path |
+| --- | --- |
+| **Windows** | `%LOCALAPPDATA%\Google\Chrome\User Data\Default\GPUCache` |
+| **macOS** | `~/Library/Application Support/Google/Chrome/Default/GPUCache` |
+
+There is also a top-level shader cache shared across profiles:
+
+| OS | Path |
+| --- | --- |
+| **Windows** | `%LOCALAPPDATA%\Google\Chrome\User Data\ShaderCache` |
+| **macOS** | `~/Library/Application Support/Google/Chrome/ShaderCache` |
+
+<Note>
+  `Default` refers to your Chrome profile. If you use a non-default profile, look for `Profile 1`, `Profile 2`, etc. instead.
+</Note>
+
+3. **Reopen Chrome** and load your game — you should now see the shader compilation stutter on first play
+4. Verify that your warmup phase compiles all shaders before gameplay begins
+
+This is the fastest way to reproduce shader jank during development. If you're not sure whether you're seeing stutter, look for hitches during the first few seconds of gameplay — in particular, the first time new visual effects or materials appear on screen.
+
+<Warning>
+  There is no way to fully eliminate shader compilation stutter in WebGL. Even with warming, complex games will have a noticeable loading phase the first time shaders are compiled.
+</Warning>
+
+## The Escape key
+
+The Escape key is one of the most commonly used keys in games (pause menu, closing inventory, backing out of menus), but browsers give it special meaning that **your game cannot override**.
+
+### Why it's a problem
+
+- Pressing Escape **exits fullscreen mode** — the browser handles this before your game ever sees the keypress
+- Pressing Escape **releases pointer lock** (mouse capture) — again, handled by the browser first
+- In Chrome, exiting pointer lock requires **two Escape presses** if the game immediately re-requests it, as the browser enforces a cooldown to prevent games from trapping the cursor
+- Some browsers suppress the `keydown` event for Escape entirely when exiting fullscreen or pointer lock, so your game may not even know it was pressed
+
+### What you can do
+
+- **Don't use Escape as your primary pause/back key.** Consider using a different key (like Tab or Backtick) for your pause menu, or provide both options.
+- **Listen for state changes instead of the key itself.** Use the `fullscreenchange` and `pointerlockchange` events to detect when the player has exited fullscreen or pointer lock, and react to those events (e.g., auto-pause the game).
+- **Communicate the behavior to players.** If your game uses fullscreen, let players know that Escape will exit fullscreen and how to re-enter it.
+
+```javascript
+document.addEventListener("fullscreenchange", () => {
+  if (!document.fullscreenElement) {
+    // Player exited fullscreen — pause the game
+    game.pause();
+  }
+});
+
+document.addEventListener("pointerlockchange", () => {
+  if (!document.pointerLockElement) {
+    // Pointer lock was released — show cursor UI
+    game.showMenu();
+  }
+});
+```
+
+## Safari audio and Unity "Decompress on Load"
+
+Safari has the most restrictive audio policies of any browser, and Unity's default audio settings make it worse.
+
+### Safari audio autoplay
+
+Safari requires a **user gesture** (click or tap) before any audio can play. This applies to both the Web Audio API and `<audio>` elements. If your game tries to play audio on load, it will be silently blocked.
+
+Additionally, Safari handles audio streaming differently from other browsers:
+
+- **Compressed audio streaming** can have higher latency or fail entirely for certain codecs
+- **Web Audio API `decodeAudioData`** has stricter format requirements — some MP3 and OGG files that work in Chrome will fail in Safari
+- **AudioContext suspension** is more aggressive — Safari may suspend your audio context if the tab is backgrounded, and resuming it requires another user gesture
+
+### Unity "Decompress on Load"
+
+Unity's default audio import setting is **Decompress on Load**, which decompresses the entire audio clip into uncompressed PCM in memory when the scene loads. On native platforms this is fine — memory is abundant and load times are fast. On WebGL, it's a disaster:
+
+- A 5 MB compressed audio file becomes **50+ MB of uncompressed PCM** in memory
+- Multiple audio clips compound quickly, easily pushing WebGL memory past browser limits
+- Safari on iOS is especially constrained, with lower memory budgets for web content
+- Decompression happens on the main thread, causing long frame stalls during loading
+
+### What you can do
+
+- **Switch audio to "Compressed in Memory" in Unity.** For all audio clips, change the load type to **Compressed In Memory** and set the compression format to **AAC** (best Safari support) or **Vorbis**. Only use Decompress on Load for very short sound effects where latency matters.
+- **Use AAC/M4A for Safari compatibility.** Avoid OGG Vorbis as the primary format if you need Safari support — Safari doesn't support OGG natively. AAC (.m4a) works across all browsers.
+- **Resume AudioContext on user interaction.** Always resume your audio context in response to a user click or tap, and handle the case where it gets suspended.
+- **Lazy-load audio.** Don't load all audio clips at startup. Stream background music and load sound effects on demand or per-scene.
+
+```javascript
+// Resume audio context on first user interaction
+document.addEventListener("click", () => {
+  if (audioContext.state === "suspended") {
+    audioContext.resume();
+  }
+}, { once: true });
+```
+
+<Warning>
+  Test audio on Safari early and often. Audio bugs that only appear in Safari are the most common support issue we see from developers.
+</Warning>
+
+## WebAssembly memory management
+
+On native platforms, your game's memory is managed by the OS and can grow and shrink freely. On the web, **WebAssembly uses a linear memory heap that can only grow, never shrink**. Once memory is allocated, it's reserved for the lifetime of the tab — and if it grows too large, the browser will kill it.
+
+### Why it matters
+
+- The WASM heap grows automatically when your game needs more memory, but it [never releases pages back to the browser](https://github.com/WebAssembly/design/issues/1397)
+- In Unity, Addressables and asset bundles don't load and unload in neat contiguous blocks — over long play sessions, **memory fragmentation** builds up as assets are loaded and unloaded in different orders
+- Even if you unload assets correctly, the freed memory may not be usable for new allocations if it's fragmented into small non-contiguous chunks
+- Eventually the tab crashes when the browser's memory limit is hit, even though your game's "active" memory usage looks reasonable
+
+### What you can do
+
+- **Monitor memory usage in your game.** Use Unity's `Profiler` API to track allocations in non-dev builds so you can catch problems before players do:
+
+```csharp
+long totalReserved = Profiler.GetTotalReservedMemoryLong();
+long allocatedMemory = Profiler.GetTotalAllocatedMemoryLong();
+
+float allocatedMB = allocatedMemory / (1024f * 1024f);
+float reservedMB = totalReserved / (1024f * 1024f);
+
+Debug.Log($"Memory Usage: {allocatedMB:F2}MB / {reservedMB:F2}MB");
+```
+
+- **Use the browser's performance tools.** Chrome's Performance tab shows your tab's memory footprint over time — watch for a steadily climbing line that never comes back down.
+- **Design your asset loading strategy around fragmentation.** Load assets in groups that will be unloaded together. Avoid rapid load/unload cycles that create gaps in the heap. The structure of your Addressable groups matters more on the web than on any other platform.
+- **Use Unity's Memory Profiler package.** The [fragmentation view](https://docs.unity3d.com/Packages/com.unity.memoryprofiler@0.7/manual/fragmentation-view.html) lets you visualize how your heap is laid out and identify fragmentation hotspots.
+- **Test long play sessions.** A game that runs fine for 5 minutes can crash after 30 if memory fragmentation is unchecked. Playtest for the duration you expect real sessions to last.
