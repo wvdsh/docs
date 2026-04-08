@@ -53,7 +53,7 @@ There is also a top-level shader cache shared across profiles:
   `Default` refers to your Chrome profile. If you use a non-default profile, look for `Profile 1`, `Profile 2`, etc. instead.
 </Note>
 
-3. **(macOS only) Delete the system-level Metal shader cache.** On macOS, Chrome uses ANGLE to translate WebGL GLSL shaders to Metal. macOS caches the compiled Metal pipeline state objects in a **system-level directory** separate from Chrome's own cache. If you only clear Chrome's folders, macOS will serve pre-compiled Metal binaries and you won't see any stutter.
+3. **(macOS only) Delete the system-level Metal shader cache.** On macOS, Chrome uses ANGLE to translate WebGL GLSL shaders to Metal. macOS caches the compiled Metal pipeline state objects in a **system-level directory** separate from Chrome's own cache. Clearing Chrome's cache alone may not be enough to reproduce stutter if the Metal cache still has compiled binaries.
 
 The system cache lives under your user's Darwin cache directory:
 
@@ -80,7 +80,7 @@ rm -rf "${CACHE_DIR}/com.google.Chrome"{,.helper,.helper.plugin}
 ```
 
 <Note>
-  Clearing only Chrome's app-level cache (`GPUCache`, `ShaderCache`) is **not sufficient** on macOS. The system Metal cache is the one that actually prevents shader recompilation.
+  If clearing Chrome's app-level cache alone doesn't reproduce stutter, the system Metal cache is likely why. Note that this cache can also be invalidated by macOS updates or GPU driver changes, so it won't always be the blocker.
 </Note>
 
 4. **Reopen Chrome** and load your game — you should now see the shader compilation stutter on first play
