@@ -7,60 +7,70 @@ Building games for the web comes with a unique set of challenges that don't exis
 
 ## Shader compilation stutter
 
-On native platforms, shaders are compiled ahead of time and cached by the GPU driver. On the web, **WebGL shaders are compiled at runtime** the first time they're used. This causes visible frame hitches — sometimes called "shader jank" — that can last hundreds of milliseconds per shader.
+On native platforms, shaders are compiled ahead of time and cached by the GPU driver. On the web, **WebGL and WebGPU shaders are compiled at runtime** the first time they're used. This causes visible frame hitches — sometimes called "shader jank" — that can last hundreds of milliseconds per shader.
 
 ### Why it happens
 
-- WebGL compiles GLSL shaders on the GPU when they're first encountered during rendering
+- The browser compiles shaders on the GPU when they're first encountered during rendering
 - Engines like Unity and Godot may use dozens of shader variants (one per material/lighting combo)
-- The browser can cache compiled shaders, but that cache is volatile — it gets cleared on browser updates, when the user clears site data, or when the GPU driver changes
+- The browser can cache compiled shaders, but that cache is not guaranteed to persist — it may be cleared on browser updates, when the user clears site data, or when the GPU driver changes
+- On macOS, the OS [caches compiled Metal GPU binaries](https://developer.apple.com/videos/play/wwdc2020/10615/) in a system directory outside the browser — **this is the cache that actually prevents recompilation**, not the browser's own shader cache
 
 ### What you can do
 
-- **Warm up shaders early.** Render all your materials/objects off-screen during a loading screen so compilation happens before gameplay starts. In Unity, use `ShaderVariantCollection.WarmUp()`. In Godot, instantiate materials during a preload scene.
+- **Warm up shaders early.** Render all your materials/objects off-screen during a loading screen so compilation happens before gameplay starts. In Unity, use [`ShaderVariantCollection.WarmUp()`](https://docs.unity3d.com/ScriptReference/ShaderVariantCollection.WarmUp.html). In Godot, instantiate materials during a preload scene.
 - **Reduce shader variants.** Fewer unique shaders means less compilation. Consolidate materials where possible and avoid unnecessary keyword permutations.
 - **Expect cold starts.** Unlike native, you can't rely on a persistent shader cache. Design your loading flow assuming the player may need to compile every shader on every visit.
 
 ### How to test shader warmup in Chrome
 
-Chrome caches compiled shaders on disk, so after the first visit you won't see stutter again — which makes it hard to tell if your warmup code is actually working. To simulate a cold start, **delete Chrome's GPU shader cache** and restart the browser.
+Chrome caches compiled shaders on disk, so after the first visit you won't see stutter again — which makes it hard to tell if your warmup code is actually working. To simulate a cold start, you need to clear the right shader cache and restart the browser. **Which cache matters depends on your OS.**
+
+#### Windows
+
+On Windows, clearing Chrome's app-level cache is sufficient.
 
 1. **Quit Chrome completely** (all windows, not just the tab)
-2. **Delete the shader cache folder.** The folder depends on whether your game uses WebGPU or WebGL:
+2. **Delete the shader cache folder:**
 
 **WebGPU** — delete `DawnWebGPUCache`:
 
-| OS | Path |
-| --- | --- |
-| **Windows** | `%LOCALAPPDATA%\Google\Chrome\User Data\Default\DawnWebGPUCache` |
-| **macOS** | `~/Library/Application Support/Google/Chrome/Default/DawnWebGPUCache` |
+```
+%LOCALAPPDATA%\Google\Chrome\User Data\Default\DawnWebGPUCache
+```
 
-**WebGL** — delete `GPUCache` and `ShaderCache`:
+**WebGL** — delete `GPUCache` and the top-level `ShaderCache`:
 
-| OS | Path |
-| --- | --- |
-| **Windows** | `%LOCALAPPDATA%\Google\Chrome\User Data\Default\GPUCache` |
-| **macOS** | `~/Library/Application Support/Google/Chrome/Default/GPUCache` |
-
-There is also a top-level shader cache shared across profiles:
-
-| OS | Path |
-| --- | --- |
-| **Windows** | `%LOCALAPPDATA%\Google\Chrome\User Data\ShaderCache` |
-| **macOS** | `~/Library/Application Support/Google/Chrome/ShaderCache` |
+```
+%LOCALAPPDATA%\Google\Chrome\User Data\Default\GPUCache
+%LOCALAPPDATA%\Google\Chrome\User Data\ShaderCache
+```
 
 <Note>
   `Default` refers to your Chrome profile. If you use a non-default profile, look for `Profile 1`, `Profile 2`, etc. instead.
 </Note>
 
-3. **Reopen Chrome** and load your game — you should now see the shader compilation stutter on first play
-4. Verify that your warmup phase compiles all shaders before gameplay begins
+3. **Reopen Chrome** and load your game — you should now see shader compilation stutter on first play
 
-This is the fastest way to reproduce shader jank during development. If you're not sure whether you're seeing stutter, look for hitches during the first few seconds of gameplay — in particular, the first time new visual effects or materials appear on screen.
+#### macOS
+
+On macOS, clearing Chrome's own shader cache (`DawnWebGPUCache`, `GPUCache`) is **not enough**. macOS [caches compiled GPU binaries](https://developer.apple.com/videos/play/wwdc2022/10102/) in a separate system directory, and this is what actually prevents shader recompilation. You need to clear that instead.
+
+1. **Quit Chrome completely** (all windows, not just the tab)
+2. **Delete the system Metal cache** by running this in Terminal:
+
+```bash
+rm -rf "$(getconf DARWIN_USER_CACHE_DIR)/com.google.Chrome.helper/com.apple.metal"
+```
+
+3. **Reopen Chrome** and load your game — you should now see shader compilation stutter on first play
+
+Once you can reproduce stutter, verify that your warmup phase compiles all shaders before gameplay begins. Look for hitches during the first few seconds of gameplay — in particular, the first time new visual effects or materials appear on screen.
 
 <Warning>
-  There is no way to fully eliminate shader compilation stutter in WebGL. Even with warming, complex games will have a noticeable loading phase the first time shaders are compiled.
+  There is no way to fully eliminate shader compilation stutter on the web. Even with warming, complex games will have a noticeable loading phase the first time shaders are compiled.
 </Warning>
+
 
 ## The Escape key
 
